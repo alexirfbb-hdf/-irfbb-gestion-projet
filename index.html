@@ -178,36 +178,9 @@ main { padding: 24px; max-width: 1400px; margin: 0 auto; }
   .form-row { grid-template-columns: 1fr; }
   .planning-label { width: 120px; }
 }
-
-/* LOGIN */
-#loginScreen { position:fixed;inset:0;background:linear-gradient(135deg,#1a202c 0%,#2d3748 100%);display:flex;align-items:center;justify-content:center;z-index:9999; }
-.login-box { background:white;border-radius:20px;padding:48px 40px;width:340px;text-align:center;box-shadow:0 25px 50px rgba(0,0,0,.4); }
-.login-logo { width:60px;height:60px;background:var(--accent);border-radius:16px;display:flex;align-items:center;justify-content:center;font-size:30px;margin:0 auto 20px; }
-.login-title { font-size:22px;font-weight:800;margin-bottom:4px; }
-.login-sub { font-size:13px;color:var(--muted);margin-bottom:28px; }
-.login-input { width:100%;padding:14px 16px;border:2px solid var(--border);border-radius:10px;font-size:18px;text-align:center;letter-spacing:6px;font-weight:700;outline:none;transition:border-color .2s; }
-.login-input:focus { border-color:var(--accent); }
-.login-btn { width:100%;margin-top:14px;padding:14px;background:var(--accent);color:white;border:none;border-radius:10px;font-size:15px;font-weight:700;cursor:pointer;transition:background .2s; }
-.login-btn:hover { background:#c1121f; }
-.login-error { color:var(--accent);font-size:13px;margin-top:10px;min-height:18px; }
-
-/* BADGE URGENTES */
-.urgent-badge { display:inline-flex;align-items:center;gap:3px;font-size:11px;font-weight:700;padding:2px 8px;border-radius:10px;background:#fee2e2;color:#dc2626;flex-shrink:0; }
 </style>
 </head>
 <body>
-
-<!-- ÉCRAN DE CONNEXION -->
-<div id="loginScreen">
-  <div class="login-box">
-    <div class="login-logo">🏀</div>
-    <div class="login-title">IRFBB HDF</div>
-    <div class="login-sub">Gestion de projet — accès équipe</div>
-    <input class="login-input" type="password" id="loginInput" placeholder="••••" maxlength="10" onkeydown="if(event.key==='Enter')checkLogin()">
-    <button class="login-btn" onclick="checkLogin()">Accéder →</button>
-    <div class="login-error" id="loginError"></div>
-  </div>
-</div>
 <header>
   <div class="logo">
     <div class="logo-icon">🏀</div>
@@ -219,6 +192,7 @@ main { padding: 24px; max-width: 1400px; margin: 0 auto; }
     <button class="nav-tab" onclick="showView('planning')">📆 Planning</button>
   </div>
   <div class="header-right">
+    <span id="save-indicator" style="font-size:12px;color:#22c55e;font-weight:600;opacity:0;transition:opacity .3s;margin-right:8px">✓ Sauvegardé</span>
     <div class="team-avatars" id="headerAvatars"></div>
     <button class="btn btn-primary btn-sm" onclick="openModal('project')">+ Projet</button>
   </div>
@@ -452,30 +426,23 @@ function renderProjects() {
   const el = document.getElementById('projectsGrid');
   if (!state.projects.length) { el.innerHTML = '<div class="empty-state"><div class="empty-icon">📂</div><div class="empty-text">Aucun projet. Créez-en un !</div></div>'; return; }
   const now = new Date(); now.setHours(0,0,0,0);
+  // Avatars des personnes ayant des tâches à faire dans chaque projet
   el.innerHTML = state.projects.map(p => {
     const tasks = state.tasks.filter(t => t.projectId === p.id);
-    // Tâches en retard (toutes sauf done)
     const ov = tasks.filter(t => t.status !== 'done' && t.due && new Date(t.due) < now).length;
-    // Tâches urgentes non terminées
-    const urgentes = tasks.filter(t => t.status !== 'done' && t.priority === 'high').length;
-    // Avatars uniquement des tâches todo ou inprogress (pas done)
-    const activeTasks = tasks.filter(t => t.status === 'todo' || t.status === 'inprogress');
-    const activeMembers = [...new Set(activeTasks.map(t => t.assignee))].filter(Boolean);
+    const activeMembers = [...new Set(tasks.filter(t => t.status !== 'done').map(t => t.assignee))].filter(Boolean);
     const avatarsHtml = activeMembers.length
       ? activeMembers.map(m => avatarEl(m, 'xs')).join('')
-      : '';
+      : (p.members||[]).map(m => avatarEl(m, 'xs')).join('');
     return `
     <div class="project-card" style="--card-color:${p.color};padding:14px 18px" onclick="showView('kanban','${p.id}')">
       <div style="display:flex;align-items:center;justify-content:space-between;gap:10px">
         <div style="display:flex;align-items:center;gap:10px;flex:1;min-width:0">
           <div style="width:4px;height:36px;border-radius:2px;background:${p.color};flex-shrink:0"></div>
-          <div style="min-width:0;flex:1">
-            <div style="font-size:15px;font-weight:700;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${p.name}</div>
-            ${urgentes ? `<div style="margin-top:3px"><span class="urgent-badge">🔴 ${urgentes} urgente${urgentes>1?'s':''}</span></div>` : ''}
-          </div>
+          <span style="font-size:15px;font-weight:700;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${p.name}</span>
           ${ov ? `<span style="font-size:11px;font-weight:600;padding:2px 7px;border-radius:10px;background:#fff7ed;color:#c2410c;flex-shrink:0">⚠️ ${ov}</span>` : ''}
         </div>
-        ${avatarsHtml ? `<div style="display:flex;flex-shrink:0">${avatarsHtml}</div>` : ''}
+        <div style="display:flex;flex-shrink:0">${avatarsHtml}</div>
       </div>
     </div>`;
   }).join('');
@@ -752,8 +719,8 @@ function renderReunions() {
               return `<tr>
                 <td><div class="agenda-num">${i+1}</div></td>
                 <td><div class="agenda-subject">${a}</div></td>
-                <td><textarea class="agenda-table textarea" placeholder="Décision…" onchange="saveAgendaNote('${r.id}',${i},'decision',this.value)">${dec}</textarea></td>
-                <td><textarea class="agenda-table textarea" placeholder="Action, responsable…" onchange="saveAgendaNote('${r.id}',${i},'action',this.value)">${act}</textarea></td>
+                <td><textarea class="agenda-table textarea" placeholder="Décision…" oninput="debounceSaveNote('${r.id}',${i},'decision',this.value)">${dec}</textarea></td>
+                <td><textarea class="agenda-table textarea" placeholder="Action, responsable…" oninput="debounceSaveNote('${r.id}',${i},'action',this.value)">${act}</textarea></td>
               </tr>`;
             }).join('')}
           </tbody>
@@ -764,16 +731,29 @@ function renderReunions() {
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
           <div class="cr-block">
             <div class="cr-block-title">📅 Prochaine réunion</div>
-            <textarea class="cr-textarea" style="min-height:60px" placeholder="Date et sujets prévus…" onchange="saveCR('${r.id}','nextMeeting',this.value)">${r.nextMeeting||''}</textarea>
+            <textarea class="cr-textarea" style="min-height:60px" placeholder="Date et sujets prévus…" oninput="debouncesCR('${r.id}','nextMeeting',this.value)">${r.nextMeeting||''}</textarea>
           </div>
           <div class="cr-block">
             <div class="cr-block-title">📝 Notes libres</div>
-            <textarea class="cr-textarea" style="min-height:60px" placeholder="Observations, divers…" onchange="saveCR('${r.id}','decisions',this.value)">${r.decisions||''}</textarea>
+            <textarea class="cr-textarea" style="min-height:60px" placeholder="Observations, divers…" oninput="debouncesCR('${r.id}','decisions',this.value)">${r.decisions||''}</textarea>
           </div>
         </div>
       </div>
     </div>`;
   }).join('');
+}
+
+// Debounce pour sauvegardes automatiques
+const _debounceTimers = {};
+function debounceSaveNote(rid, index, field, value) {
+  const key = rid + '_note_' + index + '_' + field;
+  clearTimeout(_debounceTimers[key]);
+  _debounceTimers[key] = setTimeout(() => saveAgendaNote(rid, index, field, value), 800);
+}
+function debouncesCR(rid, field, value) {
+  const key = rid + '_cr_' + field;
+  clearTimeout(_debounceTimers[key]);
+  _debounceTimers[key] = setTimeout(() => saveCR(rid, field, value), 800);
 }
 
 async function saveAgendaNote(rid, index, field, value) {
@@ -785,16 +765,24 @@ async function saveAgendaNote(rid, index, field, value) {
   if (!notes[key]) notes[key] = {};
   notes[key][field] = value;
   r.agendaNotes = JSON.stringify(notes);
-  try { await api('saveCR', { id: rid, field: 'agendaNotes', value: r.agendaNotes }); }
-  catch(e) { showError(e.message); }
+  // Sauvegarde complète de la réunion (plus fiable que updateCR)
+  try {
+    await api('saveReunion', { data: r });
+    // Feedback visuel discret
+    const indicator = document.getElementById('save-indicator');
+    if (indicator) { indicator.textContent = '✓ Sauvegardé'; indicator.style.opacity = '1'; setTimeout(() => indicator.style.opacity = '0', 1500); }
+  } catch(e) { showError(e.message); }
 }
 
 async function saveCR(rid, field, value) {
   const r = state.reunions.find(x => x.id === rid);
   if (!r) return;
   r[field] = value;
-  try { await api('saveCR', { id: rid, field, value }); }
-  catch(e) { showError(e.message); }
+  try {
+    await api('saveReunion', { data: r });
+    const indicator = document.getElementById('save-indicator');
+    if (indicator) { indicator.textContent = '✓ Sauvegardé'; indicator.style.opacity = '1'; setTimeout(() => indicator.style.opacity = '0', 1500); }
+  } catch(e) { showError(e.message); }
 }
 function editReunion(id) { openModal('reunion', null, state.reunions.find(r => r.id === id)); }
 async function deleteReunion(id) {
@@ -1105,21 +1093,7 @@ async function deleteTask(id) {
 }
 
 // INIT
-function checkLogin() {
-  const val = document.getElementById('loginInput').value.trim();
-  const err = document.getElementById('loginError');
-  if (val === '1159') {
-    document.getElementById('loginScreen').style.display = 'none';
-    loadData().then(() => renderDashboard());
-  } else {
-    err.textContent = 'Code incorrect. Réessaie.';
-    document.getElementById('loginInput').value = '';
-    document.getElementById('loginInput').focus();
-    setTimeout(() => err.textContent = '', 2000);
-  }
-}
-// Focus automatique sur le champ au chargement
-window.addEventListener('load', () => { document.getElementById('loginInput').focus(); });
+loadData().then(() => renderDashboard());
 // Rafraîchissement auto toutes les 30 secondes
 setInterval(async () => {
   if (state.loading) return;
