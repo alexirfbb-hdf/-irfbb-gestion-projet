@@ -115,7 +115,7 @@ main { padding: 24px; max-width: 1400px; margin: 0 auto; }
 .reunion-month { font-size:13px; color:var(--muted); font-weight:500; }
 .reunion-card-title { font-size:18px; font-weight:700; margin-bottom:4px; }
 .reunion-card-time { font-size:14px; color:var(--muted); }
-.prio-banner { background:#fef3c7; border-bottom:1.5px solid #f59e0b; padding:10px 20px; display:none; }
+.prio-banner { background:#fef3c7; border-top:1.5px solid #f59e0b; border-bottom:1.5px solid #f59e0b; padding:10px 20px; display:none; }
 .prio-banner.on { display:block; }
 .prio-banner-title { font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.5px; color:#d97706; margin-bottom:6px; }
 .prio-chips { display:flex; flex-wrap:wrap; gap:6px; }
@@ -1019,14 +1019,6 @@ function renderReunions() {
       '</div>';
     card.appendChild(hdr);
 
-    // ── Bandeau priorités ───────────────────────────────────
-    const prioBanner = document.createElement('div');
-    prioBanner.className = 'prio-banner' + (starred.size ? ' on' : '');
-    prioBanner.id = 'prio-' + r.id;
-    prioBanner.innerHTML = '<div class="prio-banner-title">\u2B50 Sujets prioritaires du jour</div><div class="prio-chips" id="prio-chips-' + r.id + '">' +
-      Array.from(starred).map(i => { const a = (r.agenda||[])[i]; return a ? '<span class="prio-chip">' + a + '</span>' : ''; }).join('') + '</div>';
-    card.appendChild(prioBanner);
-
     // ── Timer ───────────────────────────────────────────────
     const timerBlock = document.createElement('div');
     timerBlock.className = 'timer-block';
@@ -1069,6 +1061,15 @@ function renderReunions() {
       '</div>';
     card.appendChild(timerBlock);
 
+    // ── Bandeau priorités ───────────────────────────────────
+    const prioBanner = document.createElement('div');
+    prioBanner.className = 'prio-banner' + (starred.size ? ' on' : '');
+    prioBanner.id = 'prio-' + r.id;
+    prioBanner.innerHTML = '<div class="prio-banner-title">\u2B50 Sujets prioritaires du jour</div><div class="prio-chips" id="prio-chips-' + r.id + '">' +
+      Array.from(starred).map(i => { const a = (r.agenda||[])[i]; return a ? '<span class="prio-chip">' + a + '</span>' : ''; }).join('') + '</div>';
+    card.appendChild(prioBanner);
+
+
     // ── Ordre du jour par thématique ───────────────────────
     if ((r.agenda||[]).length) {
       const odj = document.createElement('div');
@@ -1097,68 +1098,7 @@ function renderReunions() {
 
         // Cartes sujets
         items.forEach(({subj, i}) => {
-          const noteKey = 'item_' + i;
-          const noteData = notes[noteKey] || {};
-          const st = noteData.status || 'todo';
-          const isStar = starred.has(i);
-          const actions = noteData.actions || [];
-
-          const sc = document.createElement('div');
-          sc.id = 'sc-' + r.id + '-' + i;
-          sc.className = 'subj-card' + (isStar ? ' priority' : '') + (st==='report' ? ' report-card' : '') + (st==='done' ? ' done-card' : '');
-
-          // Header sujet
-          const sh = document.createElement('div');
-          sh.className = 'subj-hdr';
-          const stLabel = st==='done' ? '\u2705 Trait\u00e9' : st==='report' ? '\uD83D\uDD04 Report\u00e9' : '\u25A1 \u00c0 traiter';
-          const stCls = st==='done' ? 'st-done' : st==='report' ? 'st-report' : 'st-todo';
-          sh.innerHTML =
-            '<button class="star-btn' + (isStar?' on':'') + '" onclick="event.stopPropagation();toggleStarSubject(\'' + r.id + '\',' + i + ')">\u2605</button>' +
-            '<button class="subj-status ' + stCls + '" onclick="event.stopPropagation();cycleSubjectStatus(\'' + r.id + '\',' + i + ')">' + stLabel + '</button>' +
-            '<span class="subj-title' + (st==='done'?' crossed':'') + '">' + subj + '</span>' +
-            '<span class="subj-chevron" id="chev-'+r.id+'-'+i+'">&#x25BC;</span>';
-          sh.addEventListener('click', () => toggleSubjectCard(r.id, i));
-          sc.appendChild(sh);
-
-          // Body sujet
-          const sb = document.createElement('div');
-          sb.className = 'subj-body';
-          sb.id = 'sb-' + r.id + '-' + i;
-
-          // Actions existantes
-          let actionsHtml = '<div class="actions-list" id="al-'+r.id+'-'+i+'">';
-          actions.forEach((ac, ai) => {
-            const m = getMember(ac.assignee);
-            const bg = m && typeof AVATAR_BG !== 'undefined' ? (AVATAR_BG[m.id]||'#94a3b8') : '#94a3b8';
-            const avImg = m && m.avatar ? '<img src="' + m.avatar + '">' : (m ? m.name.substring(0,2) : '?');
-            actionsHtml +=
-              '<div class="action-row">' +
-                '<div class="action-av" style="background:' + bg + '">' + avImg + '</div>' +
-                '<span class="action-txt">' + (m ? '<strong>' + m.name + '</strong> : ' : '') + ac.text + '</span>' +
-                '<button class="action-del" onclick="removeSubjectAction(\'' + r.id + '\',' + i + ',' + ai + ')">\u00d7</button>' +
-              '</div>';
-          });
-          actionsHtml += '</div>';
-          actionsHtml += '<button class="add-action-btn" id="aab-'+r.id+'-'+i+'" onclick="openAddActionForm(\'' + r.id + '\',' + i + ')">+ Ajouter une action</button>';
-          actionsHtml += '<div class="aaf" id="aaf-'+r.id+'-'+i+'" style="display:none">';
-          actionsHtml += '<select id="aaf-sel-'+r.id+'-'+i+'"><option value="">Assigner \u00e0\u2026</option>' + MEMBERS.map(m=>'<option value="'+m.id+'">'+m.name+'</option>').join('') + '</select>';
-          actionsHtml += '<textarea id="aaf-txt-'+r.id+'-'+i+'" placeholder="D\u00e9crivez l\u2019action\u2026"></textarea>';
-          actionsHtml += '<div class="aaf-btns"><button class="aaf-save" onclick="confirmSubjectAction(\'' + r.id + '\',' + i + ')">Enregistrer</button><button class="aaf-cancel" onclick="closeAddActionForm(\'' + r.id + '\',' + i + ')">Annuler</button></div>';
-          actionsHtml += '</div>';
-
-          sb.innerHTML =
-            '<div class="body-grid">' +
-              '<div>' +
-                '<div class="body-lbl">\uD83D\uDCAC Commentaires</div>' +
-                '<textarea class="body-ta" id="com-'+r.id+'-'+i+'" placeholder="Notes, contexte\u2026" oninput="debounceNote(\'' + r.id + '\',' + i + ',\'decision\',this.value)">' + (noteData.decision||'') + '</textarea>' +
-              '</div>' +
-              '<div>' +
-                '<div class="body-lbl">\uD83C\uDFAF Actions \u00e0 mener</div>' +
-                actionsHtml +
-              '</div>' +
-            '</div>';
-          sc.appendChild(sb);
-          odj.appendChild(sc);
+          odj.appendChild(buildSubjectCard(r, i, subj, notes, starred));
         });
       });
       card.appendChild(odj);
@@ -1224,6 +1164,70 @@ function renderReunions() {
       renderChecklists(r.id);
     }, 10);
   });
+}
+
+// ── Construction carte sujet ─────────────────────────────────
+function buildSubjectCard(r, i, subj, notes, starred) {
+  const noteKey = 'item_' + i;
+  const noteData = notes[noteKey] || {};
+  const st = noteData.status || 'todo';
+  const isStar = starred.has(i);
+  const actions = noteData.actions || [];
+
+  const sc = document.createElement('div');
+  sc.id = 'sc-' + r.id + '-' + i;
+  sc.className = 'subj-card' + (isStar ? ' priority' : '') + (st==='report' ? ' report-card' : '') + (st==='done' ? ' done-card' : '');
+
+  const stLabel = st==='done' ? '\u2705 Trait\u00e9' : st==='report' ? '\uD83D\uDD04 Report\u00e9' : '\u25A1 \u00c0 traiter';
+  const stCls = st==='done' ? 'st-done' : st==='report' ? 'st-report' : 'st-todo';
+
+  const sh = document.createElement('div');
+  sh.className = 'subj-hdr';
+  sh.innerHTML =
+    '<button class="star-btn' + (isStar?' on':'') + '" onclick="event.stopPropagation();toggleStarSubject(\'' + r.id + '\',' + i + ')">\u2605</button>' +
+    '<button class="subj-status ' + stCls + '" onclick="event.stopPropagation();cycleSubjectStatus(\'' + r.id + '\',' + i + ')">' + stLabel + '</button>' +
+    '<span class="subj-title' + (st==='done'?' crossed':'') + '">' + subj + '</span>' +
+    '<span class="subj-chevron" id="chev-'+r.id+'-'+i+'">\u25BC</span>';
+  sh.addEventListener('click', () => toggleSubjectCard(r.id, i));
+  sc.appendChild(sh);
+
+  const sb = document.createElement('div');
+  sb.className = 'subj-body';
+  sb.id = 'sb-' + r.id + '-' + i;
+
+  let actionsHtml = '<div class="actions-list" id="al-'+r.id+'-'+i+'">';
+  actions.forEach((ac, ai) => {
+    const m = getMember(ac.assignee);
+    const bg = m && typeof AVATAR_BG !== 'undefined' ? (AVATAR_BG[m.id]||'#94a3b8') : '#94a3b8';
+    const avImg = m && m.avatar ? '<img src="' + m.avatar + '">' : (m ? m.name.substring(0,2) : '?');
+    actionsHtml +=
+      '<div class="action-row">' +
+        '<div class="action-av" style="background:' + bg + '">' + avImg + '</div>' +
+        '<span class="action-txt">' + (m ? '<strong>' + m.name + '</strong> : ' : '') + ac.text + '</span>' +
+        '<button class="action-del" onclick="removeSubjectAction(\'' + r.id + '\',' + i + ',' + ai + ')">\u00d7</button>' +
+      '</div>';
+  });
+  actionsHtml += '</div>';
+  actionsHtml += '<button class="add-action-btn" onclick="openAddActionForm(\'' + r.id + '\',' + i + ')">+ Ajouter une action</button>';
+  actionsHtml += '<div class="aaf" id="aaf-'+r.id+'-'+i+'" style="display:none">';
+  actionsHtml += '<select id="aaf-sel-'+r.id+'-'+i+'"><option value="">Assigner \u00e0\u2026</option>' + MEMBERS.map(m=>'<option value="'+m.id+'">'+m.name+'</option>').join('') + '</select>';
+  actionsHtml += '<textarea id="aaf-txt-'+r.id+'-'+i+'" placeholder="D\u00e9crivez l\u2019action\u2026"></textarea>';
+  actionsHtml += '<div class="aaf-btns"><button class="aaf-save" onclick="confirmSubjectAction(\'' + r.id + '\',' + i + ')">Enregistrer</button><button class="aaf-cancel" onclick="closeAddActionForm(\'' + r.id + '\',' + i + ')">Annuler</button></div>';
+  actionsHtml += '</div>';
+
+  sb.innerHTML =
+    '<div class="body-grid">' +
+      '<div>' +
+        '<div class="body-lbl">\uD83D\uDCAC Commentaires</div>' +
+        '<textarea class="body-ta" id="com-'+r.id+'-'+i+'" placeholder="Notes, contexte\u2026" oninput="debounceNote(\'' + r.id + '\',' + i + ',\'decision\',this.value)">' + (noteData.decision||'') + '</textarea>' +
+      '</div>' +
+      '<div>' +
+        '<div class="body-lbl">\uD83C\uDFAF Actions \u00e0 mener</div>' +
+        actionsHtml +
+      '</div>' +
+    '</div>';
+  sc.appendChild(sb);
+  return sc;
 }
 
 // ── Sujet accordéon ─────────────────────────────────────────
