@@ -184,48 +184,49 @@ main { padding: 24px; max-width: 1400px; margin: 0 auto; }
 .quart-time { font-size: 13px; font-weight: 700; margin: 2px 0; }
 .quart-title { font-size: 11px; opacity: .8; }
 .timer-display { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
-.timer-clock { font-size: 42px; font-weight: 800; font-family: monospace; letter-spacing: 2px; color: white; }
-.timer-clock.warning { color: #f59e0b; animation: pulse .8s ease-in-out infinite; }
-.timer-clock.danger { color: var(--accent); animation: pulse .4s ease-in-out infinite; }
-@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.5} }
+.timer-clock { font-size: 42px; font-weight: 800; font-family: monospace; letter-spacing: 2px; }
+.timer-clock.warning { color: #f59e0b; animation: blink .8s ease-in-out infinite; }
+.timer-clock.danger { color: var(--accent); animation: blink .4s ease-in-out infinite; }
+@keyframes blink { 0%,100%{opacity:1} 50%{opacity:.4} }
 .timer-progress { height: 6px; background: rgba(255,255,255,.15); border-radius: 3px; margin-top: 10px; overflow: hidden; }
 .timer-progress-fill { height: 100%; border-radius: 3px; transition: width .5s, background .3s; }
-.timer-btns { display: flex; gap: 8px; }
-.timer-btn { padding: 8px 16px; border-radius: 8px; border: none; cursor: pointer; font-size: 13px; font-weight: 600; transition: all .15s; }
+.timer-btns { display: flex; gap: 8px; flex-shrink:0; }
+.timer-btn { padding: 8px 16px; border-radius: 8px; border: none; cursor: pointer; font-size: 13px; font-weight: 600; }
 .timer-btn-start { background: #22c55e; color: white; }
-.timer-btn-start:hover { background: #16a34a; }
 .timer-btn-reset { background: rgba(255,255,255,.15); color: white; }
-.timer-btn-reset:hover { background: rgba(255,255,255,.25); }
 .capitaine-block { display: flex; align-items: center; gap: 10px; background: rgba(255,255,255,.08); border-radius: 8px; padding: 8px 12px; margin-top: 10px; }
 .capitaine-label { font-size: 11px; opacity: .6; text-transform: uppercase; letter-spacing: .5px; }
 .capitaine-name { font-size: 14px; font-weight: 700; }
 
 /* ÉTOILE PRIORITAIRE */
-.star-btn { background: none; border: none; cursor: pointer; font-size: 16px; padding: 0 4px; line-height: 1; transition: transform .15s; flex-shrink: 0; }
+.star-btn { background: none; border: none; cursor: pointer; font-size: 18px; padding: 0 2px; line-height: 1; transition: transform .15s; flex-shrink: 0; }
 .star-btn:hover { transform: scale(1.2); }
 .star-btn.starred { color: #f59e0b; }
-.star-btn.unstarred { color: #cbd5e1; }
-.priority-row { background: #fffbeb !important; }
+.star-btn.unstarred { color: #e2e8f0; }
+.priority-row td { background: #fffbeb; }
 .priority-badge-star { font-size: 10px; background: #fef3c7; color: #d97706; padding: 1px 6px; border-radius: 8px; font-weight: 600; margin-left: 6px; }
 
 /* EXPORT CR */
-.cr-export-btn { width: 100%; padding: 10px; background: #1a202c; color: white; border: none; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; margin-top: 12px; transition: background .15s; }
-.cr-export-btn:hover { background: #2d3748; }
-.cr-export-modal { background: #f8fafc; border: 1px solid var(--border); border-radius: 10px; padding: 16px; margin-top: 12px; display: none; }
-.cr-export-modal.open { display: block; }
-.cr-export-text { font-family: monospace; font-size: 13px; line-height: 1.8; white-space: pre-wrap; color: var(--text); }
-.cr-copy-btn { margin-top: 10px; padding: 7px 14px; background: var(--accent); color: white; border: none; border-radius: 6px; font-size: 12px; font-weight: 600; cursor: pointer; }
+.cr-export-btn { width:100%;padding:10px;background:#1a202c;color:white;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;margin-top:12px; }
+.cr-export-btn:hover { background:#2d3748; }
+.cr-export-box { display:none;background:#f8fafc;border:1px solid var(--border);border-radius:10px;padding:16px;margin-top:10px; }
+.cr-export-box.open { display:block; }
+.cr-export-text { font-family:monospace;font-size:12px;line-height:1.8;white-space:pre-wrap;color:var(--text); }
+.cr-copy-btn { margin-top:10px;padding:7px 14px;background:var(--accent);color:white;border:none;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer; }
 
 /* MATCH DU MOIS */
-.match-card { background: linear-gradient(135deg,#1a202c,#2d3748); color: white; border-radius: 12px; padding: 20px 24px; margin-bottom: 16px; }
-.match-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
-.match-title { font-size: 20px; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; }
-.match-subtitle { font-size: 12px; opacity: .6; text-transform: uppercase; letter-spacing: .5px; }
-.match-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 16px; }
-.match-block { background: rgba(255,255,255,.08); border-radius: 8px; padding: 12px; }
-.match-block-title { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .5px; opacity: .6; margin-bottom: 6px; }
-.match-block textarea { width: 100%; background: transparent; border: none; color: white; font-size: 13px; font-family: inherit; resize: vertical; min-height: 60px; outline: none; }
-.match-block textarea::placeholder { opacity: .4; }
+.match-card { background:linear-gradient(135deg,#1a202c,#2d3748);color:white;border-radius:12px;padding:20px 24px;margin-bottom:16px; }
+.match-grid { display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:16px; }
+.match-block { background:rgba(255,255,255,.08);border-radius:8px;padding:12px; }
+.match-block-title { font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;opacity:.6;margin-bottom:6px; }
+.match-block textarea { width:100%;background:transparent;border:none;color:white;font-size:13px;font-family:inherit;resize:vertical;min-height:60px;outline:none; }
+.match-block textarea::placeholder { opacity:.4; }
+
+/* ONGLETS REUNION */
+.reunions-tabs { display:flex;gap:8px;margin-bottom:20px;flex-wrap:wrap; }
+.rtab { padding:8px 18px;border-radius:8px;border:1px solid var(--border);background:white;font-size:14px;font-weight:500;cursor:pointer;color:var(--muted);transition:all .15s; }
+.rtab.active { background:var(--accent);color:white;border-color:var(--accent); }
+.archive-badge { background:#f1f5f9;color:var(--muted);font-size:11px;padding:2px 8px;border-radius:10px;margin-left:6px;font-weight:600; }
 
 @media (max-width: 768px) {
   .kanban-board { grid-template-columns: 1fr; }
@@ -301,6 +302,11 @@ main { padding: 24px; max-width: 1400px; margin: 0 auto; }
       <div class="section-title">Réunions</div>
       <button class="btn btn-primary" onclick="openModal('reunion')">+ Nouvelle réunion</button>
     </div>
+    <div class="reunions-tabs">
+      <button class="rtab active" onclick="switchReunionTab('upcoming',this)">📅 À venir</button>
+      <button class="rtab" onclick="switchReunionTab('past',this)">🗂️ Archives <span class="archive-badge" id="archiveCount">0</span></button>
+      <button class="rtab" onclick="switchReunionTab('match',this)">🏟️ Match du mois</button>
+    </div>
     <div id="reunionsList"></div>
   </div>
 </main>
@@ -354,6 +360,7 @@ let state = {
   tasks: [],
   reunions: [],
   planningEvents: [],
+  match: {},
   currentProject: null,
   loading: false,
 };
@@ -732,12 +739,41 @@ async function toggleEventDone(id, checked) {
   catch(e) { /* silencieux */ renderPlanning(); }
 }
 
+let _reunionTab = 'upcoming';
+function switchReunionTab(tab, el) {
+  _reunionTab = tab;
+  document.querySelectorAll('.rtab').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+  if (tab === 'match') renderMatchDuMois();
+  else renderReunions();
+}
+
 function renderReunions() {
   const el = document.getElementById('reunionsList');
-  if (!state.reunions.length) { el.innerHTML = '<div class="empty-state"><div class="empty-icon">📅</div><div class="empty-text">Aucune réunion planifiée</div></div>'; return; }
-  const sorted = [...state.reunions].sort((a,b) => new Date(b.date)-new Date(a.date));
-  el.innerHTML = sorted.map(r => {
+  const now = new Date(); now.setHours(0,0,0,0);
+  const upcoming = state.reunions.filter(r => r.date && new Date(r.date) >= now).sort((a,b) => new Date(a.date)-new Date(b.date));
+  const past     = state.reunions.filter(r => !r.date || new Date(r.date) < now).sort((a,b) => new Date(b.date)-new Date(a.date));
+  const badge = document.getElementById('archiveCount');
+  if (badge) badge.textContent = past.length;
+  const list = _reunionTab === 'past' ? past : upcoming;
+  if (!list.length) {
+    el.innerHTML = '<div class="empty-state"><div class="empty-icon">📅</div><div class="empty-text">' + (_reunionTab==='past' ? 'Aucune réunion archivée' : 'Aucune réunion à venir') + '</div></div>';
+    return;
+  }
+  const QUARTS = [
+    {q:'Q1',range:"0-5'",title:'Tour de table'},
+    {q:'Q2',range:"5-15'",title:'Action principale'},
+    {q:'Q3',range:"15-25'",title:'Décisions & rôles'},
+    {q:'Q4',range:"25-30'",title:'Coup de sirène'},
+  ];
+  el.innerHTML = list.map(r => {
     const dt = new Date(r.date);
+    const isPast = dt < now;
+    let notes = {};
+    try { notes = r.agendaNotes ? JSON.parse(r.agendaNotes) : {}; } catch(e) { notes = {}; }
+    const starredIdx = notes._starred !== undefined ? notes._starred : -1;
+    const capId = notes._capitaine || '';
+    const capMember = getMember(capId);
     return `
     <div class="reunion-card">
       <div class="reunion-card-header">
@@ -746,7 +782,7 @@ function renderReunions() {
           <div class="reunion-month">${dt.toLocaleDateString('fr-FR',{month:'long'})} ${dt.getFullYear()}</div>
         </div>
         <div style="flex:1;margin-left:20px">
-          <div class="reunion-card-title">${r.title}</div>
+          <div class="reunion-card-title">${r.title}${isPast?' <span style="font-size:12px;background:#f1f5f9;color:var(--muted);padding:2px 8px;border-radius:8px;font-weight:500">Archivée</span>':''}</div>
           <div class="reunion-card-time">🕐 ${r.time||'—'} ${r.location?'· 📍 '+r.location:''}</div>
         </div>
         <div style="display:flex;gap:8px;flex-shrink:0">
@@ -754,26 +790,54 @@ function renderReunions() {
           <button class="btn btn-sm btn-outline" style="color:var(--accent)" onclick="deleteReunion('${r.id}')">🗑️</button>
         </div>
       </div>
+
+      <div class="timer-block">
+        <div class="timer-quarts">
+          ${QUARTS.map((q,i) => `<div class="quart" id="quart-${r.id}-${i}"><div class="quart-label">${q.q}</div><div class="quart-time">${q.range}</div><div class="quart-title">${q.title}</div></div>`).join('')}
+        </div>
+        <div class="timer-display">
+          <div style="flex:1">
+            <div class="timer-clock" id="timer-clock-${r.id}">30:00</div>
+            <div class="timer-progress"><div class="timer-progress-fill" id="timer-bar-${r.id}" style="width:100%;background:#22c55e"></div></div>
+          </div>
+          <div class="timer-btns">
+            <button class="timer-btn timer-btn-start" id="timer-btn-${r.id}" onclick="toggleTimer('${r.id}')">▶ Démarrer</button>
+            <button class="timer-btn timer-btn-reset" onclick="resetTimer('${r.id}')">↺ Reset</button>
+          </div>
+        </div>
+        <div class="capitaine-block">
+          <div style="flex:1">
+            <div class="capitaine-label">Capitaine de séance</div>
+            <div class="capitaine-name" id="cap-${r.id}">${capMember?capMember.name:'Non désigné'}</div>
+          </div>
+          <select onchange="saveCapitaine('${r.id}',this.value)" style="border:1px solid rgba(255,255,255,.2);background:rgba(255,255,255,.1);color:white;border-radius:6px;padding:4px 8px;font-size:12px;cursor:pointer">
+            <option value="">Désigner…</option>
+            ${MEMBERS.map(m=>`<option value="${m.id}" ${capId===m.id?'selected':''}>${m.name}</option>`).join('')}
+          </select>
+        </div>
+      </div>
+
       ${(r.agenda||[]).length ? `
       <div style="margin-top:16px">
         <div class="agenda-title">Ordre du jour & compte rendu</div>
         <table class="agenda-table">
           <thead><tr>
-            <th style="width:32px">#</th>
-            <th style="width:30%">Sujet</th>
+            <th style="width:28px"></th>
+            <th style="width:28px">#</th>
+            <th style="width:28%">Sujet</th>
             <th>✅ Décision prise</th>
             <th>🎯 Action à mener</th>
           </tr></thead>
           <tbody>
             ${(r.agenda||[]).map((a,i) => {
-              let notes = {};
-              try { notes = r.agendaNotes ? JSON.parse(r.agendaNotes) : {}; } catch(e) { notes = {}; }
-              const key = 'item_'+i;
-              const dec = (notes[key]&&notes[key].decision)||'';
-              const act = (notes[key]&&notes[key].action)||'';
-              return `<tr>
-                <td><div class="agenda-num">${i+1}</div></td>
-                <td><div class="agenda-subject">${a}</div></td>
+              const key='item_'+i;
+              const dec=(notes[key]&&notes[key].decision)||'';
+              const act=(notes[key]&&notes[key].action)||'';
+              const isStar = starredIdx===i;
+              return `<tr class="${isStar?'priority-row':''}">
+                <td><button class="star-btn ${isStar?'starred':'unstarred'}" onclick="toggleStar('${r.id}',${i})" title="Marquer prioritaire">★</button></td>
+                <td><div class="agenda-num" style="${isStar?'background:#f59e0b':''}">${i+1}</div></td>
+                <td><div class="agenda-subject">${a}${isStar?'<span class="priority-badge-star">⭐ Prioritaire</span>':''}</div></td>
                 <td><textarea class="agenda-table textarea" placeholder="Décision…" oninput="debounceSaveNote('${r.id}',${i},'decision',this.value)">${dec}</textarea></td>
                 <td><textarea class="agenda-table textarea" placeholder="Action, responsable…" oninput="debounceSaveNote('${r.id}',${i},'action',this.value)">${act}</textarea></td>
               </tr>`;
@@ -781,6 +845,7 @@ function renderReunions() {
           </tbody>
         </table>
       </div>` : ''}
+
       <div class="cr-section">
         <div class="cr-label">Notes générales</div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
@@ -792,6 +857,11 @@ function renderReunions() {
             <div class="cr-block-title">📝 Notes libres</div>
             <textarea class="cr-textarea" style="min-height:60px" placeholder="Observations, divers…" oninput="debouncesCR('${r.id}','decisions',this.value)">${r.decisions||''}</textarea>
           </div>
+        </div>
+        <button class="cr-export-btn" onclick="toggleCRExport('${r.id}')">📤 Générer compte rendu en 5 lignes</button>
+        <div class="cr-export-box" id="cr-box-${r.id}">
+          <div class="cr-export-text" id="cr-txt-${r.id}"></div>
+          <button class="cr-copy-btn" onclick="copyCR('${r.id}')">📋 Copier</button>
         </div>
       </div>
     </div>`;
@@ -854,179 +924,143 @@ async function deleteReunion(id) {
 
 // ── TIMER ────────────────────────────────────────────────────
 const _timers = {};
-const TOTAL_SECS = 30 * 60;
-const QUART_BOUNDS = [0, 5*60, 15*60, 25*60, 30*60];
+const TOTAL = 1800;
+const Q_BOUNDS = [0, 300, 900, 1500, 1800];
 
 function toggleTimer(rid) {
-  if (_timers[rid] && _timers[rid].running) {
-    pauseTimer(rid);
-  } else {
-    startTimer(rid);
-  }
+  if (_timers[rid]?.running) pauseTimer(rid); else startTimer(rid);
 }
 function startTimer(rid) {
-  if (!_timers[rid]) _timers[rid] = { elapsed: 0, running: false };
+  if (!_timers[rid]) _timers[rid] = { elapsed:0, running:false };
   _timers[rid].running = true;
-  document.getElementById('timer-startbtn-'+rid).textContent = '⏸ Pause';
-  _timers[rid].interval = setInterval(() => {
-    _timers[rid].elapsed++;
+  const btn = document.getElementById('timer-btn-'+rid);
+  if (btn) btn.textContent = '⏸ Pause';
+  _timers[rid].iv = setInterval(() => {
+    _timers[rid].elapsed = Math.min(_timers[rid].elapsed + 1, TOTAL);
     updateTimerDisplay(rid);
-    if (_timers[rid].elapsed >= TOTAL_SECS) {
-      clearInterval(_timers[rid].interval);
-      _timers[rid].running = false;
-      document.getElementById('timer-startbtn-'+rid).textContent = '▶ Démarrer';
-    }
+    if (_timers[rid].elapsed >= TOTAL) { clearInterval(_timers[rid].iv); _timers[rid].running = false; if (btn) btn.textContent = '▶ Démarrer'; }
   }, 1000);
 }
 function pauseTimer(rid) {
-  if (_timers[rid]) clearInterval(_timers[rid].interval);
+  clearInterval(_timers[rid]?.iv);
   if (_timers[rid]) _timers[rid].running = false;
-  const btn = document.getElementById('timer-startbtn-'+rid);
+  const btn = document.getElementById('timer-btn-'+rid);
   if (btn) btn.textContent = '▶ Reprendre';
 }
 function resetTimer(rid) {
-  if (_timers[rid]) clearInterval(_timers[rid].interval);
-  _timers[rid] = { elapsed: 0, running: false };
+  clearInterval(_timers[rid]?.iv);
+  _timers[rid] = { elapsed:0, running:false };
   updateTimerDisplay(rid);
-  const btn = document.getElementById('timer-startbtn-'+rid);
+  const btn = document.getElementById('timer-btn-'+rid);
   if (btn) btn.textContent = '▶ Démarrer';
 }
 function updateTimerDisplay(rid) {
-  const t = _timers[rid] || { elapsed: 0 };
-  const remaining = Math.max(0, TOTAL_SECS - t.elapsed);
-  const mins = Math.floor(remaining / 60);
-  const secs = remaining % 60;
-  const display = String(mins).padStart(2,'0') + ':' + String(secs).padStart(2,'0');
+  const elapsed = _timers[rid]?.elapsed || 0;
+  const rem = TOTAL - elapsed;
   const clock = document.getElementById('timer-clock-'+rid);
   const bar   = document.getElementById('timer-bar-'+rid);
   if (!clock) return;
-  clock.textContent = display;
-  const pct = ((TOTAL_SECS - remaining) / TOTAL_SECS) * 100;
-  const barColor = remaining > 10*60 ? '#22c55e' : remaining > 5*60 ? '#f59e0b' : '#ef4444';
-  if (bar) { bar.style.width = (100 - pct) + '%'; bar.style.background = barColor; }
-  clock.className = 'timer-clock' + (remaining <= 5*60 ? ' danger' : remaining <= 10*60 ? ' warning' : '');
-  // Quarts actifs
-  for (let i = 0; i < 4; i++) {
+  clock.textContent = String(Math.floor(rem/60)).padStart(2,'0') + ':' + String(rem%60).padStart(2,'0');
+  clock.className = 'timer-clock' + (rem<=300?' danger':rem<=600?' warning':'');
+  const pct = ((TOTAL-rem)/TOTAL)*100;
+  const col  = rem>600?'#22c55e':rem>300?'#f59e0b':'#ef4444';
+  if (bar) { bar.style.width=(100-pct)+'%'; bar.style.background=col; }
+  for (let i=0;i<4;i++) {
     const q = document.getElementById('quart-'+rid+'-'+i);
     if (!q) continue;
-    const qStart = QUART_BOUNDS[i], qEnd = QUART_BOUNDS[i+1];
-    if (t.elapsed >= qStart && t.elapsed < qEnd) q.className = 'quart active';
-    else if (t.elapsed >= qEnd) q.className = 'quart done';
-    else q.className = 'quart';
+    if (elapsed>=Q_BOUNDS[i]&&elapsed<Q_BOUNDS[i+1]) q.className='quart active';
+    else if (elapsed>=Q_BOUNDS[i+1]) q.className='quart done';
+    else q.className='quart';
   }
 }
 
 // ── CAPITAINE ────────────────────────────────────────────────
 async function saveCapitaine(rid, memberId) {
-  const r = state.reunions.find(x => x.id === rid);
+  const r = state.reunions.find(x=>x.id===rid);
   if (!r) return;
-  let notes = {};
-  try { notes = r.agendaNotes ? JSON.parse(r.agendaNotes) : {}; } catch(e) { notes = {}; }
+  let notes={};
+  try { notes=r.agendaNotes?JSON.parse(r.agendaNotes):{}; } catch(e){}
   notes._capitaine = memberId;
   r.agendaNotes = JSON.stringify(notes);
-  const el = document.getElementById('cap-name-'+rid);
+  const el = document.getElementById('cap-'+rid);
   const m = getMember(memberId);
-  if (el) el.textContent = m ? m.name : 'Non désigné';
-  try { await api('saveReunion', { data: r }); }
-  catch(e) { showError(e.message); }
+  if (el) el.textContent = m?m.name:'Non désigné';
+  try { await api('saveReunion',{data:r}); } catch(e){ showError(e.message); }
 }
 
-// ── ÉTOILE PRIORITAIRE ───────────────────────────────────────
-async function toggleStar(rid, index) {
-  const r = state.reunions.find(x => x.id === rid);
+// ── ÉTOILE ───────────────────────────────────────────────────
+async function toggleStar(rid, idx) {
+  const r = state.reunions.find(x=>x.id===rid);
   if (!r) return;
-  let notes = {};
-  try { notes = r.agendaNotes ? JSON.parse(r.agendaNotes) : {}; } catch(e) { notes = {}; }
-  notes._starred = (notes._starred === index) ? -1 : index;
+  let notes={};
+  try { notes=r.agendaNotes?JSON.parse(r.agendaNotes):{}; } catch(e){}
+  notes._starred = (notes._starred===idx) ? -1 : idx;
   r.agendaNotes = JSON.stringify(notes);
-  try { await api('saveReunion', { data: r }); renderReunions(); }
-  catch(e) { showError(e.message); }
+  try { await api('saveReunion',{data:r}); renderReunions(); } catch(e){ showError(e.message); }
 }
 
 // ── EXPORT CR ────────────────────────────────────────────────
 function toggleCRExport(rid) {
-  const modal = document.getElementById('cr-export-'+rid);
-  const textEl = document.getElementById('cr-text-'+rid);
-  if (!modal || !textEl) return;
-  const r = state.reunions.find(x => x.id === rid);
+  const box = document.getElementById('cr-box-'+rid);
+  const txt = document.getElementById('cr-txt-'+rid);
+  if (!box||!txt) return;
+  const r = state.reunions.find(x=>x.id===rid);
   if (!r) return;
-  let notes = {};
-  try { notes = r.agendaNotes ? JSON.parse(r.agendaNotes) : {}; } catch(e) { notes = {}; }
+  let notes={};
+  try { notes=r.agendaNotes?JSON.parse(r.agendaNotes):{}; } catch(e){}
   const dt = new Date(r.date);
-  const dateStr = dt.toLocaleDateString('fr-FR', {weekday:'long',day:'numeric',month:'long',year:'numeric'});
+  const dateStr = dt.toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
   const cap = getMember(notes._capitaine);
-  // Collecte décisions et actions
-  const decisions = [], actions = [];
-  (r.agenda||[]).forEach((a, i) => {
-    const key = 'item_'+i;
-    const starred = notes._starred === i ? '⭐ ' : '';
-    if (notes[key]?.decision) decisions.push('• ' + starred + a + ' → ' + notes[key].decision);
-    if (notes[key]?.action)   actions.push('• ' + starred + a + ' : ' + notes[key].action);
+  const decisions=[], actions=[];
+  (r.agenda||[]).forEach((a,i)=>{
+    const key='item_'+i;
+    const star = notes._starred===i ? '⭐ ' : '';
+    if (notes[key]?.decision) decisions.push('• '+star+a+' → '+notes[key].decision);
+    if (notes[key]?.action)   actions.push('• '+star+a+' : '+notes[key].action);
   });
-  const cr = [
-    '📋 COMPTE RENDU — ' + r.title.toUpperCase(),
-    '📅 ' + dateStr + (cap ? '  |  👤 Capitaine : ' + cap.name : ''),
+  const lines = [
+    '📋 COMPTE RENDU — '+r.title.toUpperCase(),
+    '📅 '+dateStr+(cap?' | 👤 Capitaine : '+cap.name:''),
     '',
-    decisions.length ? '\u2705 D\u00c9CISIONS\n' + decisions.join('\n') : '\u2705 Aucune d\u00e9cision formalis\u00e9e',
+    decisions.length ? '\u2705 D\u00c9CISIONS\n'+decisions.join('\n') : '✅ Aucune décision formalisée',
     '',
-    actions.length ? '\uD83C\uDFAF ACTIONS\n' + actions.join('\n') : '\uD83C\uDFAF Aucune action formalis\u00e9e',
+    actions.length ? '\uD83C\uDFAF ACTIONS\n'+actions.join('\n') : '🎯 Aucune action',
     '',
-    r.nextMeeting ? '\uD83D\uDCC5 PROCHAINE R\u00c9UNION\n' + r.nextMeeting : '',
-  ].filter(x => x !== undefined).join('\n');
-  textEl.textContent = cr;
-  modal.classList.toggle('open');
+    r.nextMeeting ? '\uD83D\uDCC5 PROCHAINE R\u00c9UNION\n'+r.nextMeeting : '',
+  ].filter(x=>x!==undefined).join('\n');
+  txt.textContent = lines;
+  box.classList.toggle('open');
 }
 function copyCR(rid) {
-  const el = document.getElementById('cr-text-'+rid);
+  const el = document.getElementById('cr-txt-'+rid);
   if (!el) return;
-  navigator.clipboard.writeText(el.textContent).then(() => {
+  navigator.clipboard.writeText(el.textContent).then(()=>{
     const btn = el.nextElementSibling;
-    if (btn) { btn.textContent = '✓ Copié !'; setTimeout(() => btn.textContent = '📋 Copier', 2000); }
+    if (btn){ btn.textContent='✓ Copié !'; setTimeout(()=>btn.textContent='📋 Copier',2000); }
   });
 }
 
 // ── MATCH DU MOIS ────────────────────────────────────────────
 function renderMatchDuMois() {
   const el = document.getElementById('reunionsList');
-  const match = state.match || { axe:'', binome:'', livrable:'', plan:'' };
-  el.innerHTML = `
-    <div class="match-card">
-      <div class="match-header">
-        <div>
-          <div class="match-subtitle">03 — une fois par mois</div>
-          <div class="match-title">🏟️ Le Match à enjeu</div>
-        </div>
-        <div style="font-size:12px;opacity:.6;text-align:right">1h30 – 2h · format atelier<br>Un livrable concret à la sortie</div>
-      </div>
-      <div style="font-size:13px;opacity:.8;margin-bottom:16px">Un seul axe stratégique traité en profondeur — pas une réunion descendante, un vrai temps de travail collectif.</div>
-      <div class="match-grid">
-        <div class="match-block">
-          <div class="match-block-title">🎯 Axe stratégique du mois</div>
-          <textarea placeholder="Ex: Stratégie d'ouverture BP Calais…" oninput="saveMatch('axe',this.value)">${match.axe||''}</textarea>
-        </div>
-        <div class="match-block">
-          <div class="match-block-title">👥 Binôme préparateur</div>
-          <textarea placeholder="Qui prépare et envoie la matière avant…" oninput="saveMatch('binome',this.value)">${match.binome||''}</textarea>
-        </div>
-        <div class="match-block">
-          <div class="match-block-title">📦 Livrable attendu</div>
-          <textarea placeholder="Décision / Plan d'action / Outil…" oninput="saveMatch('livrable',this.value)">${match.livrable||''}</textarea>
-        </div>
-        <div class="match-block">
-          <div class="match-block-title">📋 Plan d'action sorti</div>
-          <textarea placeholder="Ce qu'on repart avec…" oninput="saveMatch('plan',this.value)">${match.plan||''}</textarea>
-        </div>
-      </div>
-    </div>`;
+  const m = state.match||{};
+  el.innerHTML = `<div class="match-card">
+    <div style="margin-bottom:8px"><div style="font-size:11px;opacity:.6;text-transform:uppercase;letter-spacing:.5px">03 — une fois par mois</div>
+    <div style="font-size:22px;font-weight:800;text-transform:uppercase;letter-spacing:1px">🏟️ Le Match à enjeu</div>
+    <div style="font-size:13px;opacity:.75;margin-top:6px">Un seul axe stratégique traité en profondeur — format atelier, un livrable concret à la sortie.</div></div>
+    <div class="match-grid">
+      <div class="match-block"><div class="match-block-title">🎯 Axe stratégique du mois</div><textarea placeholder="Ex: Stratégie BP Calais…" oninput="saveMatch('axe',this.value)">${m.axe||''}</textarea></div>
+      <div class="match-block"><div class="match-block-title">👥 Binôme préparateur</div><textarea placeholder="Qui prépare et envoie avant…" oninput="saveMatch('binome',this.value)">${m.binome||''}</textarea></div>
+      <div class="match-block"><div class="match-block-title">📦 Livrable attendu</div><textarea placeholder="Décision / Plan d'action / Outil…" oninput="saveMatch('livrable',this.value)">${m.livrable||''}</textarea></div>
+      <div class="match-block"><div class="match-block-title">📋 Plan d'action sorti</div><textarea placeholder="Ce qu'on repart avec…" oninput="saveMatch('plan',this.value)">${m.plan||''}</textarea></div>
+    </div>
+  </div>`;
 }
-
 function saveMatch(field, value) {
-  if (!state.match) state.match = {};
-  state.match[field] = value;
-  // Sauvegarde locale pour l'instant
-  localStorage.setItem('hdf_match', JSON.stringify(state.match));
+  if (!state.match) state.match={};
+  state.match[field]=value;
+  try { localStorage.setItem('hdf_match',JSON.stringify(state.match)); } catch(e){}
 }
-
 
 // MODAL
 let _modalMode = null, _editId = null;
@@ -1325,8 +1359,7 @@ async function deleteTask(id) {
 }
 
 // INIT
-// Charger match du mois
-try { state.match = JSON.parse(localStorage.getItem('hdf_match') || '{}'); } catch(e) { state.match = {}; }
+try { state.match = JSON.parse(localStorage.getItem('hdf_match')||'{}'); } catch(e){ state.match={}; }
 loadData().then(() => renderDashboard());
 // Rafraîchissement auto toutes les 30 secondes
 setInterval(async () => {
@@ -1335,7 +1368,7 @@ setInterval(async () => {
   const v = document.querySelector('.view.active');
   if (v?.id === 'view-dashboard') renderDashboard();
   else if (v?.id === 'view-kanban' && state.currentProject) renderKanban(state.currentProject);
-  else if (v?.id === 'view-reunions') renderReunions();
+  else if (v?.id === 'view-reunions') { if (_reunionTab==='match') renderMatchDuMois(); else renderReunions(); }
 }, 30000);
 </script>
 </body>
