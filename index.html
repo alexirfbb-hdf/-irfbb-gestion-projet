@@ -270,6 +270,13 @@ main { padding: 24px; max-width: 1400px; margin: 0 auto; }
 /* ACTIONS REPORTÉES */
 .reported-badge { font-size:10px; background:#fef3c7; color:#d97706; border:1px solid #f59e0b; padding:2px 6px; border-radius:6px; font-weight:600; margin-left:6px; }
 
+
+/* STATUTS SUJETS */
+.status-pill { border:none; border-radius:20px; padding:3px 10px; font-size:11px; font-weight:700; cursor:pointer; transition:all .15s; white-space:nowrap; }
+.status-todo    { background:#f1f5f9; color:#64748b; }
+.status-done-s  { background:#dcfce7; color:#16a34a; }
+.status-report  { background:#fef3c7; color:#d97706; }
+
 @media (max-width: 768px) {
   .kanban-board { grid-template-columns: 1fr; }
   .form-row { grid-template-columns: 1fr; }
@@ -886,7 +893,8 @@ function renderReunions() {
                 <thead><tr>
                   <th style="width:28px"></th>
                   <th style="width:28px">#</th>
-                  <th style="width:30%">Sujet</th>
+                  <th style="width:80px">Statut</th>
+                  <th style="width:26%">Sujet</th>
                   <th>✅ Décision prise</th>
                   <th>🎯 Action à mener</th>
                 </tr></thead>
@@ -896,10 +904,14 @@ function renderReunions() {
                     const dec=(notes[key]&&notes[key].decision)||'';
                     const act=(notes[key]&&notes[key].action)||'';
                     const isStar = starredIdx===i;
-                    return '<tr class="'+(isStar?'priority-row':'')+'">'+
+                    const st=(notes[key]&&notes[key].status)||'todo';
+                    const stLabel=st==='done'?'✅ Traité':st==='report'?'🔄 Reporté':'⬜ À traiter';
+                    const stCls=st==='done'?'status-done-s':st==='report'?'status-report':'status-todo';
+                    return '<tr class="'+(isStar||st==='report'?'priority-row':'')+'">'+
                       '<td><button class="star-btn '+(isStar?'starred':'unstarred')+'" onclick="toggleStar(\''+r.id+'\','+i+')" title="Marquer prioritaire">★</button></td>'+
-                      '<td><div class="agenda-num" style="'+(isStar?'background:#f59e0b':'')+'">'+(i+1)+'</div></td>'+
-                      '<td><div class="agenda-subject">'+a+(isStar?'<span class="priority-badge-star">⭐ Prioritaire</span>':'')+'</div></td>'+
+                      '<td><div class="agenda-num" style="'+(isStar?'background:#f59e0b':st==='report'?'background:#d97706':'')+'">'+(i+1)+'</div></td>'+
+                      '<td><button class="status-pill '+stCls+'" onclick="cycleStatus(\''+r.id+'\','+i+')">'+stLabel+'</button></td>'+
+                      '<td><div class="agenda-subject" style="'+(st==='done'?'opacity:.5;text-decoration:line-through':st==='report'?'color:#d97706':'')+'">'+a+(isStar?'<span class="priority-badge-star">⭐ Prioritaire</span>':'')+(st==='report'?'<span class="reported-badge">🔄 Reporté</span>':'')+'</div></td>'+
                       '<td><textarea class="agenda-table textarea" placeholder="Décision…" oninput="debounceSaveNote(\''+r.id+'\','+i+',\'decision\',this.value)">'+dec+'</textarea></td>'+
                       '<td><textarea class="agenda-table textarea" placeholder="Action, responsable…" oninput="debounceSaveNote(\''+r.id+'\','+i+',\'action\',this.value)">'+act+'</textarea></td>'+
                     '</tr>';
@@ -939,10 +951,11 @@ function renderReunions() {
           try { prevNotes = prev.agendaNotes ? JSON.parse(prev.agendaNotes) : {}; } catch(e){}
           const reported = (prev.agenda||[]).filter((_,i)=>{
             const key='item_'+i;
-            return prevNotes[key]?.action && !prevNotes[key]?.actionDone;
+            return prevNotes[key]?.status === 'report';
           }).map((_,i)=>{
             const key='item_'+i;
-            return '• '+prev.agenda[i]+' : '+prevNotes[key].action;
+            const act = prevNotes[key]?.action ? ' : '+prevNotes[key].action : '';
+            return '• '+prev.agenda[i]+act;
           });
           if (!reported.length) return '';
           return '<div style="margin-top:12px;background:#fffbeb;border:1px solid #f59e0b;border-radius:10px;padding:12px 14px">'
@@ -1084,6 +1097,20 @@ function updateTimerDisplay(rid) {
     else if (elapsed>=Q_BOUNDS[i+1]) q.className='quart done';
     else q.className='quart';
   }
+}
+
+// ── STATUT SUJET ─────────────────────────────────────────────
+async function cycleStatus(rid, idx) {
+  const r = state.reunions.find(x=>x.id===rid);
+  if (!r) return;
+  let notes={};
+  try { notes=r.agendaNotes?JSON.parse(r.agendaNotes):{}; } catch(e){}
+  const key='item_'+idx;
+  if (!notes[key]) notes[key]={};
+  const cur = notes[key].status||'todo';
+  notes[key].status = cur==='todo'?'done':cur==='done'?'report':'todo';
+  r.agendaNotes = JSON.stringify(notes);
+  try { await api('saveReunion',{data:r}); renderReunions(); } catch(e){ showError(e.message); }
 }
 
 // ── CAPITAINE ────────────────────────────────────────────────
