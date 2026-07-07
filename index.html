@@ -1272,7 +1272,15 @@ function initAgendaBuilder(items) {
   renderAgendaBuilder(_agendaItems);
 }
 
+// Sauvegarde les valeurs actuelles des inputs avant re-rendu
+function syncAgendaInputs() {
+  document.querySelectorAll('.agenda-item-text').forEach((input, i) => {
+    if (_agendaItems[i]) _agendaItems[i].txt = input.value;
+  });
+}
+
 function changeAgendaTheme(idx, themeId) {
+  syncAgendaInputs();
   if (_agendaItems[idx]) {
     _agendaItems[idx].theme = themeId;
     renderAgendaBuilder(_agendaItems);
@@ -1280,20 +1288,17 @@ function changeAgendaTheme(idx, themeId) {
 }
 
 function addAgendaItem(themeId) {
+  syncAgendaInputs();
   _agendaItems.push({ txt: '', theme: themeId });
   renderAgendaBuilder(_agendaItems);
-  // Focus sur le dernier input
   setTimeout(() => {
     const inputs = document.querySelectorAll('.agenda-item-text');
     if (inputs.length) inputs[inputs.length-1].focus();
   }, 50);
 }
 
-function updateAgendaItem(idx, val) {
-  if (_agendaItems[idx]) _agendaItems[idx].txt = val;
-}
-
 function removeAgendaItem(idx) {
+  syncAgendaInputs();
   _agendaItems.splice(idx, 1);
   renderAgendaBuilder(_agendaItems);
 }
@@ -1439,6 +1444,7 @@ async function saveReunion() {
   const title = document.getElementById('f-rtitle').value.trim();
   if (!title) { alert('Le titre est requis.'); return; }
   // Lire depuis le builder
+  syncAgendaInputs();
   const validItems = _agendaItems.filter(x => x.txt.trim());
   const agenda = validItems.map(x => x.txt.trim());
   const agendaThemesObj = {};
