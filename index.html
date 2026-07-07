@@ -870,7 +870,7 @@ function renderReunions() {
         <div class="timer-display">
           <div style="flex:1">
             <div class="timer-clock" id="timer-clock-${r.id}">30:00</div>
-            <div class="timer-progress"><div class="timer-progress-fill" id="timer-bar-${r.id}" style="width:100%;background:#22c55e"></div></div>
+            <div id="time-budget-${r.id}" style="margin-top:4px"></div>
           </div>
           <div class="timer-btns">
             <button class="timer-btn timer-btn-start" id="timer-btn-${r.id}" onclick="toggleTimer('${r.id}')">▶ Démarrer</button>
@@ -915,7 +915,7 @@ function renderReunions() {
                   <th style="width:28px"></th>
                   <th style="width:90px">Statut</th>
                   <th style="width:26%">Sujet</th>
-                  <th>✅ Décision prise</th>
+                  <th>💬 Commentaires</th>
                   <th>🎯 Action à mener</th>
                 </tr></thead>
                 <tbody>
@@ -933,13 +933,9 @@ function renderReunions() {
                       '<td><button class="status-pill '+stCls+'" onclick="cycleStatus(\''+r.id+'\','+i+')">'+stLabel+'</button></td>'+
                       '<td><div class="agenda-subject" style="'+(st==='done'?'opacity:.5;text-decoration:line-through':st==='report'?'color:#d97706':'')+'">'+a+(isStar?'<span class="priority-badge-star">⭐ Prioritaire</span>':'')+(st==='report'?'<span class="reported-badge">🔄 Reporté</span>':'')+'</div></td>'+
                       '<td><textarea class="agenda-table textarea" placeholder="Commentaires…" oninput="debounceSaveNote(\''+r.id+'\','+i+',\'decision\',this.value)">'+dec+'</textarea></td>'+
-                      '<td><div style="display:flex;flex-direction:column;gap:4px">'+
-                        '<select style="border:1px solid var(--border);border-radius:6px;padding:3px 6px;font-size:11px;font-weight:600;cursor:pointer;background:#f8fafc;color:var(--text)" onchange="debounceSaveNote(\''+r.id+'\','+i+',\'assignee\',this.value)">'+
-                          '<option value="">👤 Assigner…</option>'+
-                          MEMBERS.map(m=>'<option value="'+m.id+'"'+(assigneeId===m.id?' selected':'')+'>'+m.name+'</option>').join('')+
-                        '</select>'+
-                        '<textarea class="agenda-table textarea" style="min-height:44px" placeholder="Action…" oninput="debounceSaveNote(\''+r.id+'\','+i+',\'action\',this.value)">'+act+'</textarea>'+
-                      '</div></td>'+
+                      '<td>'+
+                        renderActionCell(r.id, i, notes[key])+
+                      '</td>'+
                     '</tr>';
                   }).join('')}
                 </tbody>
@@ -1107,51 +1103,166 @@ const _timers = {};
 const TOTAL = 1800;
 const Q_BOUNDS = [0, 300, 900, 1500, 1800];
 
+function initTimer(rid) {
+  if (!_timers[rid]) _timers[rid] = { elapsed:0, running:false, currentQ:0, qElapsed:0, qBudget:[300,600,600,300], qSaved:[0,0,0,0] };
+  return _timers[rid];
+}
 function toggleTimer(rid) {
   if (_timers[rid]?.running) pauseTimer(rid); else startTimer(rid);
 }
 function startTimer(rid) {
-  if (!_timers[rid]) _timers[rid] = { elapsed:0, running:false };
-  _timers[rid].running = true;
+  const t = initTimer(rid);
+  t.running = true;
   const btn = document.getElementById('timer-btn-'+rid);
-  if (btn) btn.textContent = '⏸ Pause';
-  _timers[rid].iv = setInterval(() => {
-    _timers[rid].elapsed = Math.min(_timers[rid].elapsed + 1, TOTAL);
+  if (btn) btn.textContent = 'Pause';
+  t.iv = setInterval(() => {
+    t.elapsed = Math.min(t.elapsed+1, TOTAL);
+    t.qElapsed++;
+    if (t.qElapsed >= t.qBudget[t.currentQ] && t.currentQ < 3) { t.currentQ++; t.qElapsed=0; }
     updateTimerDisplay(rid);
-    if (_timers[rid].elapsed >= TOTAL) { clearInterval(_timers[rid].iv); _timers[rid].running = false; if (btn) btn.textContent = '▶ Démarrer'; }
+    if (t.elapsed >= TOTAL) { clearInterval(t.iv); t.running=false; if (btn) btn.textContent='Demarrer'; }
   }, 1000);
 }
 function pauseTimer(rid) {
   clearInterval(_timers[rid]?.iv);
   if (_timers[rid]) _timers[rid].running = false;
   const btn = document.getElementById('timer-btn-'+rid);
-  if (btn) btn.textContent = '▶ Reprendre';
+  if (btn) btn.textContent = 'Reprendre';
 }
 function resetTimer(rid) {
   clearInterval(_timers[rid]?.iv);
-  _timers[rid] = { elapsed:0, running:false };
+  _timers[rid] = { elapsed:0, running:false, currentQ:0, qElapsed:0, qBudget:[300,600,600,300], qSaved:[0,0,0,0] };
   updateTimerDisplay(rid);
   const btn = document.getElementById('timer-btn-'+rid);
-  if (btn) btn.textContent = '▶ Démarrer';
+  if (btn) btn.textContent = 'Demarrer';
+}
+function jumpToQuart(rid, qIdx) {
+  const t = initTimer(rid);
+  if (qIdx <= t.currentQ) return;
+  const saved = t.qBudget[t.currentQ] - t.qElapsed;
+  t.qSaved[t.currentQ] = saved;
+  if (saved > 0) {
+    const rem = 4 - t.currentQ - 1;
+    if (rem > 0) { const bonus = Math.floor(saved/rem); for (let i=t.currentQ+1;i<4;i++) t.qBudget[i]+=bonus; }
+  }
+  t.currentQ = qIdx; t.qElapsed = 0; t.elapsed = Q_BOUNDS[qIdx];
+  updateTimerDisplay(rid);
 }
 function updateTimerDisplay(rid) {
-  const elapsed = _timers[rid]?.elapsed || 0;
-  const rem = TOTAL - elapsed;
+  const t = _timers[rid] || initTimer(rid);
+  const rem = Math.max(0, t.qBudget[t.currentQ] - t.qElapsed);
   const clock = document.getElementById('timer-clock-'+rid);
-  const bar   = document.getElementById('timer-bar-'+rid);
   if (!clock) return;
-  clock.textContent = String(Math.floor(rem/60)).padStart(2,'0') + ':' + String(rem%60).padStart(2,'0');
-  clock.className = 'timer-clock' + (rem<=300?' danger':rem<=600?' warning':'');
-  const pct = ((TOTAL-rem)/TOTAL)*100;
-  const col  = rem>600?'#22c55e':rem>300?'#f59e0b':'#ef4444';
-  if (bar) { bar.style.width=(100-pct)+'%'; bar.style.background=col; }
+  clock.textContent = String(Math.floor(rem/60)).padStart(2,'0')+':'+String(rem%60).padStart(2,'0');
+  clock.className = 'timer-clock'+(rem<=60?' danger':rem<=120?' warning':'');
+  const budget = document.getElementById('time-budget-'+rid);
+  if (budget) {
+    const totalRem = TOTAL - t.elapsed;
+    const col = totalRem>=0?'#22c55e':'#ef4444';
+    const sign = totalRem>=0?'':'-';
+    budget.innerHTML = '<span style="font-size:11px;padding:2px 8px;border-radius:10px;font-weight:600;background:'+(totalRem>=0?'rgba(34,197,94,.2)':'rgba(230,57,70,.2)')+';color:'+col+'">Total restant : '+sign+String(Math.floor(Math.abs(totalRem)/60)).padStart(2,'0')+':'+String(Math.abs(totalRem)%60).padStart(2,'0')+'</span>';
+  }
   for (let i=0;i<4;i++) {
     const q = document.getElementById('quart-'+rid+'-'+i);
+    const qs = document.getElementById('quart-saved-'+rid+'-'+i);
     if (!q) continue;
-    if (elapsed>=Q_BOUNDS[i]&&elapsed<Q_BOUNDS[i+1]) q.className='quart active';
-    else if (elapsed>=Q_BOUNDS[i+1]) q.className='quart done';
-    else q.className='quart';
+    q.className = i===t.currentQ?'quart active':i<t.currentQ?'quart done':'quart inactive';
+    if (qs && t.qSaved[i] && i<t.currentQ) {
+      const s=t.qSaved[i];
+      qs.textContent=(s>0?'+':'')+Math.floor(Math.abs(s)/60)+'m'+Math.abs(s%60)+'s';
+      qs.style.color=s>0?'#22c55e':'#ef4444';
+    } else if (qs) qs.textContent='';
   }
+  const cursor = document.getElementById('tl-cursor-'+rid);
+  if (cursor) cursor.style.left=Math.min(100,(t.elapsed/TOTAL)*100)+'%';
+}
+
+
+// ── ACTIONS MULTI-ASSIGNEES ───────────────────────────────────
+function renderActionCell(rid, idx, noteData) {
+  const actions = noteData && noteData.actions ? noteData.actions : (noteData && noteData.action ? [{assignee:'',text:noteData.action}] : []);
+  let html = '<div style="display:flex;flex-direction:column;gap:4px">';
+  actions.forEach((ac,ai) => {
+    const m = getMember(ac.assignee);
+    const bg = m && typeof AVATAR_BG!=='undefined' ? AVATAR_BG[m.id]||'#94a3b8' : '#94a3b8';
+    html += '<div style="display:flex;gap:4px;align-items:flex-start;background:#f8fafc;border-radius:6px;padding:4px 6px">';
+    html += '<select data-rid="'+rid+'" data-idx="'+idx+'" data-ai="'+ai+'" onchange="handleAssigneeChange(this)" style="border:none;background:transparent;font-size:11px;font-weight:700;cursor:pointer;color:'+bg+';max-width:85px;flex-shrink:0">';
+    html += '<option value="">👤</option>';
+    html += MEMBERS.map(mem=>'<option value="'+mem.id+'"'+(ac.assignee===mem.id?' selected':'')+'>'+mem.name+'</option>').join('');
+    html += '</select>';
+    html += '<span style="flex:1;font-size:12px;padding:2px 4px;min-height:20px;color:var(--text)">'+ac.text+'</span>';
+    html += '<button data-rid="'+rid+'" data-idx="'+idx+'" data-ai="'+ai+'" onclick="handleRemoveAction(this)" style="background:none;border:none;color:#cbd5e1;cursor:pointer;font-size:13px;padding:0 2px;flex-shrink:0">x</button>';
+    html += '</div>';
+  });
+  html += '<button data-rid="'+rid+'" data-idx="'+idx+'" onclick="handleOpenAddAction(this)" style="width:100%;padding:5px;border:1px dashed #e2e8f0;border-radius:6px;background:transparent;color:#94a3b8;font-size:11px;cursor:pointer">+ Ajouter une tâche</button>';
+  html += '</div>';
+  return html;
+}
+
+function openAddAction(rid, idx, btn) {
+  const existing = document.getElementById('add-action-form-'+rid+'-'+idx);
+  if (existing) { existing.remove(); return; }
+  if (!btn) btn = event.target;
+  const form = document.createElement('div');
+  form.id = 'add-action-form-'+rid+'-'+idx;
+  form.style.cssText = 'display:flex;flex-direction:column;gap:4px;margin-top:4px;padding:6px;background:#eff6ff;border-radius:6px;border:1px solid #93c5fd';
+  form.innerHTML = 
+    '<select id="add-action-sel-'+rid+'-'+idx+'" style="border:1px solid #93c5fd;border-radius:4px;padding:3px 6px;font-size:12px;font-weight:600">'+
+      '<option value="">Assigner à…</option>'+
+      MEMBERS.map(m=>'<option value="'+m.id+'">'+m.name+'</option>').join('')+
+    '</select>'+
+    '<textarea id="add-action-txt-'+rid+'-'+idx+'" placeholder="Décrivez la tâche…" style="border:1px solid #93c5fd;border-radius:4px;padding:5px 8px;font-size:12px;font-family:inherit;resize:vertical;min-height:50px"></textarea>'+
+    '<div style="display:flex;gap:4px">'+
+      '<button data-rid="'+rid+'" data-idx="'+idx+'" onclick="handleConfirmAddAction(this)" style="flex:1;padding:5px;background:#3b82f6;color:white;border:none;border-radius:4px;font-size:11px;font-weight:700;cursor:pointer">Enregistrer</button>'+
+      '<button data-rid="'+rid+'" data-idx="'+idx+'" onclick="handleCancelAddAction(this)" style="padding:5px 8px;background:#f1f5f9;border:none;border-radius:4px;font-size:11px;cursor:pointer">Annuler</button>'+
+    '</div>';
+  btn.parentNode.insertBefore(form, btn);
+}
+
+
+function handleConfirmAddAction(el) { confirmAddAction(el.dataset.rid, parseInt(el.dataset.idx)); }
+function handleCancelAddAction(el) {
+  const form = document.getElementById('add-action-form-'+el.dataset.rid+'-'+el.dataset.idx);
+  if (form) form.remove();
+}
+
+async function confirmAddAction(rid, idx) {
+  const sel = document.getElementById('add-action-sel-'+rid+'-'+idx);
+  const txt = document.getElementById('add-action-txt-'+rid+'-'+idx);
+  if (!txt || !txt.value.trim()) return;
+  const r = state.reunions.find(x=>x.id===rid);
+  if (!r) return;
+  let notes={};
+  try { notes=r.agendaNotes?JSON.parse(r.agendaNotes):{}; } catch(e){}
+  const key='item_'+idx;
+  if (!notes[key]) notes[key]={};
+  if (!notes[key].actions) notes[key].actions=[];
+  notes[key].actions.push({assignee:sel?sel.value:'', text:txt.value.trim()});
+  r.agendaNotes=JSON.stringify(notes);
+  try { await api('saveReunion',{data:r}); renderReunions(); } catch(e){ showError(e.message); }
+}
+
+async function removeAction(rid, idx, actionIdx) {
+  const r = state.reunions.find(x=>x.id===rid);
+  if (!r) return;
+  let notes={};
+  try { notes=r.agendaNotes?JSON.parse(r.agendaNotes):{}; } catch(e){}
+  const key='item_'+idx;
+  if (notes[key]&&notes[key].actions) notes[key].actions.splice(actionIdx,1);
+  r.agendaNotes=JSON.stringify(notes);
+  try { await api('saveReunion',{data:r}); renderReunions(); } catch(e){ showError(e.message); }
+}
+
+async function updateActionAssignee(el, rid, idx, actionIdx) {
+  const memberId = el.value;
+  const r = state.reunions.find(x=>x.id===rid);
+  if (!r) return;
+  let notes={};
+  try { notes=r.agendaNotes?JSON.parse(r.agendaNotes):{}; } catch(e){}
+  const key='item_'+idx;
+  if (notes[key]&&notes[key].actions&&notes[key].actions[actionIdx]) { notes[key].actions[actionIdx].assignee=memberId; el.style.color=(typeof AVATAR_BG!=='undefined'?AVATAR_BG[memberId]||'#94a3b8':'#94a3b8'); }
+  r.agendaNotes=JSON.stringify(notes);
+  try { await api('saveReunion',{data:r}); } catch(e){ showError(e.message); }
 }
 
 // ── STATUT SUJET ─────────────────────────────────────────────
@@ -1290,10 +1401,10 @@ function exportMemberActions(rid, memberId) {
   const actions = [];
   (r.agenda||[]).forEach((a,i)=>{
     const key='item_'+i;
-    if (notes[key]&&notes[key].assignee===memberId&&notes[key].action) {
-      const t = themes.find(x=>x.id===(themeMap[i]||''))||{label:'Divers'};
-      actions.push('['+t.label+'] '+a+' : '+notes[key].action);
-    }
+    const t = themes.find(x=>x.id===(themeMap[i]||''))||{label:'Divers'};
+    // Nouveau format multi-actions
+    const acts = notes[key]&&notes[key].actions ? notes[key].actions : (notes[key]&&notes[key].action&&notes[key].assignee===memberId?[{assignee:memberId,text:notes[key].action}]:[]);
+    acts.forEach(ac=>{ if(ac.assignee===memberId&&ac.text) actions.push('['+t.label+'] '+a+' : '+ac.text); });
   });
   if (!actions.length) { alert('Aucune action assignee a '+m.name+'.'); return; }
   const lines = ['TACHES DE '+m.name.toUpperCase()+' - '+dt, 'Reunion : '+r.title, '', ...actions.map(a=>'- '+a)];
