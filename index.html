@@ -242,6 +242,34 @@ main { padding: 24px; max-width: 1400px; margin: 0 auto; }
 .agenda-add-btn { padding: 5px 12px; border-radius: 20px; border: 1.5px dashed var(--border); background: white; font-size: 12px; font-weight: 600; cursor: pointer; transition: all .15s; }
 .agenda-add-btn:hover { background: #f1f5f9; border-style: solid; }
 
+
+/* CR EXPORT AMÉLIORÉ */
+.cr-export-btns { display: flex; gap: 8px; margin-top: 12px; flex-wrap: wrap; }
+.cr-btn-quick { flex:1; padding:10px; background:#1a202c; color:white; border:none; border-radius:8px; font-size:13px; font-weight:600; cursor:pointer; min-width:140px; }
+.cr-btn-quick:hover { background:#2d3748; }
+.cr-btn-paul { flex:1; padding:10px; background:#e63946; color:white; border:none; border-radius:8px; font-size:13px; font-weight:600; cursor:pointer; min-width:140px; }
+.cr-btn-paul:hover { background:#c1121f; }
+.cr-export-box { display:none; margin-top:10px; border-radius:10px; overflow:hidden; border:1px solid var(--border); }
+.cr-export-box.open { display:block; }
+.cr-tabs { display:flex; border-bottom:1px solid var(--border); }
+.cr-tab { flex:1; padding:8px; text-align:center; font-size:12px; font-weight:600; cursor:pointer; background:#f8fafc; color:var(--muted); border:none; }
+.cr-tab.active { background:white; color:var(--text); }
+.cr-tab-content { display:none; padding:14px; }
+.cr-tab-content.active { display:block; }
+.cr-export-text { font-family:monospace; font-size:12px; line-height:1.8; white-space:pre-wrap; color:var(--text); background:#f8fafc; border-radius:6px; padding:10px 12px; }
+.cr-actions-row { display:flex; gap:8px; margin-top:10px; flex-wrap:wrap; }
+.cr-copy-btn { padding:7px 14px; background:var(--accent); color:white; border:none; border-radius:6px; font-size:12px; font-weight:600; cursor:pointer; }
+.cr-mail-btn { padding:7px 14px; background:#2563eb; color:white; border:none; border-radius:6px; font-size:12px; font-weight:600; cursor:pointer; text-decoration:none; display:inline-flex; align-items:center; gap:4px; }
+
+/* CHAMP PAUL */
+.paul-block { background:#fff5f5; border:1.5px solid #fca5a5; border-radius:10px; padding:14px; margin-top:12px; }
+.paul-block-title { font-size:12px; font-weight:700; text-transform:uppercase; letter-spacing:.5px; color:#dc2626; margin-bottom:8px; display:flex; align-items:center; gap:6px; }
+.paul-textarea { width:100%; border:1px solid #fca5a5; border-radius:8px; padding:10px 12px; font-size:13px; font-family:inherit; resize:vertical; min-height:70px; background:white; }
+.paul-textarea:focus { outline:none; border-color:#dc2626; }
+
+/* ACTIONS REPORTÉES */
+.reported-badge { font-size:10px; background:#fef3c7; color:#d97706; border:1px solid #f59e0b; padding:2px 6px; border-radius:6px; font-weight:600; margin-left:6px; }
+
 @media (max-width: 768px) {
   .kanban-board { grid-template-columns: 1fr; }
   .form-row { grid-template-columns: 1fr; }
@@ -896,10 +924,56 @@ function renderReunions() {
             <textarea class="cr-textarea" style="min-height:60px" placeholder="Observations, divers…" oninput="debouncesCR('${r.id}','decisions',this.value)">${r.decisions||''}</textarea>
           </div>
         </div>
-        <button class="cr-export-btn" onclick="toggleCRExport('${r.id}')">📤 Générer compte rendu en 5 lignes</button>
+
+        <!-- CHAMP PAUL -->
+        <div class="paul-block">
+          <div class="paul-block-title">⚡ Sujets à faire valider par Paul</div>
+          <textarea class="paul-textarea" placeholder="Ex: Ouverture session BP Calais → attente accord Paul…" oninput="debouncesCR('${r.id}','paulValidation',this.value)">${r.paulValidation||''}</textarea>
+        </div>
+
+        <!-- ACTIONS REPORTÉES de la réunion précédente -->
+        ${(()=>{
+          const prev = state.reunions.filter(x => x.id !== r.id && x.date && new Date(x.date) < new Date(r.date)).sort((a,b)=>new Date(b.date)-new Date(a.date))[0];
+          if (!prev) return '';
+          let prevNotes={};
+          try { prevNotes = prev.agendaNotes ? JSON.parse(prev.agendaNotes) : {}; } catch(e){}
+          const reported = (prev.agenda||[]).filter((_,i)=>{
+            const key='item_'+i;
+            return prevNotes[key]?.action && !prevNotes[key]?.actionDone;
+          }).map((_,i)=>{
+            const key='item_'+i;
+            return '• '+prev.agenda[i]+' : '+prevNotes[key].action;
+          });
+          if (!reported.length) return '';
+          return '<div style="margin-top:12px;background:#fffbeb;border:1px solid #f59e0b;border-radius:10px;padding:12px 14px">'
+            +'<div style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:#d97706;margin-bottom:8px">🔄 Actions reportées de la réunion précédente</div>'
+            +'<div style="font-size:13px;color:var(--text);line-height:1.8">'+reported.join('<br>')+'</div>'
+            +'</div>';
+        })()}
+
+        <!-- EXPORT CR -->
+        <div class="cr-export-btns">
+          <button class="cr-btn-quick" onclick="toggleCRExport('${r.id}','quick')">📤 CR rapide (WhatsApp/Slack)</button>
+          <button class="cr-btn-paul" onclick="toggleCRExport('${r.id}','paul')">📨 CR pour Paul</button>
+        </div>
         <div class="cr-export-box" id="cr-box-${r.id}">
-          <div class="cr-export-text" id="cr-txt-${r.id}"></div>
-          <button class="cr-copy-btn" onclick="copyCR('${r.id}')">📋 Copier</button>
+          <div class="cr-tabs">
+            <button class="cr-tab active" id="cr-tab-quick-${r.id}" onclick="switchCRTab('${r.id}','quick')">📤 Rapide</button>
+            <button class="cr-tab" id="cr-tab-paul-${r.id}" onclick="switchCRTab('${r.id}','paul')">📨 Pour Paul</button>
+          </div>
+          <div class="cr-tab-content active" id="cr-content-quick-${r.id}">
+            <div class="cr-export-text" id="cr-txt-quick-${r.id}"></div>
+            <div class="cr-actions-row">
+              <button class="cr-copy-btn" onclick="copyCRTab('${r.id}','quick')">📋 Copier</button>
+            </div>
+          </div>
+          <div class="cr-tab-content" id="cr-content-paul-${r.id}">
+            <div class="cr-export-text" id="cr-txt-paul-${r.id}"></div>
+            <div class="cr-actions-row">
+              <button class="cr-copy-btn" onclick="copyCRTab('${r.id}','paul')">📋 Copier</button>
+              <a class="cr-mail-btn" id="cr-mail-${r.id}" href="#">✉️ Ouvrir dans Mail</a>
+            </div>
+          </div>
         </div>
       </div>
     </div>`;
@@ -1461,9 +1535,10 @@ async function saveReunion() {
     agenda,
     agendaThemes: JSON.stringify(agendaThemesObj),
     agendaNotes,
-    decisions:   existing?.decisions   || '',
-    actions:     existing?.actions     || '',
-    nextMeeting: existing?.nextMeeting || '',
+    decisions:      existing?.decisions      || '',
+    actions:        existing?.actions        || '',
+    nextMeeting:    existing?.nextMeeting    || '',
+    paulValidation: existing?.paulValidation || '',
   };
   showLoading(true);
   try {
