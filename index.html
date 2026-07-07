@@ -645,8 +645,8 @@ function switchSubproject(spid, pid) {
 function renderPlanning() {
   const now = new Date(); now.setHours(0,0,0,0);
   const year = now.getFullYear();
-  const DAY_W = 3;
-  const LABEL_W = 200;
+  const DAY_W = 4;
+  const LABEL_W = 280;
   const yearStart = new Date(year, 0, 1);
 
   // Mois
@@ -688,7 +688,7 @@ function renderPlanning() {
   // ── 1. ÉVÉNEMENTS EN HAUT — 2 lignes max avec détection chevauchement ──
   const events = (state.planningEvents || []).sort((a,b) => new Date(a.date)-new Date(b.date));
   if (events.length) {
-    const BAR_MIN_W = 110; // largeur minimale d'un bandeau en px
+    const BAR_MIN_W = 130; // largeur minimale d'un bandeau en px
 
     // Détection chevauchement : on assigne chaque événement à la ligne 0 ou 1
     const evWithPos = events.map(ev => {
@@ -742,7 +742,7 @@ function renderPlanning() {
     ptasks.forEach(t => {
       const dueDate = new Date(t.due);
       const dueDay = Math.floor((dueDate - yearStart) / 86400000);
-      const left = Math.max(0, Math.min(dueDay * DAY_W, trackW - 110));
+      const left = Math.max(0, Math.min(dueDay * DAY_W, trackW - 150));
       const isDone = t.status === 'done';
       const isOv = !isDone && dueDate < now;
       const col = isDone ? '#22c55e' : isOv ? '#ef4444' : p.color;
@@ -754,7 +754,7 @@ function renderPlanning() {
         ${av}${isOv?'⚠️ ':isDone?'✓ ':''}${formatDate(t.due)}
       </div>`;
       const chk = `<input type="checkbox" ${isDone?'checked':''} onclick="event.stopPropagation();toggleTaskDone('${t.id}',this.checked)" style="width:14px;height:14px;cursor:pointer;accent-color:${col};flex-shrink:0">`;
-      const label = `<div style="display:flex;align-items:center;gap:6px;padding:0 4px">${chk}<span style="font-size:12px;color:${isDone?'var(--muted)':'var(--text)'};${isDone?'text-decoration:line-through':''};overflow:hidden;white-space:nowrap;text-overflow:ellipsis" title="${t.title}">${t.title.substring(0,20)}${t.title.length>20?'…':''}</span></div>`;
+      const label = `<div style="display:flex;align-items:center;gap:6px;padding:0 4px">${chk}<span style="font-size:12px;color:${isDone?'var(--muted)':'var(--text)'};${isDone?'text-decoration:line-through':''};overflow:hidden;white-space:nowrap;text-overflow:ellipsis" title="${t.title}">${t.title.substring(0,32)}${t.title.length>32?'…':''}</span></div>`;
       html += trackRow(label, bar, 'white');
     });
   });
