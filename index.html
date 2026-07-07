@@ -810,9 +810,9 @@ function renderReunions() {
             <div class="capitaine-label">Capitaine de séance</div>
             <div class="capitaine-name" id="cap-${r.id}">${capMember?capMember.name:'Non désigné'}</div>
           </div>
-          <select onchange="saveCapitaine('${r.id}',this.value)" style="border:1px solid rgba(255,255,255,.2);background:rgba(255,255,255,.1);color:white;border-radius:6px;padding:4px 8px;font-size:12px;cursor:pointer">
-            <option value="">Désigner…</option>
-            ${MEMBERS.map(m=>`<option value="${m.id}" ${capId===m.id?'selected':''}>${m.name}</option>`).join('')}
+          <select onchange="saveCapitaine('${r.id}',this.value)" style="border:1px solid rgba(255,255,255,.2);background:rgba(255,255,255,.1);color:white;border-radius:6px;padding:4px 8px;font-size:12px;cursor:pointer;-webkit-appearance:auto">
+            <option value="" style="background:#1a202c;color:white">Désigner…</option>
+            ${MEMBERS.map(m=>`<option value="${m.id}" style="background:#1a202c;color:white" ${capId===m.id?'selected':''}>${m.name}</option>`).join('')}
           </select>
         </div>
       </div>
