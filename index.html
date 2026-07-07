@@ -228,6 +228,20 @@ main { padding: 24px; max-width: 1400px; margin: 0 auto; }
 .rtab.active { background:var(--accent);color:white;border-color:var(--accent); }
 .archive-badge { background:#f1f5f9;color:var(--muted);font-size:11px;padding:2px 8px;border-radius:10px;margin-left:6px;font-weight:600; }
 
+
+/* AGENDA BUILDER */
+.agenda-builder { display: flex; flex-direction: column; gap: 8px; margin-top: 8px; }
+.agenda-item-row { display: flex; gap: 8px; align-items: center; background: #f8fafc; border-radius: 8px; padding: 8px 10px; border: 1px solid var(--border); }
+.agenda-item-row:hover { border-color: #94a3b8; }
+.agenda-theme-badge { font-size: 11px; font-weight: 700; padding: 3px 8px; border-radius: 10px; white-space: nowrap; flex-shrink: 0; }
+.agenda-item-text { flex: 1; border: none; background: transparent; font-size: 13px; font-family: inherit; outline: none; color: var(--text); }
+.agenda-item-text::placeholder { color: #94a3b8; }
+.agenda-remove-btn { background: none; border: none; color: #cbd5e1; cursor: pointer; font-size: 16px; padding: 0 2px; flex-shrink: 0; transition: color .15s; }
+.agenda-remove-btn:hover { color: var(--accent); }
+.agenda-add-row { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 4px; }
+.agenda-add-btn { padding: 5px 12px; border-radius: 20px; border: 1.5px dashed var(--border); background: white; font-size: 12px; font-weight: 600; cursor: pointer; transition: all .15s; }
+.agenda-add-btn:hover { background: #f1f5f9; border-style: solid; }
+
 @media (max-width: 768px) {
   .kanban-board { grid-template-columns: 1fr; }
   .form-row { grid-template-columns: 1fr; }
@@ -772,6 +786,8 @@ function renderReunions() {
     let notes = {};
     try { notes = r.agendaNotes ? JSON.parse(r.agendaNotes) : {}; } catch(e) { notes = {}; }
     const starredIdx = notes._starred !== undefined ? notes._starred : -1;
+    let themeMap = {};
+    try { themeMap = r.agendaThemes ? JSON.parse(r.agendaThemes) : {}; } catch(e) {}
     const capId = notes._capitaine || '';
     const capMember = getMember(capId);
     return `
@@ -820,30 +836,52 @@ function renderReunions() {
       ${(r.agenda||[]).length ? `
       <div style="margin-top:16px">
         <div class="agenda-title">Ordre du jour & compte rendu</div>
-        <table class="agenda-table">
-          <thead><tr>
-            <th style="width:28px"></th>
-            <th style="width:28px">#</th>
-            <th style="width:28%">Sujet</th>
-            <th>✅ Décision prise</th>
-            <th>🎯 Action à mener</th>
-          </tr></thead>
-          <tbody>
-            ${(r.agenda||[]).map((a,i) => {
-              const key='item_'+i;
-              const dec=(notes[key]&&notes[key].decision)||'';
-              const act=(notes[key]&&notes[key].action)||'';
-              const isStar = starredIdx===i;
-              return `<tr class="${isStar?'priority-row':''}">
-                <td><button class="star-btn ${isStar?'starred':'unstarred'}" onclick="toggleStar('${r.id}',${i})" title="Marquer prioritaire">★</button></td>
-                <td><div class="agenda-num" style="${isStar?'background:#f59e0b':''}">${i+1}</div></td>
-                <td><div class="agenda-subject">${a}${isStar?'<span class="priority-badge-star">⭐ Prioritaire</span>':''}</div></td>
-                <td><textarea class="agenda-table textarea" placeholder="Décision…" oninput="debounceSaveNote('${r.id}',${i},'decision',this.value)">${dec}</textarea></td>
-                <td><textarea class="agenda-table textarea" placeholder="Action, responsable…" oninput="debounceSaveNote('${r.id}',${i},'action',this.value)">${act}</textarea></td>
-              </tr>`;
-            }).join('')}
-          </tbody>
-        </table>
+        ${(()=>{
+          // Grouper les sujets par thématique
+          const grouped = {};
+          THEMES.forEach(t => { grouped[t.id] = []; });
+          (r.agenda||[]).forEach((a,i) => {
+            const tid = themeMap[i] || 'autre';
+            if (!grouped[tid]) grouped[tid] = [];
+            grouped[tid].push({ a, i });
+          });
+          let html = '';
+          THEMES.forEach(t => {
+            const items = grouped[t.id] || [];
+            if (!items.length) return;
+            html += `<div style="margin-bottom:16px">
+              <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;padding:6px 10px;background:${t.bg};border-radius:8px;border-left:3px solid ${t.color}">
+                <span style="font-size:12px;font-weight:700;color:${t.color};text-transform:uppercase;letter-spacing:.5px">${t.label}</span>
+                <span style="font-size:11px;color:${t.color};opacity:.7">${items.length} sujet${items.length>1?'s':''}</span>
+              </div>
+              <table class="agenda-table">
+                <thead><tr>
+                  <th style="width:28px"></th>
+                  <th style="width:28px">#</th>
+                  <th style="width:30%">Sujet</th>
+                  <th>✅ Décision prise</th>
+                  <th>🎯 Action à mener</th>
+                </tr></thead>
+                <tbody>
+                  ${items.map(({a,i}) => {
+                    const key='item_'+i;
+                    const dec=(notes[key]&&notes[key].decision)||'';
+                    const act=(notes[key]&&notes[key].action)||'';
+                    const isStar = starredIdx===i;
+                    return '<tr class="'+(isStar?'priority-row':'')+'">'+
+                      '<td><button class="star-btn '+(isStar?'starred':'unstarred')+'" onclick="toggleStar(\''+r.id+'\','+i+')" title="Marquer prioritaire">★</button></td>'+
+                      '<td><div class="agenda-num" style="'+(isStar?'background:#f59e0b':'')+'">'+(i+1)+'</div></td>'+
+                      '<td><div class="agenda-subject">'+a+(isStar?'<span class="priority-badge-star">⭐ Prioritaire</span>':'')+'</div></td>'+
+                      '<td><textarea class="agenda-table textarea" placeholder="Décision…" oninput="debounceSaveNote(\''+r.id+'\','+i+',\'decision\',this.value)">'+dec+'</textarea></td>'+
+                      '<td><textarea class="agenda-table textarea" placeholder="Action, responsable…" oninput="debounceSaveNote(\''+r.id+'\','+i+',\'action\',this.value)">'+act+'</textarea></td>'+
+                    '</tr>';
+                  }).join('')}
+                </tbody>
+              </table>
+            </div>`;
+          });
+          return html;
+        })()}
       </div>` : ''}
 
       <div class="cr-section">
@@ -1076,6 +1114,14 @@ function openModal(type, statusHint, editData) {
   else if (type === 'planningevent') html = buildPlanningEventForm(editData);
   document.getElementById('modalBody').innerHTML = html;
   document.getElementById('modalOverlay').classList.add('open');
+  // Init agenda builder si c'est un formulaire de réunion
+  if (type === 'reunion') {
+    let items = [];
+    let themes = {};
+    try { themes = editData?.agendaThemes ? JSON.parse(editData.agendaThemes) : {}; } catch(e){}
+    (editData?.agenda||[]).forEach((txt, i) => items.push({ txt, theme: themes[i]||'autre' }));
+    setTimeout(() => initAgendaBuilder(items), 10);
+  }
 }
 function closeModal(e) {
   if (!e || e.target === document.getElementById('modalOverlay')) {
@@ -1150,8 +1196,25 @@ function buildTaskForm(statusHint, data) {
       <button class="btn btn-primary" onclick="saveTask()">Enregistrer</button>
     </div>`;
 }
+const THEMES = [
+  { id:'bpjeps',         label:'BPJEPS',        color:'#3b82f6', bg:'#eff6ff' },
+  { id:'bf',             label:'Brevet Fédéral', color:'#8b5cf6', bg:'#f5f3ff' },
+  { id:'detb',           label:'DETB',           color:'#14b8a6', bg:'#f0fdfa' },
+  { id:'arbitrage',      label:'Arbitrage',      color:'#f59e0b', bg:'#fffbeb' },
+  { id:'communication',  label:'Communication',  color:'#ec4899', bg:'#fdf2f8' },
+  { id:'ttbb',           label:'TTBB',           color:'#e63946', bg:'#fff5f5' },
+  { id:'autre',          label:'Autre',          color:'#6366f1', bg:'#eef2ff' },
+];
+
 function buildReunionForm(data) {
-  const agVal = (data?.agenda||[]).join('\n');
+  // Reconstruire les items depuis agenda + agendaThemes
+  let items = [];
+  let themes = {};
+  try { themes = data?.agendaThemes ? JSON.parse(data.agendaThemes) : {}; } catch(e){}
+  (data?.agenda||[]).forEach((txt, i) => {
+    items.push({ txt, theme: themes[i] || 'autre' });
+  });
+  const itemsJson = JSON.stringify(items).replace(/"/g, '&quot;');
   return `
     <div class="modal-title">${data ? 'Modifier la réunion' : 'Nouvelle réunion'}</div>
     <div class="form-group"><label class="form-label">Titre</label><input class="form-input" id="f-rtitle" value="${data?.title||''}" placeholder="Ex: Réunion mensuelle IRFBB"></div>
@@ -1160,13 +1223,58 @@ function buildReunionForm(data) {
       <div class="form-group"><label class="form-label">Heure</label><input type="time" class="form-input" id="f-rtime" value="${data?.time||''}"></div>
     </div>
     <div class="form-group"><label class="form-label">Lieu</label><input class="form-input" id="f-rlocation" value="${data?.location||''}" placeholder="Salle, Visio…"></div>
-    <div class="form-group"><label class="form-label">Ordre du jour (un point par ligne)</label>
-      <textarea class="form-textarea" id="f-ragenda" style="min-height:120px" placeholder="Bilan BPJEPS&#10;Point Arbitrage&#10;Divers">${agVal}</textarea>
+    <div class="form-group">
+      <label class="form-label">Ordre du jour</label>
+      <div class="agenda-builder" id="agenda-builder"></div>
+      <div class="agenda-add-row" style="margin-top:10px">
+        ${THEMES.map(t => `<button class="agenda-add-btn" style="border-color:${t.color};color:${t.color}" onclick="addAgendaItem('${t.id}')">+ ${t.label}</button>`).join('')}
+      </div>
     </div>
     <div class="modal-actions">
       <button class="btn btn-outline" onclick="closeModal()">Annuler</button>
       <button class="btn btn-primary" onclick="saveReunion()">Enregistrer</button>
     </div>`;
+}
+
+function renderAgendaBuilder(items) {
+  const builder = document.getElementById('agenda-builder');
+  if (!builder) return;
+  if (!items || !items.length) { builder.innerHTML = '<div style="font-size:13px;color:var(--muted);padding:8px 0">Aucun sujet — ajoutez via les boutons ci-dessous</div>'; return; }
+  builder.innerHTML = items.map((item, i) => {
+    const t = THEMES.find(x => x.id === item.theme) || THEMES[6];
+    return `<div class="agenda-item-row" id="aitem-${i}">
+      <span class="agenda-theme-badge" style="background:${t.bg};color:${t.color}">${t.label}</span>
+      <input class="agenda-item-text" value="${item.txt.replace(/"/g,'&quot;')}" placeholder="Décrivez le sujet…" oninput="updateAgendaItem(${i},this.value)">
+      <button class="agenda-remove-btn" onclick="removeAgendaItem(${i})" title="Supprimer">✕</button>
+    </div>`;
+  }).join('');
+}
+
+// État temporaire du builder
+let _agendaItems = [];
+
+function initAgendaBuilder(items) {
+  _agendaItems = items || [];
+  renderAgendaBuilder(_agendaItems);
+}
+
+function addAgendaItem(themeId) {
+  _agendaItems.push({ txt: '', theme: themeId });
+  renderAgendaBuilder(_agendaItems);
+  // Focus sur le dernier input
+  setTimeout(() => {
+    const inputs = document.querySelectorAll('.agenda-item-text');
+    if (inputs.length) inputs[inputs.length-1].focus();
+  }, 50);
+}
+
+function updateAgendaItem(idx, val) {
+  if (_agendaItems[idx]) _agendaItems[idx].txt = val;
+}
+
+function removeAgendaItem(idx) {
+  _agendaItems.splice(idx, 1);
+  renderAgendaBuilder(_agendaItems);
 }
 
 function buildSubprojectForm() {
@@ -1309,8 +1417,14 @@ async function saveTask() {
 async function saveReunion() {
   const title = document.getElementById('f-rtitle').value.trim();
   if (!title) { alert('Le titre est requis.'); return; }
-  const agenda = document.getElementById('f-ragenda').value.split('\n').map(s => s.trim()).filter(Boolean);
+  // Lire depuis le builder
+  const validItems = _agendaItems.filter(x => x.txt.trim());
+  const agenda = validItems.map(x => x.txt.trim());
+  const agendaThemesObj = {};
+  validItems.forEach((x, i) => { agendaThemesObj[i] = x.theme; });
   const existing = _editId ? state.reunions.find(r => r.id === _editId) : null;
+  // Conserver agendaNotes existantes
+  let agendaNotes = existing?.agendaNotes || '';
   const d = {
     id: _editId || genId(),
     title,
@@ -1318,6 +1432,8 @@ async function saveReunion() {
     time: document.getElementById('f-rtime').value,
     location: document.getElementById('f-rlocation').value.trim(),
     agenda,
+    agendaThemes: JSON.stringify(agendaThemesObj),
+    agendaNotes,
     decisions:   existing?.decisions   || '',
     actions:     existing?.actions     || '',
     nextMeeting: existing?.nextMeeting || '',
