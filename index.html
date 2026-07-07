@@ -892,8 +892,7 @@ function renderReunions() {
               <table class="agenda-table">
                 <thead><tr>
                   <th style="width:28px"></th>
-                  <th style="width:28px">#</th>
-                  <th style="width:80px">Statut</th>
+                  <th style="width:90px">Statut</th>
                   <th style="width:26%">Sujet</th>
                   <th>✅ Décision prise</th>
                   <th>🎯 Action à mener</th>
@@ -909,7 +908,6 @@ function renderReunions() {
                     const stCls=st==='done'?'status-done-s':st==='report'?'status-report':'status-todo';
                     return '<tr class="'+(isStar||st==='report'?'priority-row':'')+'">'+
                       '<td><button class="star-btn '+(isStar?'starred':'unstarred')+'" onclick="toggleStar(\''+r.id+'\','+i+')" title="Marquer prioritaire">★</button></td>'+
-                      '<td><div class="agenda-num" style="'+(isStar?'background:#f59e0b':st==='report'?'background:#d97706':'')+'">'+(i+1)+'</div></td>'+
                       '<td><button class="status-pill '+stCls+'" onclick="cycleStatus(\''+r.id+'\','+i+')">'+stLabel+'</button></td>'+
                       '<td><div class="agenda-subject" style="'+(st==='done'?'opacity:.5;text-decoration:line-through':st==='report'?'color:#d97706':'')+'">'+a+(isStar?'<span class="priority-badge-star">⭐ Prioritaire</span>':'')+(st==='report'?'<span class="reported-badge">🔄 Reporté</span>':'')+'</div></td>'+
                       '<td><textarea class="agenda-table textarea" placeholder="Décision…" oninput="debounceSaveNote(\''+r.id+'\','+i+',\'decision\',this.value)">'+dec+'</textarea></td>'+
