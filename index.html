@@ -967,18 +967,12 @@ function toggleCRExport(rid) {
     '📋 COMPTE RENDU — ' + r.title.toUpperCase(),
     '📅 ' + dateStr + (cap ? '  |  👤 Capitaine : ' + cap.name : ''),
     '',
-    decisions.length ? '✅ DÉCISIONS
-' + decisions.join('
-') : '✅ Aucune décision formalisée',
+    decisions.length ? '\u2705 D\u00c9CISIONS\n' + decisions.join('\n') : '\u2705 Aucune d\u00e9cision formalis\u00e9e',
     '',
-    actions.length ? '🎯 ACTIONS
-' + actions.join('
-') : '🎯 Aucune action formalisée',
+    actions.length ? '\uD83C\uDFAF ACTIONS\n' + actions.join('\n') : '\uD83C\uDFAF Aucune action formalis\u00e9e',
     '',
-    r.nextMeeting ? '📅 PROCHAINE RÉUNION
-' + r.nextMeeting : '',
-  ].filter(x => x !== undefined).join('
-');
+    r.nextMeeting ? '\uD83D\uDCC5 PROCHAINE R\u00c9UNION\n' + r.nextMeeting : '',
+  ].filter(x => x !== undefined).join('\n');
   textEl.textContent = cr;
   modal.classList.toggle('open');
 }
