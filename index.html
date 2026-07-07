@@ -414,13 +414,20 @@ let state = {
   loading: false,
 };
 
-// Appel générique vers le backend (GET pour éviter CORS)
+// Appel générique — GET pour lecture, GET+payload pour écriture courte
 async function api(action, body = {}) {
-  const payload = encodeURIComponent(JSON.stringify({ action, ...body }));
-  const res = await fetch(API_URL + '?payload=' + payload, {
-    method: 'GET',
-    redirect: 'follow',
-  });
+  let url, options;
+  if (action === 'getData') {
+    // Lecture simple — paramètre direct dans l'URL
+    url = API_URL + '?action=getData';
+    options = { method: 'GET', redirect: 'follow' };
+  } else {
+    // Écriture — payload encodé en GET (Apps Script ne supporte pas POST cross-origin)
+    const payload = encodeURIComponent(JSON.stringify({ action, ...body }));
+    url = API_URL + '?payload=' + payload;
+    options = { method: 'GET', redirect: 'follow' };
+  }
+  const res = await fetch(url, options);
   const json = await res.json();
   if (!json.success) throw new Error(json.error || 'Erreur API');
   return json.data;
