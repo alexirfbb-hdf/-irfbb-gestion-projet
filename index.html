@@ -839,14 +839,14 @@ function renderReunions() {
         ${(()=>{
           // Grouper les sujets par thématique
           const grouped = {};
-          THEMES.forEach(t => { grouped[t.id] = []; });
+          getThemes().forEach(t => { grouped[t.id] = []; });
           (r.agenda||[]).forEach((a,i) => {
             const tid = themeMap[i] || 'autre';
             if (!grouped[tid]) grouped[tid] = [];
             grouped[tid].push({ a, i });
           });
           let html = '';
-          THEMES.forEach(t => {
+          getThemes().forEach(t => {
             const items = grouped[t.id] || [];
             if (!items.length) return;
             html += `<div style="margin-bottom:16px">
@@ -1196,6 +1196,18 @@ function buildTaskForm(statusHint, data) {
       <button class="btn btn-primary" onclick="saveTask()">Enregistrer</button>
     </div>`;
 }
+// Thématiques dynamiques basées sur les projets
+function getThemes() {
+  const colors = ['#3b82f6','#8b5cf6','#14b8a6','#f59e0b','#ec4899','#e63946','#6366f1','#f97316','#22c55e','#0ea5e9'];
+  const bgs    = ['#eff6ff','#f5f3ff','#f0fdfa','#fffbeb','#fdf2f8','#fff5f5','#eef2ff','#fff7ed','#f0fdf4','#f0f9ff'];
+  return state.projects.map((p, i) => ({
+    id:    p.id,
+    label: p.name,
+    color: p.color || colors[i % colors.length],
+    bg:    bgs[i % bgs.length],
+  }));
+}
+
 const THEMES = [
   { id:'bpjeps',         label:'BPJEPS',        color:'#3b82f6', bg:'#eff6ff' },
   { id:'bf',             label:'Brevet Fédéral', color:'#8b5cf6', bg:'#f5f3ff' },
@@ -1227,7 +1239,7 @@ function buildReunionForm(data) {
       <label class="form-label">Ordre du jour</label>
       <div class="agenda-builder" id="agenda-builder"></div>
       <div class="agenda-add-row" style="margin-top:10px">
-        ${THEMES.map(t => `<button class="agenda-add-btn" style="border-color:${t.color};color:${t.color}" onclick="addAgendaItem('${t.id}')">+ ${t.label}</button>`).join('')}
+        ${getThemes().map(t => `<button class="agenda-add-btn" style="border-color:${t.color};color:${t.color}" onclick="addAgendaItem('${t.id}')">+ ${t.label}</button>`).join('')}
       </div>
     </div>
     <div class="modal-actions">
@@ -1241,10 +1253,10 @@ function renderAgendaBuilder(items) {
   if (!builder) return;
   if (!items || !items.length) { builder.innerHTML = '<div style="font-size:13px;color:var(--muted);padding:8px 0">Aucun sujet — ajoutez via les boutons ci-dessous</div>'; return; }
   builder.innerHTML = items.map((item, i) => {
-    const t = THEMES.find(x => x.id === item.theme) || THEMES[6];
+    const themes=getThemes(); const t = themes.find(x => x.id === item.theme) || themes[themes.length-1];
     return `<div class="agenda-item-row" id="aitem-${i}">
       <select onchange="changeAgendaTheme(${i},this.value)" style="border:1px solid ${t.color};background:${t.bg};color:${t.color};border-radius:6px;padding:3px 6px;font-size:11px;font-weight:700;cursor:pointer;flex-shrink:0">
-        ${THEMES.map(th => `<option value="${th.id}" ${th.id===item.theme?'selected':''}>${th.label}</option>`).join('')}
+        ${getThemes().map(th => `<option value="${th.id}" ${th.id===item.theme?'selected':''}>${th.label}</option>`).join('')}
       </select>
       <input class="agenda-item-text" value="${item.txt.replace(/"/g,'&quot;')}" placeholder="Décrivez le sujet…" oninput="updateAgendaItem(${i},this.value)">
       <button class="agenda-remove-btn" onclick="removeAgendaItem(${i})" title="Supprimer">✕</button>
