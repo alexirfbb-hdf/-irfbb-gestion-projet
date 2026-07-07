@@ -827,7 +827,7 @@ function renderReunions() {
     const isPast = dt < now;
     let notes = {};
     try { notes = r.agendaNotes ? JSON.parse(r.agendaNotes) : {}; } catch(e) { notes = {}; }
-    const starredIdx = notes._starred !== undefined ? notes._starred : -1;
+    const starredSet = new Set(Array.isArray(notes._starred)?notes._starred:(notes._starred>=0?[notes._starred]:[])); const starredIdx = -1;
     let themeMap = {};
     try { themeMap = r.agendaThemes ? JSON.parse(r.agendaThemes) : {}; } catch(e) {}
     const capId = notes._capitaine || '';
@@ -851,7 +851,21 @@ function renderReunions() {
 
       <div class="timer-block">
         <div class="timer-quarts">
-          ${QUARTS.map((q,i) => `<div class="quart" id="quart-${r.id}-${i}"><div class="quart-label">${q.q}</div><div class="quart-time">${q.range}</div><div class="quart-title">${q.title}</div></div>`).join('')}
+          ${QUARTS.map((q,i) => `<div class="quart inactive" id="quart-${r.id}-${i}" onclick="jumpToQuart('${r.id}',${i})" title="Passer a ${q.q}">
+            <div class="quart-label">${q.q}</div>
+            <div class="quart-range">${q.range}</div>
+            <div class="quart-title">${q.title}</div>
+            <div class="quart-saved" id="quart-saved-${r.id}-${i}"></div>
+          </div>`).join('')}
+        </div>
+        <div class="timeline-bar">
+          <div style="position:absolute;inset:0;display:flex;border-radius:3px;overflow:hidden">
+            <div style="flex:5;background:rgba(255,255,255,.15)"></div>
+            <div style="flex:10;background:rgba(255,255,255,.1)"></div>
+            <div style="flex:10;background:rgba(255,255,255,.08)"></div>
+            <div style="flex:5;background:rgba(255,255,255,.06)"></div>
+          </div>
+          <div class="timeline-cursor" id="tl-cursor-${r.id}" style="left:0%"></div>
         </div>
         <div class="timer-display">
           <div style="flex:1">
@@ -909,7 +923,8 @@ function renderReunions() {
                     const key='item_'+i;
                     const dec=(notes[key]&&notes[key].decision)||'';
                     const act=(notes[key]&&notes[key].action)||'';
-                    const isStar = starredIdx===i;
+                    const assigneeId=(notes[key]&&notes[key].assignee)||'';
+                    const isStar = starredSet.has(i);
                     const st=(notes[key]&&notes[key].status)||'todo';
                     const stLabel=st==='done'?'✅ Traité':st==='report'?'🔄 Reporté':'⬜ À traiter';
                     const stCls=st==='done'?'status-done-s':st==='report'?'status-report':'status-todo';
@@ -917,8 +932,14 @@ function renderReunions() {
                       '<td><button class="star-btn '+(isStar?'starred':'unstarred')+'" onclick="toggleStar(\''+r.id+'\','+i+')" title="Marquer prioritaire">★</button></td>'+
                       '<td><button class="status-pill '+stCls+'" onclick="cycleStatus(\''+r.id+'\','+i+')">'+stLabel+'</button></td>'+
                       '<td><div class="agenda-subject" style="'+(st==='done'?'opacity:.5;text-decoration:line-through':st==='report'?'color:#d97706':'')+'">'+a+(isStar?'<span class="priority-badge-star">⭐ Prioritaire</span>':'')+(st==='report'?'<span class="reported-badge">🔄 Reporté</span>':'')+'</div></td>'+
-                      '<td><textarea class="agenda-table textarea" placeholder="Décision…" oninput="debounceSaveNote(\''+r.id+'\','+i+',\'decision\',this.value)">'+dec+'</textarea></td>'+
-                      '<td><textarea class="agenda-table textarea" placeholder="Action, responsable…" oninput="debounceSaveNote(\''+r.id+'\','+i+',\'action\',this.value)">'+act+'</textarea></td>'+
+                      '<td><textarea class="agenda-table textarea" placeholder="Commentaires…" oninput="debounceSaveNote(\''+r.id+'\','+i+',\'decision\',this.value)">'+dec+'</textarea></td>'+
+                      '<td><div style="display:flex;flex-direction:column;gap:4px">'+
+                        '<select style="border:1px solid var(--border);border-radius:6px;padding:3px 6px;font-size:11px;font-weight:600;cursor:pointer;background:#f8fafc;color:var(--text)" onchange="debounceSaveNote(\''+r.id+'\','+i+',\'assignee\',this.value)">'+
+                          '<option value="">👤 Assigner…</option>'+
+                          MEMBERS.map(m=>'<option value="'+m.id+'"'+(assigneeId===m.id?' selected':'')+'>'+m.name+'</option>').join('')+
+                        '</select>'+
+                        '<textarea class="agenda-table textarea" style="min-height:44px" placeholder="Action…" oninput="debounceSaveNote(\''+r.id+'\','+i+',\'action\',this.value)">'+act+'</textarea>'+
+                      '</div></td>'+
                     '</tr>';
                   }).join('')}
                 </tbody>
@@ -943,9 +964,37 @@ function renderReunions() {
         </div>
 
         <!-- CHAMP PAUL -->
-        <div class="paul-block">
-          <div class="paul-block-title">⚡ Sujets à faire valider par Paul</div>
-          <textarea class="paul-textarea" placeholder="Ex: Ouverture session BP Calais → attente accord Paul…" oninput="debouncesCR('${r.id}','paulValidation',this.value)">${r.paulValidation||''}</textarea>
+        <div class="checklist-block checklist-paul">
+          <div class="checklist-title">
+            <span>⚡ À valider par Paul</span>
+            <button class="checklist-export-btn" onclick="exportChecklist('${r.id}','paul')">📋 Copier</button>
+          </div>
+          <div class="checklist-items" id="cl-paul-${r.id}"></div>
+          <div class="checklist-add">
+            <input id="cl-paul-input-${r.id}" placeholder="Ajouter un sujet…" onkeydown="if(event.key==='Enter')addChecklistItem('${r.id}','paul')">
+            <button class="timer-btn timer-btn-reset" style="padding:6px 12px;font-size:12px" onclick="addChecklistItem('${r.id}','paul')">+</button>
+          </div>
+        </div>
+        <div class="checklist-block checklist-olivier">
+          <div class="checklist-title">
+            <span>👁️ À voir avec Olivier Deruwez</span>
+            <button class="checklist-export-btn" onclick="exportChecklist('${r.id}','olivier')">📋 Copier</button>
+          </div>
+          <div class="checklist-items" id="cl-olivier-${r.id}"></div>
+          <div class="checklist-add">
+            <input id="cl-olivier-input-${r.id}" placeholder="Ajouter un sujet…" onkeydown="if(event.key==='Enter')addChecklistItem('${r.id}','olivier')">
+            <button class="timer-btn timer-btn-reset" style="padding:6px 12px;font-size:12px" onclick="addChecklistItem('${r.id}','olivier')">+</button>
+          </div>
+        </div>
+        <div style="margin-top:14px;padding-top:14px;border-top:1px solid var(--border)">
+          <div style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);margin-bottom:10px">📋 Export tâches par personne</div>
+          <div style="display:flex;flex-wrap:wrap;gap:8px">
+            ${MEMBERS.map(m => {
+              const bg = (typeof AVATAR_BG !== 'undefined'?AVATAR_BG[m.id]:null)||'#94a3b8';
+              const av = m.avatar?'<img src="'+m.avatar+'" style="width:18px;height:18px;border-radius:50%;object-fit:cover">':'';
+              return '<button onclick="exportMemberActions(\''+r.id+'\',\''+m.id+'\')" style="display:inline-flex;align-items:center;gap:6px;padding:6px 12px;border:2px solid '+bg+';border-radius:20px;background:white;font-size:12px;font-weight:600;cursor:pointer">'+av+' '+m.name+'</button>';
+            }).join('')}
+          </div>
         </div>
 
         <!-- ACTIONS REPORTÉES de la réunion précédente -->
@@ -996,6 +1045,7 @@ function renderReunions() {
       </div>
     </div>`;
   }).join('');
+  setTimeout(()=>{ list.forEach(r=>{ renderChecklists(r.id); updatePriorityBanner(r.id); }); },50);
 }
 
 // Debounce pour sauvegardes automatiques
@@ -1132,15 +1182,139 @@ async function saveCapitaine(rid, memberId) {
   try { await api('saveReunion',{data:r}); } catch(e){ showError(e.message); }
 }
 
-// ── ÉTOILE ───────────────────────────────────────────────────
+// ── ÉTOILE MULTI ─────────────────────────────────────────────
 async function toggleStar(rid, idx) {
   const r = state.reunions.find(x=>x.id===rid);
   if (!r) return;
   let notes={};
   try { notes=r.agendaNotes?JSON.parse(r.agendaNotes):{}; } catch(e){}
-  notes._starred = (notes._starred===idx) ? -1 : idx;
+  const starred = new Set(Array.isArray(notes._starred)?notes._starred:(notes._starred>=0?[notes._starred]:[]));
+  if (starred.has(idx)) starred.delete(idx); else starred.add(idx);
+  notes._starred = Array.from(starred);
   r.agendaNotes = JSON.stringify(notes);
   try { await api('saveReunion',{data:r}); renderReunions(); } catch(e){ showError(e.message); }
+}
+
+// ── BANDEAU PRIORITES ─────────────────────────────────────────
+function updatePriorityBanner(rid) {
+  const r = state.reunions.find(x=>x.id===rid);
+  if (!r) return;
+  let notes={};
+  try { notes=r.agendaNotes?JSON.parse(r.agendaNotes):{}; } catch(e){}
+  const starred = new Set(Array.isArray(notes._starred)?notes._starred:(notes._starred>=0?[notes._starred]:[]));
+  const banner = document.getElementById('prio-banner-'+rid);
+  const chips = document.getElementById('prio-chips-'+rid);
+  if (!banner||!chips) return;
+  if (!starred.size) { banner.classList.remove('visible'); return; }
+  banner.classList.add('visible');
+  chips.innerHTML = Array.from(starred).map(i=>{ const a=(r.agenda||[])[i]; return a?'<span class="priority-chip">&#11088; '+a+'</span>':''; }).join('');
+}
+
+// ── CHECKLISTS PAUL / OLIVIER ─────────────────────────────────
+function renderChecklists(rid) {
+  const r = state.reunions.find(x=>x.id===rid);
+  if (!r) return;
+  let notes={};
+  try { notes=r.agendaNotes?JSON.parse(r.agendaNotes):{}; } catch(e){}
+  ['paul','olivier'].forEach(who => {
+    const el = document.getElementById('cl-'+who+'-'+rid);
+    if (!el) return;
+    const items = notes['_cl_'+who]||[];
+    el.innerHTML = items.map((item,i) =>
+      '<div class="checklist-item">'+
+      '<input type="checkbox" '+(item.done?'checked':'')+' onchange="toggleChecklistItem(\''+rid+'\',\''+who+'\','+i+',this.checked)">'+
+      '<span class="checklist-item-text" style="'+(item.done?'text-decoration:line-through;opacity:.5':'')+'">'+item.text+'</span>'+
+      '<button class="checklist-item-del" onclick="removeChecklistItem(\''+rid+'\',\''+who+'\','+i+')">&#x2715;</button>'+
+      '</div>'
+    ).join('');
+  });
+}
+async function addChecklistItem(rid, who) {
+  const input = document.getElementById('cl-'+who+'-input-'+rid);
+  if (!input||!input.value.trim()) return;
+  const r = state.reunions.find(x=>x.id===rid);
+  if (!r) return;
+  let notes={};
+  try { notes=r.agendaNotes?JSON.parse(r.agendaNotes):{}; } catch(e){}
+  if (!notes['_cl_'+who]) notes['_cl_'+who]=[];
+  notes['_cl_'+who].push({text:input.value.trim(),done:false});
+  r.agendaNotes=JSON.stringify(notes);
+  input.value='';
+  try { await api('saveReunion',{data:r}); renderChecklists(rid); } catch(e){ showError(e.message); }
+}
+async function toggleChecklistItem(rid, who, idx, done) {
+  const r = state.reunions.find(x=>x.id===rid);
+  if (!r) return;
+  let notes={};
+  try { notes=r.agendaNotes?JSON.parse(r.agendaNotes):{}; } catch(e){}
+  if (notes['_cl_'+who]&&notes['_cl_'+who][idx]) notes['_cl_'+who][idx].done=done;
+  r.agendaNotes=JSON.stringify(notes);
+  try { await api('saveReunion',{data:r}); renderChecklists(rid); } catch(e){ showError(e.message); }
+}
+async function removeChecklistItem(rid, who, idx) {
+  const r = state.reunions.find(x=>x.id===rid);
+  if (!r) return;
+  let notes={};
+  try { notes=r.agendaNotes?JSON.parse(r.agendaNotes):{}; } catch(e){}
+  if (notes['_cl_'+who]) notes['_cl_'+who].splice(idx,1);
+  r.agendaNotes=JSON.stringify(notes);
+  try { await api('saveReunion',{data:r}); renderChecklists(rid); } catch(e){ showError(e.message); }
+}
+function exportChecklist(rid, who) {
+  const r = state.reunions.find(x=>x.id===rid);
+  if (!r) return;
+  let notes={};
+  try { notes=r.agendaNotes?JSON.parse(r.agendaNotes):{}; } catch(e){}
+  const items = notes['_cl_'+who]||[];
+  if (!items.length) { alert('Aucun sujet dans cette liste.'); return; }
+  const name = who==='paul'?'Paul':'Olivier Deruwez';
+  const dt = new Date(r.date).toLocaleDateString('fr-FR',{day:'numeric',month:'long',year:'numeric'});
+  const lines = ['SUJETS POUR '+name.toUpperCase()+' - '+dt, '', ...items.map(it=>(it.done?'[x]':'[ ]')+' '+it.text)];
+  navigator.clipboard.writeText(lines.join('\n')).then(()=>{
+    const b=document.getElementById('errorBanner');
+    if(b){b.innerHTML='Copie !';b.style.display='flex';b.style.background='#f0fdf4';b.style.color='#16a34a';b.style.borderColor='#86efac';setTimeout(()=>{b.style.display='none';b.style.background='';b.style.color='';b.style.borderColor='';},2000);}
+  });
+}
+
+// ── EXPORT TACHES PAR MEMBRE ──────────────────────────────────
+function exportMemberActions(rid, memberId) {
+  const r = state.reunions.find(x=>x.id===rid);
+  if (!r) return;
+  let notes={}, themeMap={};
+  try { notes=r.agendaNotes?JSON.parse(r.agendaNotes):{}; } catch(e){}
+  try { themeMap=r.agendaThemes?JSON.parse(r.agendaThemes):{}; } catch(e){}
+  const m = getMember(memberId);
+  if (!m) return;
+  const dt = new Date(r.date).toLocaleDateString('fr-FR',{day:'numeric',month:'long',year:'numeric'});
+  const themes = getThemes();
+  const actions = [];
+  (r.agenda||[]).forEach((a,i)=>{
+    const key='item_'+i;
+    if (notes[key]&&notes[key].assignee===memberId&&notes[key].action) {
+      const t = themes.find(x=>x.id===(themeMap[i]||''))||{label:'Divers'};
+      actions.push('['+t.label+'] '+a+' : '+notes[key].action);
+    }
+  });
+  if (!actions.length) { alert('Aucune action assignee a '+m.name+'.'); return; }
+  const lines = ['TACHES DE '+m.name.toUpperCase()+' - '+dt, 'Reunion : '+r.title, '', ...actions.map(a=>'- '+a)];
+  navigator.clipboard.writeText(lines.join('\n')).then(()=>{
+    const b=document.getElementById('errorBanner');
+    if(b){b.innerHTML='Taches de '+m.name+' copiees !';b.style.display='flex';b.style.background='#f0fdf4';b.style.color='#16a34a';b.style.borderColor='#86efac';setTimeout(()=>{b.style.display='none';b.style.background='';b.style.color='';b.style.borderColor='';},2000);}
+  });
+}
+
+
+// ── TIMER REPENSE ─────────────────────────────────────────────
+function jumpToQuart(rid, qIdx) {
+  if (!_timers[rid]) _timers[rid] = { elapsed:0, running:false, currentQ:0, qElapsed:0, qBudget:[300,600,600,300], qSaved:[0,0,0,0] };
+  const t = _timers[rid];
+  if (qIdx > t.currentQ) {
+    const saved = t.qBudget[t.currentQ] - t.qElapsed;
+    t.qSaved[t.currentQ] = saved;
+    if (saved > 0) { const bonus = Math.floor(saved / Math.max(1,3-t.currentQ)); for (let i=t.currentQ+1;i<4;i++) t.qBudget[i]+=bonus; }
+    t.currentQ = qIdx; t.qElapsed = 0; t.elapsed = Q_BOUNDS[qIdx];
+  }
+  updateTimerDisplay(rid);
 }
 
 // ── EXPORT CR ────────────────────────────────────────────────
