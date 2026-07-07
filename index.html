@@ -550,23 +550,39 @@ let state = {
   loading: false,
 };
 
-// Appel générique — GET pour lecture, GET+payload pour écriture courte
+// Appel générique
 async function api(action, body = {}) {
-  let url, options;
-  if (action === 'getData') {
-    // Lecture simple — paramètre direct dans l'URL
-    url = API_URL + '?action=getData';
-    options = { method: 'GET', redirect: 'follow' };
-  } else {
-    // Écriture — payload encodé en GET (Apps Script ne supporte pas POST cross-origin)
-    const payload = encodeURIComponent(JSON.stringify({ action, ...body }));
-    url = API_URL + '?payload=' + payload;
-    options = { method: 'GET', redirect: 'follow' };
+  // Pour saveReunion avec agendaNotes volumineux, on sépare les sauvegardes
+  if (action === 'saveReunion' && body.data && body.data.agendaNotes) {
+    const agendaNotes = body.data.agendaNotes;
+    const rid = body.data.id;
+    // 1. Sauvegarder la réunion sans agendaNotes
+    const dataWithout = { ...body.data, agendaNotes: '' };
+    await apiCall('saveReunion', { data: dataWithout });
+    // 2. Sauvegarder agendaNotes séparément via saveCR
+    if (agendaNotes) await apiCall('saveCR', { id: rid, field: 'agendaNotes', value: agendaNotes });
+    return { ok: true };
   }
-  const res = await fetch(url, options);
-  const json = await res.json();
-  if (!json.success) throw new Error(json.error || 'Erreur API');
-  return json.data;
+  return apiCall(action, body);
+}
+
+async function apiCall(action, body = {}) {
+  let url;
+  if (action === 'getData') {
+    url = API_URL + '?action=getData';
+  } else {
+    const encoded = encodeURIComponent(JSON.stringify({ action, ...body }));
+    url = API_URL + '?payload=' + encoded;
+  }
+  const res = await fetch(url, { method: 'GET', redirect: 'follow' });
+  const text = await res.text();
+  try {
+    const json = JSON.parse(text);
+    if (!json.success) throw new Error(json.error || 'Erreur API');
+    return json.data;
+  } catch(e) {
+    throw new Error('Réponse invalide : ' + text.substring(0, 100));
+  }
 }
 
 // Charge toutes les données depuis Google Sheets
@@ -940,6 +956,17 @@ function switchReunionTab(tab, el) {
   else renderReunions();
 }
 
+
+function cleanTime(t) {
+  if (!t) return '—';
+  // Si c'est une chaîne ISO avec 1899 (format Sheets), extraire HH:mm
+  if (typeof t === 'string' && t.indexOf('1899') >= 0) {
+    const m = t.match(/T(\d{2}):(\d{2})/);
+    return m ? m[1] + ':' + m[2] : '—';
+  }
+  return t;
+}
+
 function renderReunions() {
   const el = document.getElementById('reunionsList');
   const now = new Date(); now.setHours(0,0,0,0);
@@ -984,7 +1011,7 @@ function renderReunions() {
       '</div>' +
       '<div style="flex:1;margin-left:20px">' +
         '<div class="reunion-card-title">' + r.title + (isPast ? ' <span style="font-size:12px;background:#f1f5f9;color:var(--muted);padding:2px 8px;border-radius:8px;font-weight:500">Archiv\u00e9e</span>' : '') + '</div>' +
-        '<div class="reunion-card-time">\uD83D\uDD50 ' + (r.time||'\u2014') + (r.location ? ' \u00b7 \uD83D\uDCCD ' + r.location : '') + '</div>' +
+        '<div class="reunion-card-time">\uD83D\uDD50 ' + cleanTime(r.time) + (r.location ? ' \u00b7 \uD83D\uDCCD ' + r.location : '') + '</div>' +
       '</div>' +
       '<div style="display:flex;gap:8px;flex-shrink:0">' +
         '<button class="btn btn-sm btn-outline" onclick="editReunion(\'' + r.id + '\')">\u270F\uFE0F Modifier</button>' +
