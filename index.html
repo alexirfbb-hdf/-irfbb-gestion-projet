@@ -1243,7 +1243,9 @@ function renderAgendaBuilder(items) {
   builder.innerHTML = items.map((item, i) => {
     const t = THEMES.find(x => x.id === item.theme) || THEMES[6];
     return `<div class="agenda-item-row" id="aitem-${i}">
-      <span class="agenda-theme-badge" style="background:${t.bg};color:${t.color}">${t.label}</span>
+      <select onchange="changeAgendaTheme(${i},this.value)" style="border:1px solid ${t.color};background:${t.bg};color:${t.color};border-radius:6px;padding:3px 6px;font-size:11px;font-weight:700;cursor:pointer;flex-shrink:0">
+        ${THEMES.map(th => `<option value="${th.id}" ${th.id===item.theme?'selected':''}>${th.label}</option>`).join('')}
+      </select>
       <input class="agenda-item-text" value="${item.txt.replace(/"/g,'&quot;')}" placeholder="Décrivez le sujet…" oninput="updateAgendaItem(${i},this.value)">
       <button class="agenda-remove-btn" onclick="removeAgendaItem(${i})" title="Supprimer">✕</button>
     </div>`;
@@ -1256,6 +1258,13 @@ let _agendaItems = [];
 function initAgendaBuilder(items) {
   _agendaItems = items || [];
   renderAgendaBuilder(_agendaItems);
+}
+
+function changeAgendaTheme(idx, themeId) {
+  if (_agendaItems[idx]) {
+    _agendaItems[idx].theme = themeId;
+    renderAgendaBuilder(_agendaItems);
+  }
 }
 
 function addAgendaItem(themeId) {
