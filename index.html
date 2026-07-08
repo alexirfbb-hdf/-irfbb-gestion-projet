@@ -1165,15 +1165,6 @@ function renderReunions() {
     const crWrap = document.createElement('div');
     crWrap.className = 'cr-wrap';
     crWrap.innerHTML =
-      '<div class="cr-lbl">Notes g\u00e9n\u00e9rales</div>' +
-      '<div class="cr-grid">' +
-        '<div class="cr-blk"><div class="cr-blk-title">\uD83D\uDCC5 Prochaine r\u00e9union</div>' +
-          '<textarea class="cr-ta" placeholder="Date et sujets pr\u00e9vus\u2026" onblur="saveCR(\'' + r.id + '\',\'nextMeeting\',this.value)">' + (r.nextMeeting||'') + '</textarea></div>' +
-        '<div class="cr-blk"><div class="cr-blk-title">\uD83D\uDCDD Notes libres</div>' +
-          '<textarea class="cr-ta" placeholder="Observations, divers\u2026" onblur="saveCR(\'' + r.id + '\',\'decisions\',this.value)">' + (r.decisions||'') + '</textarea></div>' +
-      '</div>' +
-
-      // Checklist Paul
       '<div class="cl-blk cl-paul">' +
         '<div class="cl-hdr"><span class="cl-ttl">\u26A1 \u00c0 valider par Paul</span><button class="cl-copy-btn" onclick="exportChecklist(\'' + r.id + '\',\'paul\')">\uD83D\uDCCB Copier</button></div>' +
         '<div class="cl-items-list" id="cl-paul-' + r.id + '"></div>' +
@@ -1518,15 +1509,8 @@ function debounceNote(rid, idx, field, value) {
   saveSubjectNote(rid, idx, field, value);
 }
 async function saveSubjectNote(rid, idx, field, value) {
-  const r = state.reunions.find(x => x.id === rid);
-  if (!r) return;
-  const notes = getReunionNotes(rid);
-  const key = 'item_' + idx;
-  if (!notes[key]) notes[key] = {};
-  notes[key][field] = value;
-  r.agendaNotes = JSON.stringify(notes);
   try {
-    await apiCall('saveCR', { id: rid, field: 'agendaNotes', value: r.agendaNotes });
+    await saveItemNote(rid, idx, {[field]: value});
     showSaveIndicator();
   } catch(e) { showError(e.message); }
 }
@@ -1639,12 +1623,12 @@ async function addChecklistItem(rid, who) {
   const inp = document.getElementById('cl-' + who + '-inp-' + rid);
   if (!inp || !inp.value.trim()) return;
   const meta = getMetaNotes(rid);
-  const key = '_cl_' + who;
-  const items = [...(meta[key === '_cl_paul' ? 'cl_paul' : 'cl_olivier'] || [])];
+  const prop = who === 'paul' ? 'cl_paul' : 'cl_olivier';
+  const items = [...(meta[prop] || [])];
   items.push({text: inp.value.trim(), done: false});
   inp.value = '';
   try {
-    await saveMetaNotes(rid, {[key]: items});
+    await saveMetaNotes(rid, {[prop]: items});
     renderChecklists(rid);
   } catch(e) { showError(e.message); }
 }
@@ -1653,14 +1637,14 @@ async function toggleChecklistItem(rid, who, idx, done) {
   const prop = who === 'paul' ? 'cl_paul' : 'cl_olivier';
   const items = [...(meta[prop] || [])];
   if (items[idx]) items[idx].done = done;
-  try { await saveMetaNotes(rid, {['_cl_' + who]: items}); renderChecklists(rid); } catch(e) { showError(e.message); }
+  try { await saveMetaNotes(rid, {[prop]: items}); renderChecklists(rid); } catch(e) { showError(e.message); }
 }
 async function removeChecklistItem(rid, who, idx) {
   const meta = getMetaNotes(rid);
   const prop = who === 'paul' ? 'cl_paul' : 'cl_olivier';
   const items = [...(meta[prop] || [])];
   items.splice(idx, 1);
-  try { await saveMetaNotes(rid, {['_cl_' + who]: items}); renderChecklists(rid); } catch(e) { showError(e.message); }
+  try { await saveMetaNotes(rid, {[prop]: items}); renderChecklists(rid); } catch(e) { showError(e.message); }
 }
 function exportChecklist(rid, who) {
   const meta = getMetaNotes(rid);
@@ -2290,36 +2274,71 @@ async function saveTask() {
 async function saveReunion() {
   const title = document.getElementById('f-rtitle').value.trim();
   if (!title) { alert('Le titre est requis.'); return; }
-  // Lire depuis le builder
   syncAgendaInputs();
   const validItems = _agendaItems.filter(x => x.txt.trim());
   const agenda = validItems.map(x => x.txt.trim());
   const agendaThemesObj = {};
   validItems.forEach((x, i) => { agendaThemesObj[i] = x.theme; });
   const existing = _editId ? state.reunions.find(r => r.id === _editId) : null;
-  // Conserver agendaNotes existantes
-  let agendaNotes = existing?.agendaNotes || '';
+  const newId = _editId || genId();
+
   const d = {
-    id: _editId || genId(),
+    id: newId,
     title,
     date: document.getElementById('f-rdate').value,
     time: document.getElementById('f-rtime').value,
     location: document.getElementById('f-rlocation').value.trim(),
     agenda,
     agendaThemes: JSON.stringify(agendaThemesObj),
-    agendaNotes,
     decisions:      existing?.decisions      || '',
     actions:        existing?.actions        || '',
     nextMeeting:    existing?.nextMeeting    || '',
     paulValidation: existing?.paulValidation || '',
   };
+
   showLoading(true);
   try {
     await api('saveReunion', { data: d });
     if (_editId) {
       const i = state.reunions.findIndex(r => r.id === _editId);
       if (i !== -1) state.reunions[i] = d; else state.reunions.push(d);
-    } else { state.reunions.push(d); }
+    } else {
+      state.reunions.push(d);
+      // ── Injecter automatiquement les sujets reportés de la réunion précédente ──
+      if (!_editId) {
+        const now = new Date(d.date || Date.now());
+        const prev = state.reunions
+          .filter(r => r.id !== newId && r.date && new Date(r.date) < now)
+          .sort((a,b) => new Date(b.date) - new Date(a.date))[0];
+        if (prev) {
+          const prevNotes = state.agendaNotes[prev.id] || {};
+          const reported = (prev.agenda||[])
+            .map((subj, i) => ({ subj, i, note: prevNotes['item_'+i] || {} }))
+            .filter(x => x.note.status === 'report');
+          if (reported.length) {
+            for (const {subj, i, note} of reported) {
+              const newIdx = d.agenda.length; // ajouter à la fin
+              // Copier le sujet dans la nouvelle réunion
+              d.agenda.push(subj);
+              const theme = (() => {
+                try { const tm = JSON.parse(prev.agendaThemes||'{}'); return tm[i] || '_autre'; } catch(e) { return '_autre'; }
+              })();
+              agendaThemesObj[newIdx] = theme;
+              // Créer une note vide avec statut "todo" et mention du report
+              await apiCall('saveAgendaNote', {
+                reunionId: newId,
+                key: 'item_' + newIdx,
+                data: { decision: '\uD83D\uDD04 Report\u00e9 depuis la r\u00e9union pr\u00e9c\u00e9dente', actions: note.actions || [], status: 'todo' }
+              });
+            }
+            // Mettre à jour la réunion avec les nouveaux sujets
+            d.agendaThemes = JSON.stringify(agendaThemesObj);
+            await api('saveReunion', { data: d });
+            state.reunions[state.reunions.length - 1] = d;
+          }
+        }
+      }
+    }
     closeModal(); renderReunions(); updateNavNextDate();
   } catch(e) { showError(e.message); }
   finally { showLoading(false); }
