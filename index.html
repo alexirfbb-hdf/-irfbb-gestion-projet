@@ -464,6 +464,7 @@ main { padding: 24px; max-width: 1400px; margin: 0 auto; }
       <span id="kanbanEmoji" style="font-size:24px"></span>
       <div class="kanban-title" id="kanbanTitle"></div>
       <div style="display:flex;gap:8px;margin-left:auto">
+        <button class="btn btn-sm btn-outline" onclick="editCurrentProject()">✏️ Modifier</button>
         <button class="btn btn-sm btn-outline" onclick="openModal('subproject')">+ Sous-projet</button>
         <button class="btn btn-primary btn-sm" onclick="openModal('task')">+ Tâche</button>
       </div>
@@ -730,6 +731,11 @@ function renderProjects() {
 
 // État des sous-projets
 let _currentSubproject = null;
+
+function editCurrentProject() {
+  const p = state.projects.find(x => x.id === state.currentProject);
+  if (p) openModal('project', null, p);
+}
 
 function renderKanban(pid) {
   const p = state.projects.find(x => x.id === pid);
@@ -1776,8 +1782,14 @@ function resetTimer(rid) {
   updateTimerDisplay(rid);
 }
 function jumpToQuart(rid, qIdx) {
+  // Ne change pas le temps — juste force l'affichage du Q actif
+  // Le décompte continue normalement là où il en est
   var t = initTimer(rid);
-  t.elapsed = Q_BOUNDS[qIdx];
+  // Si on veut forcer un saut dans le temps, on met elapsed au début du Q
+  // Mais seulement si on est EN AVANCE (elapsed < Q_BOUNDS[qIdx])
+  if (t.elapsed < Q_BOUNDS[qIdx]) {
+    t.elapsed = Q_BOUNDS[qIdx];
+  }
   updateTimerDisplay(rid);
 }
 function updateTimerDisplay(rid) {
