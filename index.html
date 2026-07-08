@@ -1022,42 +1022,64 @@ function renderReunions() {
     // ── Timer ───────────────────────────────────────────────
     const timerBlock = document.createElement('div');
     timerBlock.className = 'timer-block';
+    const PICTOS = ['🗣️','🏀','⚖️','🔔'];
     timerBlock.innerHTML =
-      '<div class="timer-quarts">' +
+      // Ligne horloge + terrain
+      '<div style="display:flex;align-items:center;gap:10px;margin-bottom:12px">' +
+        '<div class="timer-clock" id="tclock-'+r.id+'">30:00</div>' +
+        '<div style="flex:1">' +
+          '<div style="height:8px;background:rgba(255,255,255,.1);border-radius:4px;overflow:hidden;position:relative">' +
+            '<div style="display:flex;height:100%">' +
+              '<div style="flex:5;background:rgba(34,197,94,.5)"></div>' +
+              '<div style="width:1px;background:rgba(255,255,255,.2)"></div>' +
+              '<div style="flex:10;background:rgba(59,130,246,.4)"></div>' +
+              '<div style="width:1px;background:rgba(255,255,255,.2)"></div>' +
+              '<div style="flex:10;background:rgba(245,158,11,.35)"></div>' +
+              '<div style="width:1px;background:rgba(255,255,255,.2)"></div>' +
+              '<div style="flex:5;background:rgba(230,57,70,.35)"></div>' +
+            '</div>' +
+          '</div>' +
+          '<div style="position:relative;height:0">' +
+            '<div id="tlc-'+r.id+'" style="position:absolute;top:-12px;width:14px;height:14px;background:white;border-radius:50%;transform:translateX(-50%);left:0%;transition:left .5s;box-shadow:0 0 5px rgba(0,0,0,.4)">' +
+              '<div style="position:absolute;inset:3px;background:#e63946;border-radius:50%"></div>' +
+            '</div>' +
+          '</div>' +
+          '<div style="display:flex;justify-content:space-between;margin-top:6px;font-size:9px;opacity:.35;letter-spacing:.5px">' +
+            '<span>0\'</span><span>5\'</span><span>15\'</span><span>25\'</span><span>30\'</span>' +
+          '</div>' +
+        '</div>' +
+        '<div id="tbudget-'+r.id+'" style="flex-shrink:0"></div>' +
+      '</div>' +
+      // 4 Q cliquables avec pictos
+      '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:12px">' +
         QUARTS.map((q,i) =>
-          '<div class="quart inactive" id="quart-'+r.id+'-'+i+'" onclick="jumpToQuart(\'' + r.id + '\',' + i + ')" title="Passer \u00e0 ' + q.q + '">' +
-            '<div class="q-label">' + q.q + '</div>' +
-            '<div class="q-range">' + q.range + '</div>' +
-            '<div class="q-title">' + q.title + '</div>' +
-            '<div class="q-saved" id="qs-'+r.id+'-'+i+'"></div>' +
+          '<div class="quart inactive" id="quart-'+r.id+'-'+i+'" onclick="jumpToQuart(\'' + r.id + '\',' + i + ')">' +
+            '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">' +
+              '<span style="font-size:10px;font-weight:800;letter-spacing:1px;opacity:.4" id="ql-'+r.id+'-'+i+'">' + q.q + '</span>' +
+              '<span id="qs-'+r.id+'-'+i+'" style="font-size:10px;font-weight:700"></span>' +
+            '</div>' +
+            '<div style="font-size:20px;margin-bottom:4px">' + PICTOS[i] + '</div>' +
+            '<div style="font-size:11px;font-weight:700;margin-bottom:2px">' + q.range + '</div>' +
+            '<div style="font-size:10px;opacity:.65;line-height:1.3">' + q.title + '</div>' +
           '</div>'
         ).join('') +
       '</div>' +
-      '<div class="tl-bar">' +
-        '<div class="tl-segs">' +
-          '<div style="flex:5;background:rgba(255,255,255,.15)"></div>' +
-          '<div style="flex:10;background:rgba(255,255,255,.1)"></div>' +
-          '<div style="flex:10;background:rgba(255,255,255,.08)"></div>' +
-          '<div style="flex:5;background:rgba(255,255,255,.06)"></div>' +
-        '</div>' +
-        '<div class="tl-cursor" id="tlc-'+r.id+'" style="left:0%"></div>' +
-      '</div>' +
-      '<div class="timer-row">' +
-        '<div>' +
-          '<div class="timer-clock" id="tclock-'+r.id+'">30:00</div>' +
-          '<div id="tbudget-'+r.id+'"></div>' +
-        '</div>' +
-        '<div class="timer-btns">' +
+      // Bas : boutons + capitaine
+      '<div style="display:flex;align-items:center;justify-content:space-between;gap:10px">' +
+        '<div style="display:flex;gap:6px">' +
           '<button class="tbtn tbtn-start" id="tbtn-'+r.id+'" onclick="toggleTimer(\'' + r.id + '\')">\u25B6 D\u00e9marrer</button>' +
-          '<button class="tbtn tbtn-reset" onclick="resetTimer(\'' + r.id + '\')">\u21BA Reset</button>' +
+          '<button class="tbtn tbtn-reset" onclick="resetTimer(\'' + r.id + '\')" title="Reset">\u21BA</button>' +
         '</div>' +
-      '</div>' +
-      '<div class="cap-block">' +
-        '<div style="flex:1"><div class="cap-label">Capitaine de s\u00e9ance</div><div class="cap-name" id="cap-'+r.id+'">' + (capMember ? capMember.name : 'Non d\u00e9sign\u00e9') + '</div></div>' +
-        '<select class="cap-select" onchange="saveCapitaine(\'' + r.id + '\',this.value)">' +
-          '<option value="">D\u00e9signer\u2026</option>' +
-          MEMBERS.map(m => '<option value="' + m.id + '"' + (capId === m.id ? ' selected' : '') + '>' + m.name + '</option>').join('') +
-        '</select>' +
+        '<div style="display:flex;align-items:center;gap:8px;background:rgba(255,255,255,.06);border-radius:8px;padding:6px 12px">' +
+          '<div>' +
+            '<div style="font-size:9px;opacity:.5;text-transform:uppercase;letter-spacing:.5px">Capitaine</div>' +
+            '<div style="font-size:13px;font-weight:700" id="cap-'+r.id+'">' + (capMember ? capMember.name : 'Non d\u00e9sign\u00e9') + '</div>' +
+          '</div>' +
+          '<select class="cap-select" onchange="saveCapitaine(\'' + r.id + '\',this.value)">' +
+            '<option value="">D\u00e9signer\u2026</option>' +
+            MEMBERS.map(m => '<option value="' + m.id + '"' + (capId === m.id ? ' selected' : '') + '>' + m.name + '</option>').join('') +
+          '</select>' +
+        '</div>' +
       '</div>';
     card.appendChild(timerBlock);
 
@@ -1678,10 +1700,31 @@ function updateTimerDisplay(rid) {
   for (let i=0;i<4;i++) {
     const q = document.getElementById('quart-'+rid+'-'+i);
     const qs = document.getElementById('qs-'+rid+'-'+i);
+    const ql = document.getElementById('ql-'+rid+'-'+i);
     if (!q) continue;
-    q.className = 'quart '+(i===t.currentQ?'active':i<t.currentQ?'done':'inactive');
-    if (qs && t.qSaved[i] && i<t.currentQ) { const s=t.qSaved[i]; qs.textContent=(s>0?'+':'')+Math.floor(Math.abs(s)/60)+'m'+Math.abs(s%60)+'s'; qs.style.color=s>0?'#22c55e':'#ef4444'; }
-    else if (qs) qs.textContent='';
+    const QCOLS = ['rgba(34,197,94,.5)','rgba(59,130,246,.4)','rgba(245,158,11,.35)','rgba(230,57,70,.35)'];
+    const QBORDS = ['#22c55e','#3b82f6','#f59e0b','#e63946'];
+    if (i===t.currentQ) {
+      q.className = 'quart active';
+      q.style.borderColor = QBORDS[i];
+      q.style.background = QCOLS[i];
+      if (ql) { ql.style.opacity='1'; ql.style.color=QBORDS[i]; }
+    } else if (i<t.currentQ) {
+      q.className = 'quart done';
+      q.style.borderColor = '#22c55e';
+      q.style.background = 'rgba(34,197,94,.08)';
+      if (ql) { ql.style.opacity='1'; ql.style.color='#22c55e'; }
+    } else {
+      q.className = 'quart inactive';
+      q.style.borderColor = 'transparent';
+      q.style.background = 'rgba(255,255,255,.06)';
+      if (ql) { ql.style.opacity='.4'; ql.style.color=''; }
+    }
+    if (qs && t.qSaved[i] && i<t.currentQ) {
+      const s=t.qSaved[i];
+      qs.textContent=(s>0?'+':'')+Math.floor(Math.abs(s)/60)+'m'+Math.abs(s%60)+'s';
+      qs.style.color=s>0?'#22c55e':'#ef4444';
+    } else if (qs) { qs.textContent=''; }
   }
   const cursor = document.getElementById('tlc-'+rid);
   if (cursor) cursor.style.left=Math.min(100,(t.elapsed/TOTAL)*100)+'%';
