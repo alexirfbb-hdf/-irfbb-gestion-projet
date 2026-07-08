@@ -1782,7 +1782,8 @@ function resetTimer(rid) {
   updateTimerDisplay(rid);
 }
 function jumpToQuart(rid, qIdx) {
-  // Ne fait RIEN au temps — juste un indicateur visuel
+  var t = initTimer(rid);
+  t.forcedQ = qIdx; // Forcer la surbrillance sans changer le temps
   updateTimerDisplay(rid);
 }
 function updateTimerDisplay(rid) {
@@ -1795,24 +1796,28 @@ function updateTimerDisplay(rid) {
   if (!clock) return;
   clock.textContent = (mins < 10 ? '0' : '') + mins + ':' + (secs < 10 ? '0' : '') + secs;
   clock.className = 'timer-clock' + (rem <= 300 ? ' danger' : rem <= 600 ? ' warn' : '');
-  // Q actif selon temps écoulé
-  var QCOLS  = ['rgba(34,197,94,.5)', 'rgba(59,130,246,.4)', 'rgba(245,158,11,.35)', 'rgba(230,57,70,.35)'];
-  var QBORDS = ['#22c55e', '#3b82f6', '#f59e0b', '#e63946'];
+  // Q actif = forcé par clic OU automatique selon temps
+  var autoQ = 0;
+  for (var j = 0; j < 4; j++) { if (t.elapsed >= Q_BOUNDS[j]) autoQ = j; }
+  var activeQ = (t.forcedQ !== undefined && t.forcedQ >= autoQ) ? t.forcedQ : autoQ;
+  // Réinitialiser forcedQ si le temps dépasse le Q forcé
+  if (t.forcedQ !== undefined && t.elapsed >= Q_BOUNDS[t.forcedQ + 1 < 4 ? t.forcedQ + 1 : 4]) {
+    t.forcedQ = undefined;
+  }
+  var QCOLS  = ['rgba(34,197,94,.5)','rgba(59,130,246,.4)','rgba(245,158,11,.35)','rgba(230,57,70,.35)'];
+  var QBORDS = ['#22c55e','#3b82f6','#f59e0b','#e63946'];
   for (var i = 0; i < 4; i++) {
     var q  = document.getElementById('quart-' + rid + '-' + i);
     var ql = document.getElementById('ql-'    + rid + '-' + i);
     var qs = document.getElementById('qs-'    + rid + '-' + i);
     if (!q) continue;
-    var active = t.elapsed >= Q_BOUNDS[i] && t.elapsed < Q_BOUNDS[i + 1];
-    var done   = t.elapsed >= Q_BOUNDS[i + 1];
-    if (active) {
+    if (i === activeQ) {
       q.className = 'quart active';
       q.style.borderColor = QBORDS[i];
       q.style.background  = QCOLS[i];
       if (ql) { ql.style.opacity = '1'; ql.style.color = QBORDS[i]; }
-      var qRem = Q_BOUNDS[i + 1] - t.elapsed;
-      if (qs) { qs.textContent = Math.floor(qRem / 60) + "'" + (qRem % 60 < 10 ? '0' : '') + (qRem % 60) + '"'; qs.style.color = 'rgba(255,255,255,.7)'; }
-    } else if (done) {
+      if (qs) qs.textContent = '';
+    } else if (i < autoQ) {
       q.className = 'quart done';
       q.style.borderColor = '#22c55e';
       q.style.background  = 'rgba(34,197,94,.08)';
