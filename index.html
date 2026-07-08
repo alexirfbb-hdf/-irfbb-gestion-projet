@@ -1211,7 +1211,11 @@ function buildSubjectCard(r, i, subj, notes, starred, prefix) {
   const noteData = notes[noteKey] || {};
   const st = noteData.status || 'todo';
   const isStar = starred.has(i);
-  const actions = noteData.actions || [];
+  // Compatibilité ancien format (action string) → nouveau format (actions array)
+  let actions = noteData.actions || [];
+  if (!actions.length && noteData.action) {
+    actions = [{ assignee: noteData.assignee || '', text: noteData.action }];
+  }
 
   const sc = document.createElement('div');
   sc.id = 'sc-' + pfx + r.id + '-' + i;
@@ -1376,7 +1380,11 @@ async function removeSubjectAction(rid, idx, ai) {
 function refreshActionsList(rid, idx, notes) {
   const key = 'item_' + idx;
   const noteData = notes[key] || {};
-  const actions = noteData.actions || [];
+  // Compatibilité ancien format (action string) → nouveau format (actions array)
+  let actions = noteData.actions || [];
+  if (!actions.length && noteData.action) {
+    actions = [{ assignee: noteData.assignee || '', text: noteData.action }];
+  }
   const el = document.getElementById('al-' + rid + '-' + idx);
   if (!el) return;
   el.innerHTML = actions.map((ac, ai) => {
@@ -1443,7 +1451,8 @@ function toggleCRExport(rid, tab) {
     const tid = themeMap[i] || '_autre';
     const bucket = byTheme[tid] || byTheme['_autre'];
     if (nd.decision) bucket.comments.push(subj + ' : ' + nd.decision);
-    const acts = nd.actions || [];
+    let acts = nd.actions || [];
+    if (!acts.length && nd.action) acts = [{ assignee: nd.assignee||'', text: nd.action }];
     acts.forEach(ac => {
       const m = getMember(ac.assignee);
       bucket.actions.push((m ? m.name + ' : ' : '') + ac.text + ' (' + subj + ')');
