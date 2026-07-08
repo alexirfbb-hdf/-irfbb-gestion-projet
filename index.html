@@ -1773,55 +1773,80 @@ function resetTimer(rid) {
 function jumpToQuart(rid, qIdx) {
   const t = initTimer(rid);
   if (qIdx <= t.currentQ) return;
+  // Temps gagné sur le Q actuel
   const saved = t.qBudget[t.currentQ] - t.qElapsed;
   t.qSaved[t.currentQ] = saved;
-  if (saved > 0) { const rem = 4 - t.currentQ - 1; if (rem > 0) { const bonus = Math.floor(saved/rem); for (let i=t.currentQ+1;i<4;i++) t.qBudget[i]+=bonus; } }
-  t.currentQ = qIdx; t.qElapsed = 0; t.elapsed = Q_BOUNDS[qIdx];
+  // Redistribuer le temps gagné sur les Q restants (après qIdx)
+  if (saved > 0) {
+    const qRestants = 3 - qIdx; // Q après celui qu'on rejoint
+    if (qRestants > 0) {
+      const bonus = Math.floor(saved / qRestants);
+      for (let i = qIdx; i < 4; i++) t.qBudget[i] += bonus;
+    }
+  }
+  // Sauter au Q demandé
+  t.currentQ = qIdx;
+  t.qElapsed = 0;
+  // elapsed = somme des budgets des Q précédents (temps réel écoulé)
+  t.elapsed = Q_BOUNDS[qIdx];
   updateTimerDisplay(rid);
 }
+
 function updateTimerDisplay(rid) {
   const t = _timers[rid] || initTimer(rid);
-  const rem = Math.max(0, t.qBudget[t.currentQ] - t.qElapsed);
+  // Horloge = temps GLOBAL restant sur les 30 min
+  const totalBudget = t.qBudget.reduce((s,v) => s+v, 0);
+  const elapsed = Q_BOUNDS[t.currentQ] + t.qElapsed;
+  const globalRem = Math.max(0, totalBudget - elapsed);
   const clock = document.getElementById('tclock-'+rid);
   if (!clock) return;
-  clock.textContent = String(Math.floor(rem/60)).padStart(2,'0')+':'+String(rem%60).padStart(2,'0');
-  clock.className = 'timer-clock'+(rem<=60?' danger':rem<=120?' warn':'');
+  clock.textContent = String(Math.floor(globalRem/60)).padStart(2,'0')+':'+String(globalRem%60).padStart(2,'0');
+  clock.className = 'timer-clock'+(globalRem<=300?' danger':globalRem<=600?' warn':'');
+
+  // Supprimer le budget séparé (redondant)
   const budget = document.getElementById('tbudget-'+rid);
-  if (budget) {
-    const tr = TOTAL - t.elapsed;
-    budget.innerHTML = '<span class="time-budget-tag '+(tr>=0?'budget-ok':'budget-late')+'">Total restant : '+String(Math.floor(Math.abs(tr)/60)).padStart(2,'0')+':'+String(Math.abs(tr)%60).padStart(2,'0')+'</span>';
-  }
+  if (budget) budget.innerHTML = '';
+
+  // Q blocks
   for (let i=0;i<4;i++) {
-    const q = document.getElementById('quart-'+rid+'-'+i);
+    const q  = document.getElementById('quart-'+rid+'-'+i);
     const qs = document.getElementById('qs-'+rid+'-'+i);
     const ql = document.getElementById('ql-'+rid+'-'+i);
     if (!q) continue;
-    const QCOLS = ['rgba(34,197,94,.5)','rgba(59,130,246,.4)','rgba(245,158,11,.35)','rgba(230,57,70,.35)'];
+    const QCOLS  = ['rgba(34,197,94,.5)','rgba(59,130,246,.4)','rgba(245,158,11,.35)','rgba(230,57,70,.35)'];
     const QBORDS = ['#22c55e','#3b82f6','#f59e0b','#e63946'];
-    if (i===t.currentQ) {
+    if (i === t.currentQ) {
       q.className = 'quart active';
       q.style.borderColor = QBORDS[i];
-      q.style.background = QCOLS[i];
+      q.style.background  = QCOLS[i];
       if (ql) { ql.style.opacity='1'; ql.style.color=QBORDS[i]; }
-    } else if (i<t.currentQ) {
+      // Afficher le temps restant dans ce Q
+      const qRem = Math.max(0, t.qBudget[i] - t.qElapsed);
+      if (qs) { qs.textContent = String(Math.floor(qRem/60))+'m'+String(qRem%60).padStart(2,'0')+'s'; qs.style.color='rgba(255,255,255,.7)'; }
+    } else if (i < t.currentQ) {
       q.className = 'quart done';
       q.style.borderColor = '#22c55e';
-      q.style.background = 'rgba(34,197,94,.08)';
+      q.style.background  = 'rgba(34,197,94,.08)';
       if (ql) { ql.style.opacity='1'; ql.style.color='#22c55e'; }
+      // Afficher le temps gagné sur ce Q
+      if (qs && t.qSaved[i]) {
+        const s = t.qSaved[i];
+        qs.textContent = (s>0?'+':'')+Math.floor(Math.abs(s)/60)+'m'+Math.abs(s%60)+'s';
+        qs.style.color = s>0?'#22c55e':'#ef4444';
+      } else if (qs) qs.textContent = '';
     } else {
       q.className = 'quart inactive';
       q.style.borderColor = 'transparent';
-      q.style.background = 'rgba(255,255,255,.06)';
+      q.style.background  = 'rgba(255,255,255,.06)';
       if (ql) { ql.style.opacity='.4'; ql.style.color=''; }
+      // Afficher le budget alloué à ce Q
+      if (qs) { qs.textContent = String(Math.floor(t.qBudget[i]/60))+'m'; qs.style.color='rgba(255,255,255,.4)'; }
     }
-    if (qs && t.qSaved[i] && i<t.currentQ) {
-      const s=t.qSaved[i];
-      qs.textContent=(s>0?'+':'')+Math.floor(Math.abs(s)/60)+'m'+Math.abs(s%60)+'s';
-      qs.style.color=s>0?'#22c55e':'#ef4444';
-    } else if (qs) { qs.textContent=''; }
   }
+
+  // Curseur ligne de temps basé sur le temps global
   const cursor = document.getElementById('tlc-'+rid);
-  if (cursor) cursor.style.left=Math.min(100,(t.elapsed/TOTAL)*100)+'%';
+  if (cursor) cursor.style.left = Math.min(100, (elapsed/TOTAL)*100)+'%';
 }
 
 // ── STATUT SUJET ─────────────────────────────────────────────
