@@ -1084,13 +1084,6 @@ function renderReunions() {
     card.appendChild(timerBlock);
 
     // ── Bandeau priorités ───────────────────────────────────
-    const prioBanner = document.createElement('div');
-    prioBanner.className = 'prio-banner' + (starred.size ? ' on' : '');
-    prioBanner.id = 'prio-' + r.id;
-    prioBanner.innerHTML = '<div class="prio-banner-title">\u2B50 Sujets prioritaires du jour</div><div class="prio-chips" id="prio-chips-' + r.id + '">' +
-      Array.from(starred).map(i => { const a = (r.agenda||[])[i]; return a ? '<span class="prio-chip">' + a + '</span>' : ''; }).join('') + '</div>';
-    card.appendChild(prioBanner);
-
 
     // ── Ordre du jour par thématique ───────────────────────
     if ((r.agenda||[]).length) {
