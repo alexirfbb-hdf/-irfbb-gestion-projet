@@ -1808,145 +1808,14 @@ function updatePriorityBanner(rid) {
   chips.innerHTML = Array.from(starred).map(i=>{ const a=(r.agenda||[])[i]; return a?'<span class="priority-chip">&#11088; '+a+'</span>':''; }).join('');
 }
 
-// ── CHECKLISTS PAUL / OLIVIER ─────────────────────────────────
-function renderChecklists(rid) {
-  const r = state.reunions.find(x=>x.id===rid);
-  if (!r) return;
-  let notes={};
-  try { notes=r.agendaNotes?JSON.parse(r.agendaNotes):{}; } catch(e){}
-  ['paul','olivier'].forEach(who => {
-    const el = document.getElementById('cl-'+who+'-'+rid);
-    if (!el) return;
-    const items = notes['_cl_'+who]||[];
-    el.innerHTML = items.map((item,i) =>
-      '<div class="checklist-item">'+
-      '<input type="checkbox" '+(item.done?'checked':'')+' onchange="toggleChecklistItem(\''+rid+'\',\''+who+'\','+i+',this.checked)">'+
-      '<span class="checklist-item-text" style="'+(item.done?'text-decoration:line-through;opacity:.5':'')+'">'+item.text+'</span>'+
-      '<button class="checklist-item-del" onclick="removeChecklistItem(\''+rid+'\',\''+who+'\','+i+')">&#x2715;</button>'+
-      '</div>'
-    ).join('');
-  });
-}
-async function addChecklistItem(rid, who) {
-  const input = document.getElementById('cl-'+who+'-input-'+rid);
-  if (!input||!input.value.trim()) return;
-  const r = state.reunions.find(x=>x.id===rid);
-  if (!r) return;
-  let notes={};
-  try { notes=r.agendaNotes?JSON.parse(r.agendaNotes):{}; } catch(e){}
-  if (!notes['_cl_'+who]) notes['_cl_'+who]=[];
-  notes['_cl_'+who].push({text:input.value.trim(),done:false});
-  r.agendaNotes=JSON.stringify(notes);
-  input.value='';
-  try { await api('saveReunion',{data:r}); renderChecklists(rid); } catch(e){ showError(e.message); }
-}
-async function toggleChecklistItem(rid, who, idx, done) {
-  const r = state.reunions.find(x=>x.id===rid);
-  if (!r) return;
-  let notes={};
-  try { notes=r.agendaNotes?JSON.parse(r.agendaNotes):{}; } catch(e){}
-  if (notes['_cl_'+who]&&notes['_cl_'+who][idx]) notes['_cl_'+who][idx].done=done;
-  r.agendaNotes=JSON.stringify(notes);
-  try { await api('saveReunion',{data:r}); renderChecklists(rid); } catch(e){ showError(e.message); }
-}
-async function removeChecklistItem(rid, who, idx) {
-  const r = state.reunions.find(x=>x.id===rid);
-  if (!r) return;
-  let notes={};
-  try { notes=r.agendaNotes?JSON.parse(r.agendaNotes):{}; } catch(e){}
-  if (notes['_cl_'+who]) notes['_cl_'+who].splice(idx,1);
-  r.agendaNotes=JSON.stringify(notes);
-  try { await api('saveReunion',{data:r}); renderChecklists(rid); } catch(e){ showError(e.message); }
-}
-function exportChecklist(rid, who) {
-  const r = state.reunions.find(x=>x.id===rid);
-  if (!r) return;
-  let notes={};
-  try { notes=r.agendaNotes?JSON.parse(r.agendaNotes):{}; } catch(e){}
-  const items = notes['_cl_'+who]||[];
-  if (!items.length) { alert('Aucun sujet dans cette liste.'); return; }
-  const name = who==='paul'?'Paul':'Olivier Deruwez';
-  const dt = new Date(r.date).toLocaleDateString('fr-FR',{day:'numeric',month:'long',year:'numeric'});
-  const lines = ['SUJETS POUR '+name.toUpperCase()+' - '+dt, '', ...items.map(it=>(it.done?'[x]':'[ ]')+' '+it.text)];
-  navigator.clipboard.writeText(lines.join('\n')).then(()=>{
-    const b=document.getElementById('errorBanner');
-    if(b){b.innerHTML='Copie !';b.style.display='flex';b.style.background='#f0fdf4';b.style.color='#16a34a';b.style.borderColor='#86efac';setTimeout(()=>{b.style.display='none';b.style.background='';b.style.color='';b.style.borderColor='';},2000);}
-  });
-}
-
-// ── EXPORT TACHES PAR MEMBRE ──────────────────────────────────
-function exportMemberActions(rid, memberId) {
-  const r = state.reunions.find(x=>x.id===rid);
-  if (!r) return;
-  let notes={}, themeMap={};
-  try { notes=r.agendaNotes?JSON.parse(r.agendaNotes):{}; } catch(e){}
-  try { themeMap=r.agendaThemes?JSON.parse(r.agendaThemes):{}; } catch(e){}
-  const m = getMember(memberId);
-  if (!m) return;
-  const dt = new Date(r.date).toLocaleDateString('fr-FR',{day:'numeric',month:'long',year:'numeric'});
-  const themes = getThemes();
-  const actions = [];
-  (r.agenda||[]).forEach((a,i)=>{
-    const key='item_'+i;
-    if (notes[key]&&notes[key].assignee===memberId&&notes[key].action) {
-      const t = themes.find(x=>x.id===(themeMap[i]||''))||{label:'Divers'};
-      actions.push('['+t.label+'] '+a+' : '+notes[key].action);
-    }
-  });
-  if (!actions.length) { alert('Aucune action assignee a '+m.name+'.'); return; }
-  const lines = ['TACHES DE '+m.name.toUpperCase()+' - '+dt, 'Reunion : '+r.title, '', ...actions.map(a=>'- '+a)];
-  navigator.clipboard.writeText(lines.join('\n')).then(()=>{
-    const b=document.getElementById('errorBanner');
-    if(b){b.innerHTML='Taches de '+m.name+' copiees !';b.style.display='flex';b.style.background='#f0fdf4';b.style.color='#16a34a';b.style.borderColor='#86efac';setTimeout(()=>{b.style.display='none';b.style.background='';b.style.color='';b.style.borderColor='';},2000);}
-  });
-}
 
 
-// ── TIMER REPENSE ─────────────────────────────────────────────
-function jumpToQuart(rid, qIdx) {
-  if (!_timers[rid]) _timers[rid] = { elapsed:0, running:false, currentQ:0, qElapsed:0, qBudget:[300,600,600,300], qSaved:[0,0,0,0] };
-  const t = _timers[rid];
-  if (qIdx > t.currentQ) {
-    const saved = t.qBudget[t.currentQ] - t.qElapsed;
-    t.qSaved[t.currentQ] = saved;
-    if (saved > 0) { const bonus = Math.floor(saved / Math.max(1,3-t.currentQ)); for (let i=t.currentQ+1;i<4;i++) t.qBudget[i]+=bonus; }
-    t.currentQ = qIdx; t.qElapsed = 0; t.elapsed = Q_BOUNDS[qIdx];
-  }
-  updateTimerDisplay(rid);
-}
 
-// ── EXPORT CR ────────────────────────────────────────────────
-function toggleCRExport(rid) {
-  const box = document.getElementById('cr-box-'+rid);
-  const txt = document.getElementById('cr-txt-'+rid);
-  if (!box||!txt) return;
-  const r = state.reunions.find(x=>x.id===rid);
-  if (!r) return;
-  let notes={};
-  try { notes=r.agendaNotes?JSON.parse(r.agendaNotes):{}; } catch(e){}
-  const dt = new Date(r.date);
-  const dateStr = dt.toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
-  const cap = getMember(notes._capitaine);
-  const decisions=[], actions=[];
-  (r.agenda||[]).forEach((a,i)=>{
-    const key='item_'+i;
-    const star = notes._starred===i ? '⭐ ' : '';
-    if (notes[key]?.decision) decisions.push('• '+star+a+' → '+notes[key].decision);
-    if (notes[key]?.action)   actions.push('• '+star+a+' : '+notes[key].action);
-  });
-  const lines = [
-    '📋 COMPTE RENDU — '+r.title.toUpperCase(),
-    '📅 '+dateStr+(cap?' | 👤 Capitaine : '+cap.name:''),
-    '',
-    decisions.length ? '\u2705 D\u00c9CISIONS\n'+decisions.join('\n') : '✅ Aucune décision formalisée',
-    '',
-    actions.length ? '\uD83C\uDFAF ACTIONS\n'+actions.join('\n') : '🎯 Aucune action',
-    '',
-    r.nextMeeting ? '\uD83D\uDCC5 PROCHAINE R\u00c9UNION\n'+r.nextMeeting : '',
-  ].filter(x=>x!==undefined).join('\n');
-  txt.textContent = lines;
-  box.classList.toggle('open');
-}
+
+
+
+
+
 function copyCR(rid) {
   const el = document.getElementById('cr-txt-'+rid);
   if (!el) return;
@@ -2386,6 +2255,9 @@ loadData().then(() => renderDashboard());
 // Rafraîchissement auto toutes les 30 secondes
 setInterval(async () => {
   if (state.loading) return;
+  // Ne pas recharger si l'utilisateur est en train de saisir
+  const active = document.activeElement;
+  if (active && (active.tagName === 'TEXTAREA' || active.tagName === 'INPUT')) return;
   await loadData();
   const v = document.querySelector('.view.active');
   if (v?.id === 'view-dashboard') renderDashboard();
