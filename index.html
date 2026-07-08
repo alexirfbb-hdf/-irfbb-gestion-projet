@@ -571,7 +571,18 @@ async function apiCall(action, body = {}) {
   if (action === 'getData') {
     url = API_URL + '?action=getData';
   } else {
-    const encoded = encodeURIComponent(JSON.stringify({ action, ...body }));
+    // Encoder proprement en gérant les caractères spéciaux
+    const jsonStr = JSON.stringify({ action, ...body });
+    // Remplacer les caractères problématiques avant encodage
+    let encoded;
+    try {
+      encoded = encodeURIComponent(jsonStr);
+    } catch(e) {
+      // Fallback : encoder caractère par caractère
+      encoded = jsonStr.split('').map(c => {
+        try { return encodeURIComponent(c); } catch(e) { return c; }
+      }).join('');
+    }
     url = API_URL + '?payload=' + encoded;
   }
   const res = await fetch(url, { method: 'GET', redirect: 'follow' });
@@ -581,6 +592,7 @@ async function apiCall(action, body = {}) {
     if (!json.success) throw new Error(json.error || 'Erreur API');
     return json.data;
   } catch(e) {
+    if (text.includes('"success"')) throw new Error(JSON.parse(text).error || 'Erreur API');
     throw new Error('Réponse invalide : ' + text.substring(0, 100));
   }
 }
