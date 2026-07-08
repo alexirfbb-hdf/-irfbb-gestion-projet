@@ -1424,7 +1424,12 @@ async function confirmSubjectAction(rid, idx) {
   if (!notes[key].actions) notes[key].actions = [];
   notes[key].actions.push({assignee: selEl ? selEl.value : '', text: txtEl.value.trim()});
   r.agendaNotes = JSON.stringify(notes);
-  try { await apiCall('saveCR', {id: rid, field: 'agendaNotes', value: r.agendaNotes}); closeAddActionForm(rid, idx); refreshActionsList(rid, idx, notes); } catch(e) { showError(e.message); }
+  // Envoyer uniquement l'item modifié (payload court)
+  try {
+    await apiCall('saveAgendaItem', {id: rid, key: key, data: notes[key]});
+    closeAddActionForm(rid, idx);
+    refreshActionsList(rid, idx, notes);
+  } catch(e) { showError(e.message); }
 }
 async function updateSubjectAction(rid, idx, ai, newText) {
   const text = newText.replace(/<[^>]*>/g, '').trim(); // strip HTML tags
@@ -1450,7 +1455,11 @@ async function removeSubjectAction(rid, idx, ai) {
   const key = 'item_' + idx;
   if (notes[key] && notes[key].actions) notes[key].actions.splice(ai, 1);
   r.agendaNotes = JSON.stringify(notes);
-  try { await apiCall('saveCR', {id: rid, field: 'agendaNotes', value: r.agendaNotes}); refreshActionsList(rid, idx, notes); } catch(e) { showError(e.message); }
+  // Envoyer uniquement l'item modifié
+  try {
+    await apiCall('saveAgendaItem', {id: rid, key: key, data: notes[key] || {}});
+    refreshActionsList(rid, idx, notes);
+  } catch(e) { showError(e.message); }
 }
 
 
