@@ -1358,7 +1358,7 @@ async function confirmSubjectAction(rid, idx) {
   if (!notes[key].actions) notes[key].actions = [];
   notes[key].actions.push({assignee: selEl ? selEl.value : '', text: txtEl.value.trim()});
   r.agendaNotes = JSON.stringify(notes);
-  try { await api('saveReunion', {data: r}); closeAddActionForm(rid, idx); renderReunions(); } catch(e) { showError(e.message); }
+  try { await api('saveReunion', {data: r}); closeAddActionForm(rid, idx); refreshActionsList(rid, idx, notes); } catch(e) { showError(e.message); }
 }
 async function removeSubjectAction(rid, idx, ai) {
   const r = state.reunions.find(x => x.id === rid);
@@ -1368,7 +1368,33 @@ async function removeSubjectAction(rid, idx, ai) {
   const key = 'item_' + idx;
   if (notes[key] && notes[key].actions) notes[key].actions.splice(ai, 1);
   r.agendaNotes = JSON.stringify(notes);
-  try { await api('saveReunion', {data: r}); renderReunions(); } catch(e) { showError(e.message); }
+  try { await api('saveReunion', {data: r}); refreshActionsList(rid, idx, notes); } catch(e) { showError(e.message); }
+}
+
+
+// ── Refresh partiel liste d'actions (sans recharger toute la page) ──
+function refreshActionsList(rid, idx, notes) {
+  const key = 'item_' + idx;
+  const noteData = notes[key] || {};
+  const actions = noteData.actions || [];
+  const el = document.getElementById('al-' + rid + '-' + idx);
+  if (!el) return;
+  el.innerHTML = actions.map((ac, ai) => {
+    const m = getMember(ac.assignee);
+    const bg = m && typeof AVATAR_BG !== 'undefined' ? (AVATAR_BG[m.id]||'#94a3b8') : '#94a3b8';
+    const avImg = m && m.avatar ? '<img src="' + m.avatar + '">' : (m ? m.name.substring(0,2) : '?');
+    return '<div class="action-row">' +
+      '<div class="action-av" style="background:' + bg + '">' + avImg + '</div>' +
+      '<span class="action-txt">' + (m ? '<strong>' + m.name + '</strong> : ' : '') + ac.text + '</span>' +
+      '<button class="action-del" onclick="removeSubjectAction(\'' + rid + '\',' + idx + ',' + ai + ')">×</button>' +
+    '</div>';
+  }).join('');
+  showSaveIndicator();
+}
+
+function showSaveIndicator() {
+  const ind = document.getElementById('save-indicator');
+  if (ind) { ind.style.opacity='1'; setTimeout(()=>ind.style.opacity='0',1500); }
 }
 
 // ── Debounce notes sujet ──────────────────────────────────────
