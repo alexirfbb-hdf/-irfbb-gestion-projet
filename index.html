@@ -1390,19 +1390,19 @@ async function toggleStarSubject(rid, idx) {
 async function cycleSubjectStatus(rid, idx) {
   const noteData = getItemNote(rid, idx);
   const cur = noteData.status || 'todo';
-  const notes = getReunionNotes(rid);
-  const key = 'item_' + idx;
-  if (!notes[key]) notes[key] = {};
   const next = cur === 'todo' ? 'done' : cur === 'done' ? 'report' : 'todo';
-  notes[key].status = next;
-  r.agendaNotes = JSON.stringify(notes);
 
-  // Mise à jour visuelle immédiate — sans recharger la page
+  // Mise à jour dans le state local
+  if (!state.agendaNotes[rid]) state.agendaNotes[rid] = {};
+  const key = 'item_' + idx;
+  if (!state.agendaNotes[rid][key]) state.agendaNotes[rid][key] = {};
+  state.agendaNotes[rid][key].status = next;
+
+  // Mise à jour visuelle immédiate
+  const starred = new Set(getMetaNotes(rid).starred || []);
   const updateCard = (prefix) => {
     const sc = document.getElementById('sc-' + prefix + rid + '-' + idx);
-    const sb = document.getElementById('sb-' + prefix + rid + '-' + idx);
     if (!sc) return;
-    // Statut bouton
     const statusBtn = sc.querySelector('.subj-status');
     if (statusBtn) {
       const labels = {todo:'\u25A1 \u00c0 traiter', done:'\u2705 Trait\u00e9', report:'\uD83D\uDD04 Report\u00e9'};
@@ -1410,23 +1410,18 @@ async function cycleSubjectStatus(rid, idx) {
       statusBtn.textContent = labels[next];
       statusBtn.className = cls[next];
     }
-    // Titre barré si done
     const titleEl = sc.querySelector('.subj-title');
-    if (titleEl) {
-      titleEl.classList.toggle('crossed', next === 'done');
-    }
-    // Bordure carte
+    if (titleEl) titleEl.classList.toggle('crossed', next === 'done');
     sc.className = 'subj-card' +
-      (notes._starred && Array.from(new Set(Array.isArray(notes._starred)?notes._starred:[notes._starred])).includes(idx) ? ' priority' : '') +
+      (starred.has(idx) ? ' priority' : '') +
       (next === 'report' ? ' report-card' : '') +
       (next === 'done'   ? ' done-card'   : '');
   };
-
-  updateCard('');    // carte dans la thématique
-  updateCard('p-');  // carte dans le bandeau priorités (si présente)
+  updateCard('');
+  updateCard('p-');
 
   // Sauvegarde en arrière-plan
-  apiCall('saveCR', {id: rid, field: 'agendaNotes', value: r.agendaNotes})
+  saveItemNote(rid, idx, {status: next})
     .then(() => showSaveIndicator())
     .catch(e => showError(e.message));
 }
