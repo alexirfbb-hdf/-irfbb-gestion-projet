@@ -546,6 +546,7 @@ let state = {
   tasks: [],
   reunions: [],
   planningEvents: [],
+  agendaNotes: {},
   match: {},
   currentProject: null,
   loading: false,
@@ -601,10 +602,11 @@ async function loadData() {
   showLoading(true);
   try {
     const data = await api('getData');
-    state.projects      = data.projects || [];
-    state.tasks         = data.tasks    || [];
-    state.reunions      = data.reunions || [];
-    state.planningEvents = data.events  || [];
+    state.projects       = data.projects     || [];
+    state.tasks          = data.tasks       || [];
+    state.reunions       = data.reunions    || [];
+    state.planningEvents = data.events      || [];
+    state.agendaNotes    = data.agendaNotes || {};
     // Si le Sheets est vide, on injecte les données par défaut
     if (!state.projects.length) {
       for (const p of PROJECTS_DEFAULT) await api('saveProject', { data: p });
@@ -1005,11 +1007,12 @@ function renderReunions() {
   list.forEach(r => {
     const dt = new Date(r.date);
     const isPast = dt < now;
-    let notes = {}, themeMap = {};
-    try { notes = r.agendaNotes ? JSON.parse(r.agendaNotes) : {}; } catch(e) {}
+    const notes = getReunionNotes(r.id);
+    let themeMap = {};
     try { themeMap = r.agendaThemes ? JSON.parse(r.agendaThemes) : {}; } catch(e) {}
-    const starred = new Set(Array.isArray(notes._starred) ? notes._starred : (notes._starred >= 0 ? [notes._starred] : []));
-    const capId = notes._capitaine || '';
+    const meta = getMetaNotes(r.id);
+    const starred = new Set(meta.starred);
+    const capId = meta.capitaine || '';
     const capMember = getMember(capId);
 
     // Bâtir la carte
@@ -1220,6 +1223,41 @@ function renderReunions() {
   });
 }
 
+
+// ── Lecture notes agenda depuis state ────────────────────────
+function getReunionNotes(rid) {
+  return state.agendaNotes[rid] || {};
+}
+function getItemNote(rid, idx) {
+  const notes = getReunionNotes(rid);
+  return notes['item_' + idx] || {};
+}
+function getMetaNotes(rid) {
+  const notes = getReunionNotes(rid);
+  return {
+    starred:    notes._starred    || [],
+    capitaine:  notes._capitaine  || '',
+    cl_paul:    notes._cl_paul    || [],
+    cl_olivier: notes._cl_olivier || [],
+  };
+}
+
+// ── Sauvegarde item individuel ────────────────────────────────
+async function saveItemNote(rid, idx, data) {
+  if (!state.agendaNotes[rid]) state.agendaNotes[rid] = {};
+  const key = 'item_' + idx;
+  if (!state.agendaNotes[rid][key]) state.agendaNotes[rid][key] = {};
+  Object.assign(state.agendaNotes[rid][key], data);
+  return apiCall('saveAgendaNote', {reunionId: rid, key: key, data: state.agendaNotes[rid][key]});
+}
+
+// ── Sauvegarde meta (starred, capitaine, checklists) ─────────
+async function saveMetaNotes(rid, data) {
+  if (!state.agendaNotes[rid]) state.agendaNotes[rid] = {};
+  Object.assign(state.agendaNotes[rid], data);
+  return apiCall('saveMeta', {reunionId: rid, data: data});
+}
+
 // ── Construction carte sujet ─────────────────────────────────
 function buildSubjectCard(r, i, subj, notes, starred, prefix) {
   const pfx = prefix ? prefix + '-' : '';
@@ -1329,14 +1367,9 @@ function toggleSubjectCard(rid, idx) {
 
 // ── Multi-étoiles ────────────────────────────────────────────
 async function toggleStarSubject(rid, idx) {
-  const r = state.reunions.find(x => x.id === rid);
-  if (!r) return;
-  let notes = {};
-  try { notes = r.agendaNotes ? JSON.parse(r.agendaNotes) : {}; } catch(e) {}
-  const starred = new Set(Array.isArray(notes._starred) ? notes._starred : (notes._starred >= 0 ? [notes._starred] : []));
+  const meta = getMetaNotes(rid);
+  const starred = new Set(meta.starred);
   if (starred.has(idx)) starred.delete(idx); else starred.add(idx);
-  notes._starred = Array.from(starred);
-  r.agendaNotes = JSON.stringify(notes);
 
   // Mise à jour visuelle immédiate de l'étoile
   ['', 'p-'].forEach(pfx => {
@@ -1355,13 +1388,11 @@ async function toggleStarSubject(rid, idx) {
 
 // ── Statut sujet ─────────────────────────────────────────────
 async function cycleSubjectStatus(rid, idx) {
-  const r = state.reunions.find(x => x.id === rid);
-  if (!r) return;
-  let notes = {};
-  try { notes = r.agendaNotes ? JSON.parse(r.agendaNotes) : {}; } catch(e) {}
+  const noteData = getItemNote(rid, idx);
+  const cur = noteData.status || 'todo';
+  const notes = getReunionNotes(rid);
   const key = 'item_' + idx;
   if (!notes[key]) notes[key] = {};
-  const cur = notes[key].status || 'todo';
   const next = cur === 'todo' ? 'done' : cur === 'done' ? 'report' : 'todo';
   notes[key].status = next;
   r.agendaNotes = JSON.stringify(notes);
@@ -1417,8 +1448,7 @@ async function confirmSubjectAction(rid, idx) {
   if (!txtEl || !txtEl.value.trim()) return;
   const r = state.reunions.find(x => x.id === rid);
   if (!r) return;
-  let notes = {};
-  try { notes = r.agendaNotes ? JSON.parse(r.agendaNotes) : {}; } catch(e) {}
+  const notes = getReunionNotes(rid);
   const key = 'item_' + idx;
   if (!notes[key]) notes[key] = {};
   if (!notes[key].actions) notes[key].actions = [];
@@ -1432,32 +1462,27 @@ async function confirmSubjectAction(rid, idx) {
   } catch(e) { showError(e.message); }
 }
 async function updateSubjectAction(rid, idx, ai, newText) {
-  const text = newText.replace(/<[^>]*>/g, '').trim(); // strip HTML tags
-  const r = state.reunions.find(x => x.id === rid);
-  if (!r || !text) return;
-  let notes = {};
-  try { notes = r.agendaNotes ? JSON.parse(r.agendaNotes) : {}; } catch(e) {}
-  const key = 'item_' + idx;
-  if (notes[key] && notes[key].actions && notes[key].actions[ai]) {
-    notes[key].actions[ai].text = text;
-    r.agendaNotes = JSON.stringify(notes);
-    apiCall('saveCR', {id: rid, field: 'agendaNotes', value: r.agendaNotes})
+  const text = newText.replace(/<[^>]*>/g, '').trim();
+  if (!text) return;
+  const noteData = getItemNote(rid, idx);
+  const actions = [...(noteData.actions || [])];
+  if (!actions.length && noteData.action) actions.push({assignee: noteData.assignee||'', text: noteData.action});
+  if (actions[ai]) {
+    actions[ai].text = text;
+    saveItemNote(rid, idx, {actions})
       .then(() => showSaveIndicator())
       .catch(e => showError(e.message));
   }
 }
 
 async function removeSubjectAction(rid, idx, ai) {
-  const r = state.reunions.find(x => x.id === rid);
-  if (!r) return;
-  let notes = {};
-  try { notes = r.agendaNotes ? JSON.parse(r.agendaNotes) : {}; } catch(e) {}
-  const key = 'item_' + idx;
-  if (notes[key] && notes[key].actions) notes[key].actions.splice(ai, 1);
-  r.agendaNotes = JSON.stringify(notes);
-  // Envoyer uniquement l'item modifié
+  const noteData = getItemNote(rid, idx);
+  const actions = [...(noteData.actions || [])];
+  if (!actions.length && noteData.action) actions.push({assignee: noteData.assignee||'', text: noteData.action});
+  actions.splice(ai, 1);
   try {
-    await apiCall('saveAgendaItem', {id: rid, key: key, data: notes[key] || {}});
+    await saveItemNote(rid, idx, {actions});
+    const notes = getReunionNotes(rid);
     refreshActionsList(rid, idx, notes);
   } catch(e) { showError(e.message); }
 }
@@ -1500,8 +1525,7 @@ function debounceNote(rid, idx, field, value) {
 async function saveSubjectNote(rid, idx, field, value) {
   const r = state.reunions.find(x => x.id === rid);
   if (!r) return;
-  let notes = {};
-  try { notes = r.agendaNotes ? JSON.parse(r.agendaNotes) : {}; } catch(e) {}
+  const notes = getReunionNotes(rid);
   const key = 'item_' + idx;
   if (!notes[key]) notes[key] = {};
   notes[key][field] = value;
@@ -1518,13 +1542,14 @@ function toggleCRExport(rid, tab) {
   if (!box) return;
   const r = state.reunions.find(x => x.id === rid);
   if (!r) return;
-  let notes = {}, themeMap = {};
-  try { notes = r.agendaNotes ? JSON.parse(r.agendaNotes) : {}; } catch(e) {}
+  const notes = getReunionNotes(rid);
+  const meta = getMetaNotes(rid);
+  let themeMap = {};
   try { themeMap = r.agendaThemes ? JSON.parse(r.agendaThemes) : {}; } catch(e) {}
   const dt = new Date(r.date);
   const dateShort = dt.toLocaleDateString('fr-FR', {day:'numeric', month:'long', year:'numeric'});
   const dateStr = dt.toLocaleDateString('fr-FR', {weekday:'long', day:'numeric', month:'long', year:'numeric'});
-  const cap = getMember(notes._capitaine);
+  const cap = getMember(meta.capitaine);
   const themes = getThemes();
   const byTheme = {};
   themes.forEach(t => { byTheme[t.id] = {label: t.label, comments: [], actions: []}; });
@@ -1601,14 +1626,11 @@ function copyCRTab(rid, tab) {
 
 // ── Checklists Paul/Olivier ───────────────────────────────────
 function renderChecklists(rid) {
-  const r = state.reunions.find(x => x.id === rid);
-  if (!r) return;
-  let notes = {};
-  try { notes = r.agendaNotes ? JSON.parse(r.agendaNotes) : {}; } catch(e) {}
+  const meta = getMetaNotes(rid);
   ['paul','olivier'].forEach(who => {
     const el = document.getElementById('cl-' + who + '-' + rid);
     if (!el) return;
-    const items = notes['_cl_' + who] || [];
+    const items = who === 'paul' ? (meta.cl_paul || []) : (meta.cl_olivier || []);
     el.innerHTML = items.map((item, i) =>
       '<div class="cl-item">' +
         '<input type="checkbox"' + (item.done ? ' checked' : '') + ' onchange="toggleChecklistItem(\'' + rid + '\',\'' + who + '\',' + i + ',this.checked)">' +
@@ -1621,40 +1643,33 @@ function renderChecklists(rid) {
 async function addChecklistItem(rid, who) {
   const inp = document.getElementById('cl-' + who + '-inp-' + rid);
   if (!inp || !inp.value.trim()) return;
-  const r = state.reunions.find(x => x.id === rid);
-  if (!r) return;
-  let notes = {};
-  try { notes = r.agendaNotes ? JSON.parse(r.agendaNotes) : {}; } catch(e) {}
-  if (!notes['_cl_' + who]) notes['_cl_' + who] = [];
-  notes['_cl_' + who].push({text: inp.value.trim(), done: false});
-  r.agendaNotes = JSON.stringify(notes);
+  const meta = getMetaNotes(rid);
+  const key = '_cl_' + who;
+  const items = [...(meta[key === '_cl_paul' ? 'cl_paul' : 'cl_olivier'] || [])];
+  items.push({text: inp.value.trim(), done: false});
   inp.value = '';
-  try { await apiCall('saveCR', {id: rid, field: 'agendaNotes', value: r.agendaNotes}); renderChecklists(rid); } catch(e) { showError(e.message); }
+  try {
+    await saveMetaNotes(rid, {[key]: items});
+    renderChecklists(rid);
+  } catch(e) { showError(e.message); }
 }
 async function toggleChecklistItem(rid, who, idx, done) {
-  const r = state.reunions.find(x => x.id === rid);
-  if (!r) return;
-  let notes = {};
-  try { notes = r.agendaNotes ? JSON.parse(r.agendaNotes) : {}; } catch(e) {}
-  if (notes['_cl_' + who] && notes['_cl_' + who][idx]) notes['_cl_' + who][idx].done = done;
-  r.agendaNotes = JSON.stringify(notes);
-  try { await apiCall('saveCR', {id: rid, field: 'agendaNotes', value: r.agendaNotes}); renderChecklists(rid); } catch(e) { showError(e.message); }
+  const meta = getMetaNotes(rid);
+  const prop = who === 'paul' ? 'cl_paul' : 'cl_olivier';
+  const items = [...(meta[prop] || [])];
+  if (items[idx]) items[idx].done = done;
+  try { await saveMetaNotes(rid, {['_cl_' + who]: items}); renderChecklists(rid); } catch(e) { showError(e.message); }
 }
 async function removeChecklistItem(rid, who, idx) {
-  const r = state.reunions.find(x => x.id === rid);
-  if (!r) return;
-  let notes = {};
-  try { notes = r.agendaNotes ? JSON.parse(r.agendaNotes) : {}; } catch(e) {}
-  if (notes['_cl_' + who]) notes['_cl_' + who].splice(idx, 1);
-  r.agendaNotes = JSON.stringify(notes);
-  try { await apiCall('saveCR', {id: rid, field: 'agendaNotes', value: r.agendaNotes}); renderChecklists(rid); } catch(e) { showError(e.message); }
+  const meta = getMetaNotes(rid);
+  const prop = who === 'paul' ? 'cl_paul' : 'cl_olivier';
+  const items = [...(meta[prop] || [])];
+  items.splice(idx, 1);
+  try { await saveMetaNotes(rid, {['_cl_' + who]: items}); renderChecklists(rid); } catch(e) { showError(e.message); }
 }
 function exportChecklist(rid, who) {
-  const r = state.reunions.find(x => x.id === rid);
-  if (!r) return;
-  let notes = {};
-  try { notes = r.agendaNotes ? JSON.parse(r.agendaNotes) : {}; } catch(e) {}
-  const items = notes['_cl_' + who] || [];
+  const meta = getMetaNotes(rid);
+  const items = who === 'paul' ? (meta.cl_paul || []) : (meta.cl_olivier || []);
   if (!items.length) { alert('Aucun sujet dans cette liste.'); return; }
   const name = who === 'paul' ? 'Paul' : 'Olivier Deruwez';
   const dt = new Date(r.date).toLocaleDateString('fr-FR', {day:'numeric', month:'long', year:'numeric'});
@@ -1669,8 +1684,8 @@ function exportChecklist(rid, who) {
 function exportMemberActions(rid, memberId) {
   const r = state.reunions.find(x => x.id === rid);
   if (!r) return;
-  let notes = {}, themeMap = {};
-  try { notes = r.agendaNotes ? JSON.parse(r.agendaNotes) : {}; } catch(e) {}
+  const notes = getReunionNotes(rid);
+  let themeMap = {};
   try { themeMap = r.agendaThemes ? JSON.parse(r.agendaThemes) : {}; } catch(e) {}
   const m = getMember(memberId);
   if (!m) return;
@@ -1710,8 +1725,7 @@ function debouncesCR(rid, field, value) {
 async function saveAgendaNote(rid, index, field, value) {
   const r = state.reunions.find(x => x.id === rid);
   if (!r) return;
-  let notes = {};
-  try { notes = r.agendaNotes ? JSON.parse(r.agendaNotes) : {}; } catch(e) { notes = {}; }
+  const notes = getReunionNotes(rid);
   const key = 'item_' + index;
   if (!notes[key]) notes[key] = {};
   notes[key][field] = value;
@@ -1851,8 +1865,7 @@ function updateTimerDisplay(rid) {
 async function cycleStatus(rid, idx) {
   const r = state.reunions.find(x=>x.id===rid);
   if (!r) return;
-  let notes={};
-  try { notes=r.agendaNotes?JSON.parse(r.agendaNotes):{}; } catch(e){}
+  const notes = getReunionNotes(rid);
   const key='item_'+idx;
   if (!notes[key]) notes[key]={};
   const cur = notes[key].status||'todo';
@@ -1865,8 +1878,7 @@ async function cycleStatus(rid, idx) {
 async function saveCapitaine(rid, memberId) {
   const r = state.reunions.find(x=>x.id===rid);
   if (!r) return;
-  let notes={};
-  try { notes=r.agendaNotes?JSON.parse(r.agendaNotes):{}; } catch(e){}
+  const notes = getReunionNotes(rid);
   notes._capitaine = memberId;
   r.agendaNotes = JSON.stringify(notes);
   const el = document.getElementById('cap-'+rid);
@@ -1879,8 +1891,7 @@ async function saveCapitaine(rid, memberId) {
 async function toggleStar(rid, idx) {
   const r = state.reunions.find(x=>x.id===rid);
   if (!r) return;
-  let notes={};
-  try { notes=r.agendaNotes?JSON.parse(r.agendaNotes):{}; } catch(e){}
+  const notes = getReunionNotes(rid);
   const starred = new Set(Array.isArray(notes._starred)?notes._starred:(notes._starred>=0?[notes._starred]:[]));
   if (starred.has(idx)) starred.delete(idx); else starred.add(idx);
   notes._starred = Array.from(starred);
@@ -1892,8 +1903,7 @@ async function toggleStar(rid, idx) {
 function updatePriorityBanner(rid) {
   const r = state.reunions.find(x=>x.id===rid);
   if (!r) return;
-  let notes={};
-  try { notes=r.agendaNotes?JSON.parse(r.agendaNotes):{}; } catch(e){}
+  const notes = getReunionNotes(rid);
   const starred = new Set(Array.isArray(notes._starred)?notes._starred:(notes._starred>=0?[notes._starred]:[]));
   const banner = document.getElementById('prio-banner-'+rid);
   const chips = document.getElementById('prio-chips-'+rid);
