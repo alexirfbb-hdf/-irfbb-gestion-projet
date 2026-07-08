@@ -1782,14 +1782,7 @@ function resetTimer(rid) {
   updateTimerDisplay(rid);
 }
 function jumpToQuart(rid, qIdx) {
-  // Ne change pas le temps — juste force l'affichage du Q actif
-  // Le décompte continue normalement là où il en est
-  var t = initTimer(rid);
-  // Si on veut forcer un saut dans le temps, on met elapsed au début du Q
-  // Mais seulement si on est EN AVANCE (elapsed < Q_BOUNDS[qIdx])
-  if (t.elapsed < Q_BOUNDS[qIdx]) {
-    t.elapsed = Q_BOUNDS[qIdx];
-  }
+  // Ne fait RIEN au temps — juste un indicateur visuel
   updateTimerDisplay(rid);
 }
 function updateTimerDisplay(rid) {
