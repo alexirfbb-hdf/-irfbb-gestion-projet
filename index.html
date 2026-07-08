@@ -571,14 +571,12 @@ async function apiCall(action, body = {}) {
   if (action === 'getData') {
     url = API_URL + '?action=getData';
   } else {
-    // Encoder proprement en gérant les caractères spéciaux
-    const jsonStr = JSON.stringify({ action, ...body });
-    // Remplacer les caractères problématiques avant encodage
+    // Encoder proprement en gérant les caractères spéciaux dont %
+    const jsonStr = JSON.stringify({ action, ...body }).replace(/%/g, '%25');
     let encoded;
     try {
       encoded = encodeURIComponent(jsonStr);
     } catch(e) {
-      // Fallback : encoder caractère par caractère
       encoded = jsonStr.split('').map(c => {
         try { return encodeURIComponent(c); } catch(e) { return c; }
       }).join('');
@@ -1282,7 +1280,7 @@ function buildSubjectCard(r, i, subj, notes, starred, prefix) {
     actionsHtml +=
       '<div class="action-row">' +
         '<div class="action-av" style="background:' + bg + '">' + avImg + '</div>' +
-        '<span class="action-txt">' + (m ? '<strong>' + m.name + '</strong> : ' : '') + ac.text + '</span>' +
+        '<span class="action-txt" contenteditable="true" onblur="updateSubjectAction(\'' + r.id + '\',' + i + ',' + ai + ',this.innerText)" style="flex:1;font-size:12px;outline:none;cursor:text">' + (m ? '<strong>' + m.name + '</strong> : ' : '') + ac.text + '</span>' +
         '<button class="action-del" onclick="removeSubjectAction(\'' + r.id + '\',' + i + ',' + ai + ')">\u00d7</button>' +
       '</div>';
   });
@@ -1333,7 +1331,20 @@ async function toggleStarSubject(rid, idx) {
   if (starred.has(idx)) starred.delete(idx); else starred.add(idx);
   notes._starred = Array.from(starred);
   r.agendaNotes = JSON.stringify(notes);
-  try { await apiCall('saveCR', {id: rid, field: 'agendaNotes', value: r.agendaNotes}); renderReunions(); } catch(e) { showError(e.message); }
+
+  // Mise à jour visuelle immédiate de l'étoile
+  ['', 'p-'].forEach(pfx => {
+    const sc = document.getElementById('sc-' + pfx + rid + '-' + idx);
+    if (!sc) return;
+    const starBtn = sc.querySelector('.star-btn');
+    if (starBtn) starBtn.classList.toggle('on', starred.has(idx));
+    sc.classList.toggle('priority', starred.has(idx));
+  });
+
+  // Sauvegarder puis recharger pour mettre à jour le bandeau priorités
+  apiCall('saveCR', {id: rid, field: 'agendaNotes', value: r.agendaNotes})
+    .then(() => renderReunions())
+    .catch(e => showError(e.message));
 }
 
 // ── Statut sujet ─────────────────────────────────────────────
@@ -1345,9 +1356,42 @@ async function cycleSubjectStatus(rid, idx) {
   const key = 'item_' + idx;
   if (!notes[key]) notes[key] = {};
   const cur = notes[key].status || 'todo';
-  notes[key].status = cur === 'todo' ? 'done' : cur === 'done' ? 'report' : 'todo';
+  const next = cur === 'todo' ? 'done' : cur === 'done' ? 'report' : 'todo';
+  notes[key].status = next;
   r.agendaNotes = JSON.stringify(notes);
-  try { await apiCall('saveCR', {id: rid, field: 'agendaNotes', value: r.agendaNotes}); renderReunions(); } catch(e) { showError(e.message); }
+
+  // Mise à jour visuelle immédiate — sans recharger la page
+  const updateCard = (prefix) => {
+    const sc = document.getElementById('sc-' + prefix + rid + '-' + idx);
+    const sb = document.getElementById('sb-' + prefix + rid + '-' + idx);
+    if (!sc) return;
+    // Statut bouton
+    const statusBtn = sc.querySelector('.subj-status');
+    if (statusBtn) {
+      const labels = {todo:'\u25A1 \u00c0 traiter', done:'\u2705 Trait\u00e9', report:'\uD83D\uDD04 Report\u00e9'};
+      const cls    = {todo:'subj-status st-todo', done:'subj-status st-done', report:'subj-status st-report'};
+      statusBtn.textContent = labels[next];
+      statusBtn.className = cls[next];
+    }
+    // Titre barré si done
+    const titleEl = sc.querySelector('.subj-title');
+    if (titleEl) {
+      titleEl.classList.toggle('crossed', next === 'done');
+    }
+    // Bordure carte
+    sc.className = 'subj-card' +
+      (notes._starred && Array.from(new Set(Array.isArray(notes._starred)?notes._starred:[notes._starred])).includes(idx) ? ' priority' : '') +
+      (next === 'report' ? ' report-card' : '') +
+      (next === 'done'   ? ' done-card'   : '');
+  };
+
+  updateCard('');    // carte dans la thématique
+  updateCard('p-');  // carte dans le bandeau priorités (si présente)
+
+  // Sauvegarde en arrière-plan
+  apiCall('saveCR', {id: rid, field: 'agendaNotes', value: r.agendaNotes})
+    .then(() => showSaveIndicator())
+    .catch(e => showError(e.message));
 }
 
 // ── Actions multi ─────────────────────────────────────────────
@@ -1376,6 +1420,22 @@ async function confirmSubjectAction(rid, idx) {
   r.agendaNotes = JSON.stringify(notes);
   try { await apiCall('saveCR', {id: rid, field: 'agendaNotes', value: r.agendaNotes}); closeAddActionForm(rid, idx); refreshActionsList(rid, idx, notes); } catch(e) { showError(e.message); }
 }
+async function updateSubjectAction(rid, idx, ai, newText) {
+  const text = newText.replace(/<[^>]*>/g, '').trim(); // strip HTML tags
+  const r = state.reunions.find(x => x.id === rid);
+  if (!r || !text) return;
+  let notes = {};
+  try { notes = r.agendaNotes ? JSON.parse(r.agendaNotes) : {}; } catch(e) {}
+  const key = 'item_' + idx;
+  if (notes[key] && notes[key].actions && notes[key].actions[ai]) {
+    notes[key].actions[ai].text = text;
+    r.agendaNotes = JSON.stringify(notes);
+    apiCall('saveCR', {id: rid, field: 'agendaNotes', value: r.agendaNotes})
+      .then(() => showSaveIndicator())
+      .catch(e => showError(e.message));
+  }
+}
+
 async function removeSubjectAction(rid, idx, ai) {
   const r = state.reunions.find(x => x.id === rid);
   if (!r) return;
@@ -1405,7 +1465,7 @@ function refreshActionsList(rid, idx, notes) {
     const avImg = m && m.avatar ? '<img src="' + m.avatar + '">' : (m ? m.name.substring(0,2) : '?');
     return '<div class="action-row">' +
       '<div class="action-av" style="background:' + bg + '">' + avImg + '</div>' +
-      '<span class="action-txt">' + (m ? '<strong>' + m.name + '</strong> : ' : '') + ac.text + '</span>' +
+      '<span class="action-txt" contenteditable="true" onblur="updateSubjectAction(\'' + rid + '\',' + idx + ',' + ai + ',this.innerText)" style="flex:1;font-size:12px;outline:none;cursor:text">' + (m ? '<strong>' + m.name + '</strong> : ' : '') + ac.text + '</span>' +
       '<button class="action-del" onclick="removeSubjectAction(\'' + rid + '\',' + idx + ',' + ai + ')">×</button>' +
     '</div>';
   }).join('');
