@@ -1574,6 +1574,21 @@ function toggleCRExport(rid, tab) {
     });
   }
   if (r.nextMeeting) pl.push('PROCHAINE R\u00c9UNION', r.nextMeeting, '');
+
+  // Checklists Paul et Olivier
+  const clPaul = meta.cl_paul || [];
+  const clOlivier = meta.cl_olivier || [];
+  if (clPaul.length) {
+    pl.push('\u26A1 SUJETS \u00c0 VALIDER PAR PAUL', '');
+    clPaul.forEach(it => pl.push((it.done ? '[x]' : '[ ]') + ' ' + it.text));
+    pl.push('');
+  }
+  if (clOlivier.length) {
+    pl.push('\uD83D\uDC41\uFE0F SUJETS POUR OLIVIER DERUWEZ', '');
+    clOlivier.forEach(it => pl.push((it.done ? '[x]' : '[ ]') + ' ' + it.text));
+    pl.push('');
+  }
+
   pl.push('Cordialement,', "L'\u00e9quipe IRFBB HDF");
   const paulText = pl.join('\n');
 
