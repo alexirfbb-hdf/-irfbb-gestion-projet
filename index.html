@@ -1149,9 +1149,9 @@ function renderReunions() {
       '<div class="cr-lbl">Notes g\u00e9n\u00e9rales</div>' +
       '<div class="cr-grid">' +
         '<div class="cr-blk"><div class="cr-blk-title">\uD83D\uDCC5 Prochaine r\u00e9union</div>' +
-          '<textarea class="cr-ta" placeholder="Date et sujets pr\u00e9vus\u2026" oninput="debouncesCR(\'' + r.id + '\',\'nextMeeting\',this.value)">' + (r.nextMeeting||'') + '</textarea></div>' +
+          '<textarea class="cr-ta" placeholder="Date et sujets pr\u00e9vus\u2026" onblur="saveCR(\'' + r.id + '\',\'nextMeeting\',this.value)">' + (r.nextMeeting||'') + '</textarea></div>' +
         '<div class="cr-blk"><div class="cr-blk-title">\uD83D\uDCDD Notes libres</div>' +
-          '<textarea class="cr-ta" placeholder="Observations, divers\u2026" oninput="debouncesCR(\'' + r.id + '\',\'decisions\',this.value)">' + (r.decisions||'') + '</textarea></div>' +
+          '<textarea class="cr-ta" placeholder="Observations, divers\u2026" onblur="saveCR(\'' + r.id + '\',\'decisions\',this.value)">' + (r.decisions||'') + '</textarea></div>' +
       '</div>' +
 
       // Checklist Paul
@@ -1286,7 +1286,7 @@ function buildSubjectCard(r, i, subj, notes, starred, prefix) {
     '<div class="body-grid">' +
       '<div>' +
         '<div class="body-lbl">\uD83D\uDCAC Commentaires</div>' +
-        '<textarea class="body-ta" id="com-'+r.id+'-'+i+'" placeholder="Notes, contexte\u2026" oninput="debounceNote(\'' + r.id + '\',' + i + ',\'decision\',this.value)">' + (noteData.decision||'') + '</textarea>' +
+        '<textarea class="body-ta" id="com-'+r.id+'-'+i+'" placeholder="Notes, contexte\u2026" onblur="saveSubjectNote(\'' + r.id + '\',' + i + ',\'decision\',this.value)">' + (noteData.decision||'') + '</textarea>' +
       '</div>' +
       '<div>' +
         '<div class="body-lbl">\uD83C\uDFAF Actions \u00e0 mener</div>' +
@@ -1408,9 +1408,7 @@ function showSaveIndicator() {
 // ── Debounce notes sujet ──────────────────────────────────────
 const _debNotes = {};
 function debounceNote(rid, idx, field, value) {
-  const k = rid + '_' + idx + '_' + field;
-  clearTimeout(_debNotes[k]);
-  _debNotes[k] = setTimeout(() => saveSubjectNote(rid, idx, field, value), 800);
+  saveSubjectNote(rid, idx, field, value);
 }
 async function saveSubjectNote(rid, idx, field, value) {
   const r = state.reunions.find(x => x.id === rid);
@@ -1619,9 +1617,7 @@ function debounceSaveNote(rid, index, field, value) {
   _debounceTimers[key] = setTimeout(() => saveAgendaNote(rid, index, field, value), 800);
 }
 function debouncesCR(rid, field, value) {
-  const key = rid + '_cr_' + field;
-  clearTimeout(_debounceTimers[key]);
-  _debounceTimers[key] = setTimeout(() => saveCR(rid, field, value), 800);
+  saveCR(rid, field, value);
 }
 
 async function saveAgendaNote(rid, index, field, value) {
