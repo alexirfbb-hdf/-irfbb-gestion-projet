@@ -115,6 +115,36 @@ main { padding: 24px; max-width: 1400px; margin: 0 auto; }
 .reunion-month { font-size:13px; color:var(--muted); font-weight:500; }
 .reunion-card-title { font-size:18px; font-weight:700; margin-bottom:4px; }
 .reunion-card-time { font-size:14px; color:var(--muted); }
+
+/* ── Archives : groupes par mois + lignes compactes ─────── */
+.month-group { margin-bottom: 14px; }
+.month-group-header {
+  display: flex; align-items: center; gap: 10px;
+  background: white; border-radius: 10px; box-shadow: var(--shadow);
+  padding: 12px 18px; cursor: pointer; user-select: none;
+  transition: box-shadow .15s;
+}
+.month-group-header:hover { box-shadow: var(--shadow-lg); }
+.month-group-chevron { font-size: 11px; color: var(--muted); transition: transform .15s; display: inline-block; }
+.month-group-chevron.open { transform: rotate(90deg); }
+.month-group-label { font-size: 15px; font-weight: 700; text-transform: capitalize; flex: 1; }
+.month-group-count { font-size: 12px; color: var(--muted); background: #f1f5f9; padding: 2px 10px; border-radius: 10px; font-weight: 600; }
+.month-group-body { padding: 8px 0 2px 6px; }
+
+.rrow-wrap { margin-bottom: 8px; }
+.rrow {
+  display: flex; align-items: center; gap: 12px;
+  background: white; border: 1px solid var(--border); border-radius: 8px;
+  padding: 10px 16px; cursor: pointer; transition: background .12s, border-color .12s;
+}
+.rrow:hover { background: #f8fafc; border-color: #cbd5e1; }
+.rrow-chevron { font-size: 10px; color: var(--muted); flex-shrink: 0; transition: transform .15s; }
+.rrow-chevron.open { transform: rotate(90deg); }
+.rrow-date { font-size: 13px; font-weight: 700; color: var(--accent); flex-shrink: 0; width: 62px; }
+.rrow-title { font-size: 14px; font-weight: 600; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.rrow-time { font-size: 12px; color: var(--muted); flex-shrink: 0; }
+.rrow-actions { display: flex; gap: 6px; flex-shrink: 0; }
+.rrow-detail { margin-top: 8px; }
 .prio-banner { background:#fef3c7; border-top:1.5px solid #f59e0b; border-bottom:1.5px solid #f59e0b; padding:10px 20px; display:none; }
 .prio-banner.on { display:block; }
 .prio-banner-title { font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.5px; color:#d97706; margin-bottom:6px; }
@@ -985,6 +1015,81 @@ function cleanTime(t) {
   return t;
 }
 
+// ── État accordéon archives ──────────────────────────────────
+let _openMonths = new Set();
+
+function monthKeyOf(d) { return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0'); }
+function monthLabelOf(d) {
+  const l = d.toLocaleDateString('fr-FR', {month:'long', year:'numeric'});
+  return l.charAt(0).toUpperCase() + l.slice(1);
+}
+
+function toggleMonthGroup(key) {
+  const body = document.getElementById('mbody-' + key);
+  const chev = document.getElementById('mchev-' + key);
+  if (!body) return;
+  if (_openMonths.has(key)) {
+    _openMonths.delete(key);
+    body.style.display = 'none';
+    if (chev) chev.classList.remove('open');
+  } else {
+    _openMonths.add(key);
+    body.style.display = 'block';
+    if (chev) chev.classList.add('open');
+  }
+}
+
+function toggleReunionRow(rid) {
+  const detail = document.getElementById('rdetail-' + rid);
+  const chev = document.getElementById('rchev-' + rid);
+  if (!detail) return;
+  const isOpen = detail.style.display !== 'none';
+  if (isOpen) {
+    detail.style.display = 'none';
+    if (chev) chev.classList.remove('open');
+    return;
+  }
+  if (!detail.dataset.built) {
+    const r = state.reunions.find(x => x.id === rid);
+    if (r) {
+      const now = new Date(); now.setHours(0,0,0,0);
+      detail.appendChild(buildReunionCard(r, now));
+      detail.dataset.built = '1';
+    }
+  }
+  detail.style.display = 'block';
+  if (chev) chev.classList.add('open');
+}
+
+function buildReunionRow(r) {
+  const dt = new Date(r.date);
+  const wrap = document.createElement('div');
+  wrap.className = 'rrow-wrap';
+
+  const row = document.createElement('div');
+  row.className = 'rrow';
+  row.id = 'rrow-' + r.id;
+  row.innerHTML =
+    '<span class="rrow-chevron" id="rchev-' + r.id + '">\u25B6</span>' +
+    '<span class="rrow-date">' + dt.getDate() + ' ' + dt.toLocaleDateString('fr-FR',{month:'short'}) + '</span>' +
+    '<span class="rrow-title">' + r.title + '</span>' +
+    '<span class="rrow-time">' + (r.time ? '\uD83D\uDD50 ' + cleanTime(r.time) : '') + (r.location ? ' \u00b7 \uD83D\uDCCD ' + r.location : '') + '</span>' +
+    '<span class="rrow-actions">' +
+      '<button class="btn btn-sm btn-outline" onclick="event.stopPropagation();editReunion(\'' + r.id + '\')" title="Modifier">\u270F\uFE0F</button>' +
+      '<button class="btn btn-sm btn-outline" style="color:var(--accent)" onclick="event.stopPropagation();deleteReunion(\'' + r.id + '\')" title="Supprimer">\uD83D\uDDD1\uFE0F</button>' +
+    '</span>';
+  row.onclick = () => toggleReunionRow(r.id);
+  wrap.appendChild(row);
+
+  const detail = document.createElement('div');
+  detail.className = 'rrow-detail';
+  detail.id = 'rdetail-' + r.id;
+  detail.style.display = 'none';
+  wrap.appendChild(detail);
+
+  return wrap;
+}
+
 function renderReunions() {
   const el = document.getElementById('reunionsList');
   const now = new Date(); now.setHours(0,0,0,0);
@@ -997,14 +1102,63 @@ function renderReunions() {
     el.innerHTML = '<div class="empty-state"><div class="empty-icon">📅</div><div class="empty-text">' + (_reunionTab==='past'?'Aucune r\u00e9union archiv\u00e9e':'Aucune r\u00e9union \u00e0 venir') + '</div></div>';
     return;
   }
-  const QUARTS = [
-    {q:'Q1', range:"0-5'",  title:'Tour de table'},
-    {q:'Q2', range:"5-15'", title:'Sujet prio du jour \u2b50'},
-    {q:'Q3', range:"15-25'",title:'D\u00e9cisions & r\u00f4les'},
-    {q:'Q4', range:"25-30'",title:'Coup de sir\u00e8ne \u00b7 Prog. prochaine r\u00e9union'},
-  ];
+
   el.innerHTML = '';
-  list.forEach(r => {
+
+  // ── Archives : groupées par mois, en accordéon ────────────
+  if (_reunionTab === 'past') {
+    const groups = [];
+    const groupMap = {};
+    past.forEach(r => {
+      const dt = new Date(r.date);
+      const key = monthKeyOf(dt);
+      if (!groupMap[key]) {
+        groupMap[key] = { key, label: monthLabelOf(dt), items: [] };
+        groups.push(groupMap[key]);
+      }
+      groupMap[key].items.push(r);
+    });
+
+    if (_openMonths.size === 0 && groups.length) _openMonths.add(groups[0].key);
+
+    groups.forEach(g => {
+      const isOpen = _openMonths.has(g.key);
+      const grp = document.createElement('div');
+      grp.className = 'month-group';
+
+      const ghdr = document.createElement('div');
+      ghdr.className = 'month-group-header';
+      ghdr.innerHTML =
+        '<span class="month-group-chevron' + (isOpen ? ' open' : '') + '" id="mchev-' + g.key + '">\u25B6</span>' +
+        '<span class="month-group-label">' + g.label + '</span>' +
+        '<span class="month-group-count">' + g.items.length + ' r\u00e9union' + (g.items.length>1?'s':'') + '</span>';
+      ghdr.onclick = () => toggleMonthGroup(g.key);
+      grp.appendChild(ghdr);
+
+      const gbody = document.createElement('div');
+      gbody.className = 'month-group-body';
+      gbody.id = 'mbody-' + g.key;
+      gbody.style.display = isOpen ? 'block' : 'none';
+      g.items.forEach(r => gbody.appendChild(buildReunionRow(r)));
+      grp.appendChild(gbody);
+
+      el.appendChild(grp);
+    });
+    return;
+  }
+
+  // ── À venir : cartes complètes affichées directement ──────
+  list.forEach(r => el.appendChild(buildReunionCard(r, now)));
+}
+
+const QUARTS = [
+  {q:'Q1', range:"0-5'",  title:'Tour de table'},
+  {q:'Q2', range:"5-15'", title:'Sujet prio du jour \u2b50'},
+  {q:'Q3', range:"15-25'",title:'D\u00e9cisions & r\u00f4les'},
+  {q:'Q4', range:"25-30'",title:'Coup de sir\u00e8ne \u00b7 Prog. prochaine r\u00e9union'},
+];
+
+function buildReunionCard(r, now) {
     const dt = new Date(r.date);
     const isPast = dt < now;
     const notes = getReunionNotes(r.id);
@@ -1204,13 +1358,12 @@ function renderReunions() {
       '</div>';
     card.appendChild(crWrap);
 
-    el.appendChild(card);
-
     // Init checklists et timer display
     setTimeout(() => {
       renderChecklists(r.id);
     }, 10);
-  });
+
+    return card;
 }
 
 
