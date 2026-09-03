@@ -115,36 +115,6 @@ main { padding: 24px; max-width: 1400px; margin: 0 auto; }
 .reunion-month { font-size:13px; color:var(--muted); font-weight:500; }
 .reunion-card-title { font-size:18px; font-weight:700; margin-bottom:4px; }
 .reunion-card-time { font-size:14px; color:var(--muted); }
-
-/* ── Archives : groupes par mois + lignes compactes ─────── */
-.month-group { margin-bottom: 14px; }
-.month-group-header {
-  display: flex; align-items: center; gap: 10px;
-  background: white; border-radius: 10px; box-shadow: var(--shadow);
-  padding: 12px 18px; cursor: pointer; user-select: none;
-  transition: box-shadow .15s;
-}
-.month-group-header:hover { box-shadow: var(--shadow-lg); }
-.month-group-chevron { font-size: 11px; color: var(--muted); transition: transform .15s; display: inline-block; }
-.month-group-chevron.open { transform: rotate(90deg); }
-.month-group-label { font-size: 15px; font-weight: 700; text-transform: capitalize; flex: 1; }
-.month-group-count { font-size: 12px; color: var(--muted); background: #f1f5f9; padding: 2px 10px; border-radius: 10px; font-weight: 600; }
-.month-group-body { padding: 8px 0 2px 6px; }
-
-.rrow-wrap { margin-bottom: 8px; }
-.rrow {
-  display: flex; align-items: center; gap: 12px;
-  background: white; border: 1px solid var(--border); border-radius: 8px;
-  padding: 10px 16px; cursor: pointer; transition: background .12s, border-color .12s;
-}
-.rrow:hover { background: #f8fafc; border-color: #cbd5e1; }
-.rrow-chevron { font-size: 10px; color: var(--muted); flex-shrink: 0; transition: transform .15s; }
-.rrow-chevron.open { transform: rotate(90deg); }
-.rrow-date { font-size: 13px; font-weight: 700; color: var(--accent); flex-shrink: 0; width: 62px; }
-.rrow-title { font-size: 14px; font-weight: 600; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.rrow-time { font-size: 12px; color: var(--muted); flex-shrink: 0; }
-.rrow-actions { display: flex; gap: 6px; flex-shrink: 0; }
-.rrow-detail { margin-top: 8px; }
 .prio-banner { background:#fef3c7; border-top:1.5px solid #f59e0b; border-bottom:1.5px solid #f59e0b; padding:10px 20px; display:none; }
 .prio-banner.on { display:block; }
 .prio-banner-title { font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.5px; color:#d97706; margin-bottom:6px; }
@@ -457,9 +427,9 @@ main { padding: 24px; max-width: 1400px; margin: 0 auto; }
     <div class="logo-text">IRFBB <span>HDF</span></div>
   </div>
   <div class="nav-tabs">
-    <button class="nav-tab active" onclick="showView('dashboard')">🏠 Projets</button>
+    
     <button class="nav-tab" onclick="showView('reunions')" id="navReunionTab">📅 Réunions<span class="nav-tab-sub" id="navNextDate"></span></button>
-    <button class="nav-tab" onclick="showView('planning')">📆 Planning</button>
+    
   </div>
   <div class="header-right">
     <span id="save-indicator" style="font-size:12px;color:#22c55e;font-weight:600;opacity:0;transition:opacity .3s;margin-right:8px">✓ Sauvegardé</span>
@@ -478,15 +448,6 @@ main { padding: 24px; max-width: 1400px; margin: 0 auto; }
 </style>
 
 <main>
-  <!-- DASHBOARD -->
-  <div class="view active" id="view-dashboard">
-    <div class="section-header">
-      <div class="section-title">Projets</div>
-      <button class="btn btn-primary" onclick="openModal('project')">+ Nouveau projet</button>
-    </div>
-    <div class="projects-grid" id="projectsGrid"></div>
-  </div>
-
   <!-- KANBAN -->
   <div class="view" id="view-kanban">
     <div class="kanban-header">
@@ -501,15 +462,6 @@ main { padding: 24px; max-width: 1400px; margin: 0 auto; }
     </div>
     <div class="subproject-tabs" id="subprojectTabs"></div>
     <div class="kanban-board" id="kanbanBoard"></div>
-  </div>
-
-  <!-- PLANNING -->
-  <div class="view" id="view-planning">
-    <div class="section-header">
-      <div class="section-title">📆 Planning annuel</div>
-      <button class="btn btn-primary" onclick="openModal('planningevent')">+ Ajouter un événement</button>
-    </div>
-    <div class="planning-wrap" id="planningWrap"></div>
   </div>
 
   <!-- REUNIONS -->
@@ -1015,81 +967,6 @@ function cleanTime(t) {
   return t;
 }
 
-// ── État accordéon archives ──────────────────────────────────
-let _openMonths = new Set();
-
-function monthKeyOf(d) { return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0'); }
-function monthLabelOf(d) {
-  const l = d.toLocaleDateString('fr-FR', {month:'long', year:'numeric'});
-  return l.charAt(0).toUpperCase() + l.slice(1);
-}
-
-function toggleMonthGroup(key) {
-  const body = document.getElementById('mbody-' + key);
-  const chev = document.getElementById('mchev-' + key);
-  if (!body) return;
-  if (_openMonths.has(key)) {
-    _openMonths.delete(key);
-    body.style.display = 'none';
-    if (chev) chev.classList.remove('open');
-  } else {
-    _openMonths.add(key);
-    body.style.display = 'block';
-    if (chev) chev.classList.add('open');
-  }
-}
-
-function toggleReunionRow(rid) {
-  const detail = document.getElementById('rdetail-' + rid);
-  const chev = document.getElementById('rchev-' + rid);
-  if (!detail) return;
-  const isOpen = detail.style.display !== 'none';
-  if (isOpen) {
-    detail.style.display = 'none';
-    if (chev) chev.classList.remove('open');
-    return;
-  }
-  if (!detail.dataset.built) {
-    const r = state.reunions.find(x => x.id === rid);
-    if (r) {
-      const now = new Date(); now.setHours(0,0,0,0);
-      detail.appendChild(buildReunionCard(r, now));
-      detail.dataset.built = '1';
-    }
-  }
-  detail.style.display = 'block';
-  if (chev) chev.classList.add('open');
-}
-
-function buildReunionRow(r) {
-  const dt = new Date(r.date);
-  const wrap = document.createElement('div');
-  wrap.className = 'rrow-wrap';
-
-  const row = document.createElement('div');
-  row.className = 'rrow';
-  row.id = 'rrow-' + r.id;
-  row.innerHTML =
-    '<span class="rrow-chevron" id="rchev-' + r.id + '">\u25B6</span>' +
-    '<span class="rrow-date">' + dt.getDate() + ' ' + dt.toLocaleDateString('fr-FR',{month:'short'}) + '</span>' +
-    '<span class="rrow-title">' + r.title + '</span>' +
-    '<span class="rrow-time">' + (r.time ? '\uD83D\uDD50 ' + cleanTime(r.time) : '') + (r.location ? ' \u00b7 \uD83D\uDCCD ' + r.location : '') + '</span>' +
-    '<span class="rrow-actions">' +
-      '<button class="btn btn-sm btn-outline" onclick="event.stopPropagation();editReunion(\'' + r.id + '\')" title="Modifier">\u270F\uFE0F</button>' +
-      '<button class="btn btn-sm btn-outline" style="color:var(--accent)" onclick="event.stopPropagation();deleteReunion(\'' + r.id + '\')" title="Supprimer">\uD83D\uDDD1\uFE0F</button>' +
-    '</span>';
-  row.onclick = () => toggleReunionRow(r.id);
-  wrap.appendChild(row);
-
-  const detail = document.createElement('div');
-  detail.className = 'rrow-detail';
-  detail.id = 'rdetail-' + r.id;
-  detail.style.display = 'none';
-  wrap.appendChild(detail);
-
-  return wrap;
-}
-
 function renderReunions() {
   const el = document.getElementById('reunionsList');
   const now = new Date(); now.setHours(0,0,0,0);
@@ -1102,63 +979,14 @@ function renderReunions() {
     el.innerHTML = '<div class="empty-state"><div class="empty-icon">📅</div><div class="empty-text">' + (_reunionTab==='past'?'Aucune r\u00e9union archiv\u00e9e':'Aucune r\u00e9union \u00e0 venir') + '</div></div>';
     return;
   }
-
+  const QUARTS = [
+    {q:'Q1', range:"0-5'",  title:'M\u00e9t\u00e9o sentimentale'},
+    {q:'Q2', range:"5-15'", title:'Sujet prio du jour \u2b50'},
+    {q:'Q3', range:"15-25'",title:'D\u00e9cisions & r\u00f4les'},
+    {q:'Q4', range:"25-60'",title:'Coup de sir\u00e8ne \u00b7 Prog. prochaine r\u00e9union'},
+  ];
   el.innerHTML = '';
-
-  // ── Archives : groupées par mois, en accordéon ────────────
-  if (_reunionTab === 'past') {
-    const groups = [];
-    const groupMap = {};
-    past.forEach(r => {
-      const dt = new Date(r.date);
-      const key = monthKeyOf(dt);
-      if (!groupMap[key]) {
-        groupMap[key] = { key, label: monthLabelOf(dt), items: [] };
-        groups.push(groupMap[key]);
-      }
-      groupMap[key].items.push(r);
-    });
-
-    if (_openMonths.size === 0 && groups.length) _openMonths.add(groups[0].key);
-
-    groups.forEach(g => {
-      const isOpen = _openMonths.has(g.key);
-      const grp = document.createElement('div');
-      grp.className = 'month-group';
-
-      const ghdr = document.createElement('div');
-      ghdr.className = 'month-group-header';
-      ghdr.innerHTML =
-        '<span class="month-group-chevron' + (isOpen ? ' open' : '') + '" id="mchev-' + g.key + '">\u25B6</span>' +
-        '<span class="month-group-label">' + g.label + '</span>' +
-        '<span class="month-group-count">' + g.items.length + ' r\u00e9union' + (g.items.length>1?'s':'') + '</span>';
-      ghdr.onclick = () => toggleMonthGroup(g.key);
-      grp.appendChild(ghdr);
-
-      const gbody = document.createElement('div');
-      gbody.className = 'month-group-body';
-      gbody.id = 'mbody-' + g.key;
-      gbody.style.display = isOpen ? 'block' : 'none';
-      g.items.forEach(r => gbody.appendChild(buildReunionRow(r)));
-      grp.appendChild(gbody);
-
-      el.appendChild(grp);
-    });
-    return;
-  }
-
-  // ── À venir : cartes complètes affichées directement ──────
-  list.forEach(r => el.appendChild(buildReunionCard(r, now)));
-}
-
-const QUARTS = [
-  {q:'Q1', range:"0-5'",  title:'Tour de table'},
-  {q:'Q2', range:"5-15'", title:'Sujet prio du jour \u2b50'},
-  {q:'Q3', range:"15-25'",title:'D\u00e9cisions & r\u00f4les'},
-  {q:'Q4', range:"25-30'",title:'Coup de sir\u00e8ne \u00b7 Prog. prochaine r\u00e9union'},
-];
-
-function buildReunionCard(r, now) {
+  list.forEach(r => {
     const dt = new Date(r.date);
     const isPast = dt < now;
     const notes = getReunionNotes(r.id);
@@ -1275,7 +1103,47 @@ function buildReunionCard(r, now) {
 
       const allThemes = [...themes, {id:'_autre', label:'Autre', color:'#6366f1', bg:'#eef2ff'}];
 
-      // ── Section Prioritaires en haut ──────────────────────
+      // ── Sujet du jour ──────────────────────────
+      const sdjNote = getItemNote(r.id, '_sdj');
+      const sdjActions = sdjNote.actions || [];
+      const sdjActHtml = sdjActions.map(function(ac, ai) {
+        const m = getMember(ac.assignee);
+        const bg = m && typeof AVATAR_BG !== 'undefined' ? (AVATAR_BG[m.id]||'#94a3b8') : '#94a3b8';
+        const avImg = m && m.avatar ? '<img src="'+m.avatar+'">' : (m ? m.name.substring(0,2) : '?');
+        return '<div class="action-row">' +
+          '<div class="action-av" style="background:'+bg+'">'+avImg+'</div>' +
+          '<span class="action-txt">'+(m?'<strong>'+m.name+'</strong> : ':'')+ac.text+'</span>' +
+          '<button class="action-del" onclick="removeSubjectAction(\''+r.id+'\',\'_sdj\','+ai+')">\u00d7</button>' +
+        '</div>';
+      }).join('');
+      const sdjEl = document.createElement('div');
+      sdjEl.style.cssText = 'background:#f0f9ff;border:1.5px solid #38bdf8;border-radius:10px;margin:8px 0;padding:12px;';
+      sdjEl.innerHTML =
+        '<div style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:#0369a1;margin-bottom:10px">' +
+          '\uD83C\uDFAF Sujet du jour' +
+        '</div>' +
+        '<div class="body-grid">' +
+          '<div>' +
+            '<div class="body-lbl">\uD83D\uDCAC Notes</div>' +
+            '<textarea class="body-ta" placeholder="Notes\u2026" oninput="debounceNote(\''+r.id+'\',\'_sdj\',\'decision\',this.value)">'+(sdjNote.decision||'')+'</textarea>' +
+          '</div>' +
+          '<div>' +
+            '<div class="body-lbl">\uD83C\uDFAF Actions</div>' +
+            '<div class="actions-list" id="al-'+r.id+'-_sdj">'+sdjActHtml+'</div>' +
+            '<button class="add-action-btn" onclick="openAddActionForm(\''+r.id+'\',\'_sdj\')">+ Ajouter une action</button>' +
+            '<div class="aaf" id="aaf-'+r.id+'-_sdj" style="display:none">' +
+              '<select id="aaf-sel-'+r.id+'-_sdj"><option value="">Assigner\u2026</option>'+MEMBERS.map(function(m){return '<option value="'+m.id+'">'+m.name+'</option>';}).join('')+'</select>' +
+              '<textarea id="aaf-txt-'+r.id+'-_sdj" placeholder="D\u00e9crivez l\u2019action\u2026"></textarea>' +
+              '<div class="aaf-btns">' +
+                '<button class="aaf-save" onclick="confirmSubjectAction(\''+r.id+'\',\'_sdj\')">Enregistrer</button>' +
+                '<button class="aaf-cancel" onclick="closeAddActionForm(\''+r.id+'\',\'_sdj\')">Annuler</button>' +
+              '</div>' +
+            '</div>' +
+          '</div>' +
+        '</div>';
+      odj.appendChild(sdjEl);
+
+      // ── Section Prioritaires en haut ──────────────
       if (starred.size > 0) {
         const prioItems = Array.from(starred)
           .map(i => ({ subj: (r.agenda||[])[i], i }))
@@ -1347,6 +1215,7 @@ function buildReunionCard(r, now) {
       // Export CR
       '<div class="cr-export-btns">' +
         '<button class="crbtn crbtn-quick" onclick="toggleCRExport(\'' + r.id + '\',\'quick\')">\uD83D\uDCE4 CR rapide (WhatsApp)</button>' +
+        '<button class="crbtn crbtn-paul" onclick="toggleCRExport(\'' + r.id + '\',\'paul\')">\uD83D\uDCE8 CR pour Paul</button>' +
       '</div>' +
       '<div class="cr-export-box" id="cr-box-' + r.id + '">' +
         '<div class="cr-tabs-row">' +
@@ -1358,12 +1227,13 @@ function buildReunionCard(r, now) {
       '</div>';
     card.appendChild(crWrap);
 
+    el.appendChild(card);
+
     // Init checklists et timer display
     setTimeout(() => {
       renderChecklists(r.id);
     }, 10);
-
-    return card;
+  });
 }
 
 
@@ -1373,22 +1243,23 @@ function getReunionNotes(rid) {
 }
 function getItemNote(rid, idx) {
   const notes = getReunionNotes(rid);
-  return notes['item_' + idx] || {};
+  var key = (typeof idx === 'string' && idx.charAt(0) === '_') ? idx : 'item_' + idx;
+  return notes[key] || {};
 }
 function getMetaNotes(rid) {
   const notes = getReunionNotes(rid);
   return {
     starred:    notes._starred    || [],
-    capitaine:  notes._capitaine  || '',
-    cl_paul:    notes._cl_paul    || [],
-    cl_olivier: notes._cl_olivier || [],
+    capitaine:  notes._capitaine  || notes.capitaine || '',
+    cl_paul:    notes._cl_paul    || notes.cl_paul   || [],
+    cl_olivier: notes._cl_olivier || notes.cl_olivier|| [],
   };
 }
 
 // ── Sauvegarde item individuel ────────────────────────────────
 async function saveItemNote(rid, idx, data) {
   if (!state.agendaNotes[rid]) state.agendaNotes[rid] = {};
-  const key = 'item_' + idx;
+  var key = (typeof idx === 'string' && idx.charAt(0) === '_') ? idx : 'item_' + idx;
   if (!state.agendaNotes[rid][key]) state.agendaNotes[rid][key] = {};
   Object.assign(state.agendaNotes[rid][key], data);
   return apiCall('saveAgendaNote', {reunionId: rid, key: key, data: state.agendaNotes[rid][key]});
@@ -1483,7 +1354,7 @@ function buildSubjectCard(r, i, subj, notes, starred, prefix) {
     '<div class="body-grid">' +
       '<div>' +
         '<div class="body-lbl">\uD83D\uDCAC Commentaires</div>' +
-        '<textarea class="body-ta" id="com-'+r.id+'-'+i+'" placeholder="Notes, contexte\u2026" onblur="saveSubjectNote(\'' + r.id + '\',' + i + ',\'decision\',this.value)">' + (noteData.decision||'') + '</textarea>' +
+        '<textarea class="body-ta" id="com-'+r.id+'-'+i+'" placeholder="Notes, contexte\u2026" oninput="debounceNote(\'' + r.id + '\',' + i + ',\'decision\',this.value)">' + (noteData.decision||'') + '</textarea>' +
       '</div>' +
       '<div>' +
         '<div class="body-lbl">\uD83C\uDFAF Actions \u00e0 mener</div>' +
@@ -1537,7 +1408,7 @@ async function cycleSubjectStatus(rid, idx) {
 
   // Mise à jour dans le state local
   if (!state.agendaNotes[rid]) state.agendaNotes[rid] = {};
-  const key = 'item_' + idx;
+  var key = (typeof idx === 'string' && idx.charAt(0) === '_') ? idx : 'item_' + idx;
   if (!state.agendaNotes[rid][key]) state.agendaNotes[rid][key] = {};
   state.agendaNotes[rid][key].status = next;
 
@@ -1628,8 +1499,8 @@ async function removeSubjectAction(rid, idx, ai) {
 
 // ── Refresh partiel liste d'actions (sans recharger toute la page) ──
 function refreshActionsList(rid, idx, notes) {
-  const key = 'item_' + idx;
-  const noteData = notes[key] || {};
+  var key = (typeof idx === 'string' && idx.charAt(0) === '_') ? idx : 'item_' + idx;
+  const noteData = (notes && notes[key]) ? notes[key] : getItemNote(rid, idx);
   // Compatibilité ancien format (action string) → nouveau format (actions array)
   let actions = noteData.actions || [];
   if (!actions.length && noteData.action) {
@@ -1657,8 +1528,11 @@ function showSaveIndicator() {
 
 // ── Debounce notes sujet ──────────────────────────────────────
 const _debNotes = {};
+var _saveTimers = {};
 function debounceNote(rid, idx, field, value) {
-  saveSubjectNote(rid, idx, field, value);
+  var k = String(rid) + "_" + String(idx) + "_" + field;
+  clearTimeout(_saveTimers[k]);
+  _saveTimers[k] = setTimeout(function() { saveSubjectNote(rid, idx, field, value); }, 1500);
 }
 async function saveSubjectNote(rid, idx, field, value) {
   try {
@@ -1909,8 +1783,8 @@ async function deleteReunion(id) {
 
 // ── TIMER ────────────────────────────────────────────────────
 const _timers = {};
-const TOTAL = 1800;
-const Q_BOUNDS = [0, 300, 900, 1500, 1800];
+const TOTAL = 3600;
+const Q_BOUNDS = [0, 300, 900, 1500, 3600];
 
 function initTimer(rid) {
   if (!_timers[rid]) _timers[rid] = { elapsed: 0, running: false };
@@ -1923,22 +1797,23 @@ function toggleTimer(rid) {
 function startTimer(rid) {
   var t = initTimer(rid);
   t.running = true;
+  t.startTime = Date.now() - (t.elapsed * 1000);
   var btn = document.getElementById('tbtn-' + rid);
   if (btn) btn.textContent = 'Pause';
   t.iv = setInterval(function() {
-    t.elapsed++;
+    t.elapsed = Math.floor((Date.now() - t.startTime) / 1000);
     if (t.elapsed >= TOTAL) {
       t.elapsed = TOTAL;
       clearInterval(t.iv);
       t.running = false;
-      if (btn) btn.textContent = 'Démarrer';
+      if (btn) btn.textContent = 'D\u00e9marrer';
     }
     updateTimerDisplay(rid);
-  }, 1000);
+  }, 500);
 }
 function pauseTimer(rid) {
   var t = _timers[rid];
-  if (t) { clearInterval(t.iv); t.running = false; }
+  if (t) { clearInterval(t.iv); t.running = false; t.elapsed = Math.floor((Date.now() - (t.startTime||Date.now())) / 1000); }
   var btn = document.getElementById('tbtn-' + rid);
   if (btn) btn.textContent = 'Reprendre';
 }
@@ -2022,15 +1897,13 @@ async function cycleStatus(rid, idx) {
 
 // ── CAPITAINE ────────────────────────────────────────────────
 async function saveCapitaine(rid, memberId) {
-  const r = state.reunions.find(x=>x.id===rid);
-  if (!r) return;
-  const notes = getReunionNotes(rid);
-  notes._capitaine = memberId;
-  r.agendaNotes = JSON.stringify(notes);
   const el = document.getElementById('cap-'+rid);
   const m = getMember(memberId);
-  if (el) el.textContent = m?m.name:'Non désigné';
-  try { await apiCall('saveCR', {id: rid, field: 'agendaNotes', value: r.agendaNotes}); } catch(e){ showError(e.message); }
+  if (el) el.textContent = m ? m.name : 'Non d\u00e9sign\u00e9';
+  // Mettre à jour le state local
+  if (!state.agendaNotes[rid]) state.agendaNotes[rid] = {};
+  state.agendaNotes[rid]._capitaine = memberId;
+  try { await saveMetaNotes(rid, {capitaine: memberId}); showSaveIndicator(); } catch(e){ showError(e.message); }
 }
 
 // ── ÉTOILE MULTI ─────────────────────────────────────────────
