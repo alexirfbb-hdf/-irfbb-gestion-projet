@@ -1074,22 +1074,24 @@ function openArchive(rid) {
 
 // Wrapper qui utilise renderReunions existant sur une seule réunion
 function renderOneReunion(r) {
-  // Créer un conteneur temporaire hors DOM
+  // Conteneur temporaire totalement isolé — ne pas toucher au DOM principal
   var tmp = document.createElement('div');
-  tmp.id = 'reunionsList';
+  // Injecter sans changer id pour ne pas perturber reunionsList existant
+  tmp.style.display = 'none';
   document.body.appendChild(tmp);
   var saved = state.reunions;
+  var savedEl = document.getElementById('reunionsList');
+  // Renommer temporairement reunionsList pour éviter les conflits
+  if (savedEl) savedEl.id = '_reunionsList_bak';
+  tmp.id = 'reunionsList';
   state.reunions = [r];
   renderReunions();
   state.reunions = saved;
+  tmp.id = '';
+  // Restaurer
+  if (savedEl) savedEl.id = 'reunionsList';
   var card = tmp.firstElementChild ? tmp.firstElementChild.cloneNode(true) : document.createElement('div');
   document.body.removeChild(tmp);
-  // Restaurer le vrai reunionsList si besoin
-  var real = document.getElementById('homeContent');
-  var realList = document.getElementById('reunionsList');
-  if (!realList && real) {
-    var d = document.createElement('div'); d.id = 'reunionsList'; real.appendChild(d);
-  }
   return card;
 }
 
@@ -1192,7 +1194,7 @@ function renderReunions() {
     timerBlock.innerHTML =
       // Ligne horloge + terrain
       '<div style="display:flex;align-items:center;gap:10px;margin-bottom:12px">' +
-        '<div class="timer-clock" id="tclock-'+r.id+'">30:00</div>' +
+        '<div class="timer-clock" id="tclock-'+r.id+'">60:00</div>' +
         '<div style="flex:1">' +
           '<div style="height:8px;background:rgba(255,255,255,.1);border-radius:4px;overflow:hidden;position:relative">' +
             '<div style="display:flex;height:100%">' +
@@ -2058,15 +2060,13 @@ async function cycleStatus(rid, idx) {
 
 // ── CAPITAINE ────────────────────────────────────────────────
 async function saveCapitaine(rid, memberId) {
-  const r = state.reunions.find(x=>x.id===rid);
-  if (!r) return;
-  const notes = getReunionNotes(rid);
-  notes._capitaine = memberId;
-  r.agendaNotes = JSON.stringify(notes);
   const el = document.getElementById('cap-'+rid);
   const m = getMember(memberId);
-  if (el) el.textContent = m?m.name:'Non désigné';
-  try { await apiCall('saveCR', {id: rid, field: 'agendaNotes', value: r.agendaNotes}); } catch(e){ showError(e.message); }
+  if (el) el.textContent = m ? m.name : 'Non désigné';
+  // Mettre à jour le state local
+  if (!state.agendaNotes[rid]) state.agendaNotes[rid] = {};
+  state.agendaNotes[rid]._capitaine = memberId;
+  try { await saveMetaNotes(rid, {capitaine: memberId}); showSaveIndicator(); } catch(e){ showError(e.message); }
 }
 
 // ── ÉTOILE MULTI ─────────────────────────────────────────────
