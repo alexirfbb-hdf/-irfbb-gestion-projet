@@ -1189,14 +1189,30 @@ function exportMember(rid,memberId) {
   const actions=[];
   (r.agenda||[]).forEach((subj,i)=>{
     const n=notes['item_'+i]||{};
-    const acts=n.actions||(n.action&&n.assignee===memberId?[{assignee:memberId,text:n.action}]:[]);
+    let acts=n.actions||[];
+    if(!acts.length&&n.action) acts=[{assignee:n.assignee||'',text:n.action}];
     acts.filter(a=>a.assignee===memberId&&a.text).forEach(a=>{
-      const t=themes.find(x=>x.id===themeMap[i])||{label:'Autre'};
-      actions.push(`[${t.label}] ${subj} : ${a.text}`);
+      const t=themes.find(x=>x.id===themeMap[i]);
+      actions.push(`[${t?t.label:'Autre'}] ${subj} : ${a.text}`);
     });
   });
-  if(!actions.length){alert(`Aucune action assignée à ${m?m.name:memberId}`);return;}
-  navigator.clipboard.writeText(`TÂCHES DE ${(m?m.name:memberId).toUpperCase()} — ${dt}\n\n${actions.map(a=>'- '+a).join('\n')}`).then(()=>showSaveOk());
+  if(!actions.length){
+    alert(`Aucune action assignée à ${m?m.name:memberId} dans cette réunion.`);
+    return;
+  }
+  const text=`TÂCHES DE ${(m?m.name:memberId).toUpperCase()} — ${dt}\n\n${actions.map(a=>'- '+a).join('\n')}`;
+  if(navigator.clipboard&&window.isSecureContext) {
+    navigator.clipboard.writeText(text).then(()=>showSaveOk()).catch(()=>fallbackCopy(text));
+  } else {
+    fallbackCopy(text);
+  }
+}
+function fallbackCopy(text) {
+  const ta=document.createElement('textarea');
+  ta.value=text; ta.style.cssText='position:fixed;left:-9999px';
+  document.body.appendChild(ta); ta.select();
+  try { document.execCommand('copy'); showSaveOk(); } catch(e){ alert(text); }
+  document.body.removeChild(ta);
 }
 
 // ═══════════════════════════════════════════════════════════════
