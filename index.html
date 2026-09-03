@@ -955,13 +955,20 @@ function switchReunionTab(tab, el) {
 
 
 function cleanTime(t) {
-  if (!t) return '—';
-  // Si c'est une chaîne ISO avec 1899 (format Sheets), extraire HH:mm
-  if (typeof t === 'string' && t.indexOf('1899') >= 0) {
-    const m = t.match(/T(\d{2}):(\d{2})/);
-    return m ? m[1] + ':' + m[2] : '—';
+  if (!t) return '';
+  if (typeof t === 'string') {
+    // Format ISO 1899 depuis Sheets — extraire HH:mm sans conversion UTC
+    if (t.indexOf('1899') >= 0) {
+      const m = t.match(/T(\d{2}):(\d{2})/);
+      return m ? m[1] + ':' + m[2] : '';
+    }
+    // Format HH:mm déjà propre
+    return t.substring(0, 5);
   }
-  return t;
+  if (t instanceof Date) {
+    return String(t.getHours()).padStart(2,'0') + ':' + String(t.getMinutes()).padStart(2,'0');
+  }
+  return String(t).substring(0, 5);
 }
 
 
@@ -1290,6 +1297,13 @@ function renderReunions() {
         grouped[tid].push({subj, i});
       });
 
+      // Regrouper les IDs inconnus dans _autre
+      Object.keys(grouped).forEach(tid => {
+        if (tid !== '_autre' && !themes.find(t => t.id === tid) && grouped[tid].length) {
+          grouped['_autre'] = (grouped['_autre']||[]).concat(grouped[tid]);
+          grouped[tid] = [];
+        }
+      });
       const allThemes = [...themes, {id:'_autre', label:'Autre', color:'#6366f1', bg:'#eef2ff'}];
 
       // ── Section Prioritaires en haut ──────────────────────
