@@ -601,21 +601,10 @@ async function loadData() {
   try {
     const data = await api('getData');
     state.projects       = data.projects     || [];
-    state.tasks          = data.tasks       || [];
-    state.reunions       = data.reunions    || [];
-    state.planningEvents = data.events      || [];
-    state.agendaNotes    = data.agendaNotes || {};
-    // Si le Sheets est vide, on injecte les données par défaut
-    if (!state.projects.length) {
-      for (const p of PROJECTS_DEFAULT) await api('saveProject', { data: p });
-      for (const t of TASKS_DEFAULT)    await api('saveTask',    { data: t });
-      for (const r of REUNIONS_DEFAULT) await api('saveReunion', { data: r });
-      const fresh = await api('getData');
-      state.projects       = fresh.projects || [];
-      state.tasks          = fresh.tasks    || [];
-      state.reunions       = fresh.reunions || [];
-      state.planningEvents = fresh.events   || [];
-    }
+    state.tasks          = data.tasks        || [];
+    state.reunions       = data.reunions     || [];
+    state.planningEvents = data.events       || [];
+    state.agendaNotes    = data.agendaNotes  || {};
   } catch(e) {
     showError('Impossible de contacter Google Sheets. Vérifie l\'URL du script.<br><small>' + e.message + '</small>');
   } finally {
