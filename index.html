@@ -991,7 +991,23 @@ function renderHomeReunion() {
     el.innerHTML = '<div class="no-data"><div class="no-data-icon">📅</div><div class="no-data-title">Aucune réunion à venir</div><button class="btn btn-primary" style="margin-top:16px" onclick="openModal(&quot;reunion&quot;)">+ Nouvelle réunion</button></div>';
     return;
   }
-  list.forEach(function(r) { el.appendChild(renderOneReunion(r)); });
+  // Afficher uniquement la prochaine réunion
+  el.appendChild(renderOneReunion(list[0]));
+  // Si d'autres réunions à venir, afficher une liste simple
+  if (list.length > 1) {
+    var nextDiv = document.createElement('div');
+    nextDiv.style.cssText = 'margin-top:16px;background:white;border:1px solid var(--border);border-radius:10px;padding:14px 18px;';
+    nextDiv.innerHTML = '<div style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);margin-bottom:10px">📅 Réunions à venir</div>' +
+      list.slice(1).map(function(r) {
+        var dt = new Date(r.date);
+        return '<div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-top:1px solid var(--border)">' +
+          '<div style="font-size:13px;font-weight:600;color:var(--accent);min-width:80px">'+dt.toLocaleDateString('fr-FR',{day:'numeric',month:'short'})+'</div>' +
+          '<div style="font-size:13px;color:var(--text)">'+r.title+'</div>' +
+          '<button class="btn btn-sm btn-outline" style="margin-left:auto" onclick="editReunion(\'' + r.id + '\')">✏️</button>' +
+        '</div>';
+      }).join('');
+    el.appendChild(nextDiv);
+  }
 }
 
 function renderArchivesList() {
@@ -1051,16 +1067,22 @@ function openArchive(rid) {
 
 // Wrapper qui utilise renderReunions existant sur une seule réunion
 function renderOneReunion(r) {
-  var tmp = document.getElementById('reunionsList');
-  var created = false;
-  if (!tmp) { tmp = document.createElement('div'); tmp.id='reunionsList'; document.body.appendChild(tmp); created=true; }
+  // Créer un conteneur temporaire hors DOM
+  var tmp = document.createElement('div');
+  tmp.id = 'reunionsList';
+  document.body.appendChild(tmp);
   var saved = state.reunions;
   state.reunions = [r];
   renderReunions();
   state.reunions = saved;
   var card = tmp.firstElementChild ? tmp.firstElementChild.cloneNode(true) : document.createElement('div');
-  tmp.innerHTML = '';
-  if (created) tmp.remove();
+  document.body.removeChild(tmp);
+  // Restaurer le vrai reunionsList si besoin
+  var real = document.getElementById('homeContent');
+  var realList = document.getElementById('reunionsList');
+  if (!realList && real) {
+    var d = document.createElement('div'); d.id = 'reunionsList'; real.appendChild(d);
+  }
   return card;
 }
 
@@ -1116,10 +1138,10 @@ function renderReunions() {
     return;
   }
   const QUARTS = [
-    {q:'Q1', range:"0-5'",  title:'Tour de table'},
+    {q:'Q1', range:"0-5'",  title:'Météo sentimentale'},
     {q:'Q2', range:"5-15'", title:'Sujet prio du jour \u2b50'},
     {q:'Q3', range:"15-25'",title:'D\u00e9cisions & r\u00f4les'},
-    {q:'Q4', range:"25-30'",title:'Coup de sir\u00e8ne \u00b7 Prog. prochaine r\u00e9union'},
+    {q:'Q4', range:"25-60'",title:'Coup de sir\u00e8ne \u00b7 Prochaine r\u00e9union'},
   ];
   el.innerHTML = '';
   list.forEach(r => {
@@ -1226,6 +1248,37 @@ function renderReunions() {
     if ((r.agenda||[]).length) {
       const odj = document.createElement('div');
       odj.className = 'odj-wrap';
+
+    // ── Sujet du jour ──────────────────────────────────────
+    const sdjNote = getItemNote(r.id, '_sdj');
+    const sdjEl = document.createElement('div');
+    sdjEl.style.cssText = 'background:#f0f9ff;border:1.5px solid #38bdf8;border-radius:10px;margin:8px 0;padding:12px;';
+    let sdjActHtml = (sdjNote.actions||[]).map((ac,ai) => {
+      const m = getMember(ac.assignee);
+      const bg = m && typeof AVATAR_BG!=='undefined'?(AVATAR_BG[m.id]||'#94a3b8'):'#94a3b8';
+      return '<div class="action-row">' +
+        '<div class="action-av" style="background:'+bg+'">'+(m?m.name.substring(0,2):'?')+'</div>' +
+        '<span class="action-txt">'+(m?'<strong>'+m.name+'</strong> : ':'')+ac.text+'</span>' +
+        '<button class="action-del" onclick="removeSubjectAction(\''+r.id+'\',\'_sdj\','+ai+')">×</button>' +
+      '</div>';
+    }).join('');
+    sdjEl.innerHTML =
+      '<div style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:#0369a1;margin-bottom:10px">🎯 Sujet du jour</div>' +
+      '<div class="body-grid">' +
+        '<div><div class="body-lbl">💬 Notes</div>' +
+          '<textarea class="body-ta" placeholder="Notes…" oninput="debounceNote(\''+r.id+'\',\'_sdj\',\'decision\',this.value)">'+(sdjNote.decision||'')+'</textarea></div>' +
+        '<div><div class="body-lbl">🎯 Actions</div>' +
+          '<div class="actions-list" id="al-'+r.id+'-_sdj">'+sdjActHtml+'</div>' +
+          '<button class="add-action-btn" onclick="openAddActionForm(\''+r.id+'\',\'_sdj\')">+ Ajouter une action</button>' +
+          '<div class="aaf" id="aaf-'+r.id+'-_sdj" style="display:none">' +
+            '<select id="aaf-sel-'+r.id+'-_sdj"><option value="">Assigner…</option>'+MEMBERS.map(m=>'<option value="'+m.id+'">'+m.name+'</option>').join('')+'</select>' +
+            '<textarea id="aaf-txt-'+r.id+'-_sdj" placeholder="Décrivez l\'action…"></textarea>' +
+            '<div class="aaf-btns"><button class="aaf-save" onclick="confirmSubjectAction(\''+r.id+'\',\'_sdj\')">Enregistrer</button>' +
+            '<button class="aaf-cancel" onclick="closeAddActionForm(\''+r.id+'\',\'_sdj\')">Annuler</button></div>' +
+          '</div>' +
+        '</div>' +
+      '</div>';
+    odj.appendChild(sdjEl);
       // Grouper par thème
       const themes = getThemes();
       const grouped = {};
@@ -1449,7 +1502,7 @@ function buildSubjectCard(r, i, subj, notes, starred, prefix) {
     '<div class="body-grid">' +
       '<div>' +
         '<div class="body-lbl">\uD83D\uDCAC Commentaires</div>' +
-        '<textarea class="body-ta" id="com-'+r.id+'-'+i+'" placeholder="Notes, contexte\u2026" onblur="saveSubjectNote(\'' + r.id + '\',' + i + ',\'decision\',this.value)">' + (noteData.decision||'') + '</textarea>' +
+        '<textarea class="body-ta" id="com-'+r.id+'-'+i+'" placeholder="Notes, contexte\u2026" oninput="debounceNote(\'' + r.id + '\',' + i + ',\'decision\',this.value)">' + (noteData.decision||'') + '</textarea>' +
       '</div>' +
       '<div>' +
         '<div class="body-lbl">\uD83C\uDFAF Actions \u00e0 mener</div>' +
@@ -1623,8 +1676,11 @@ function showSaveIndicator() {
 
 // ── Debounce notes sujet ──────────────────────────────────────
 const _debNotes = {};
+var _saveTimers = {};
 function debounceNote(rid, idx, field, value) {
-  saveSubjectNote(rid, idx, field, value);
+  var k = String(rid) + '_' + String(idx) + '_' + field;
+  clearTimeout(_saveTimers[k]);
+  _saveTimers[k] = setTimeout(function() { saveSubjectNote(rid, idx, field, value); }, 1500);
 }
 async function saveSubjectNote(rid, idx, field, value) {
   try {
@@ -1875,8 +1931,8 @@ async function deleteReunion(id) {
 
 // ── TIMER ────────────────────────────────────────────────────
 const _timers = {};
-const TOTAL = 1800;
-const Q_BOUNDS = [0, 300, 900, 1500, 1800];
+const TOTAL = 3600;
+const Q_BOUNDS = [0, 300, 900, 1500, 3600];
 
 function initTimer(rid) {
   if (!_timers[rid]) _timers[rid] = { elapsed: 0, running: false };
