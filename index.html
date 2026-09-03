@@ -1011,17 +1011,22 @@ function renderHomeReunion() {
 function renderArchivesList() {
   var el = document.getElementById('archivesList');
   if (!el) return;
-  // Afficher toutes les réunions sauf la plus proche à venir
   var now = new Date();
-  // Comparer sur la date locale sans décalage UTC
   var todayStr = now.getFullYear() + '-' + String(now.getMonth()+1).padStart(2,'0') + '-' + String(now.getDate()).padStart(2,'0');
+  console.log('=== ARCHIVES DEBUG ===');
+  console.log('Aujourd\'hui:', todayStr);
+  console.log('Toutes réunions:', state.reunions.map(function(r){ return {id:r.id, title:r.title, date:r.date}; }));
   var past = state.reunions
-    .filter(function(r) { return r.date && r.date < todayStr; })
+    .filter(function(r) {
+      var isPast = r.date && r.date < todayStr;
+      console.log('Réunion', r.title, '| date:', r.date, '| passée:', isPast);
+      return isPast;
+    })
     .sort(function(a,b) { return b.date < a.date ? -1 : b.date > a.date ? 1 : 0; });
-  console.log('Archives: total réunions =', state.reunions.length, '| passées =', past.length, '| today =', todayStr);
+  console.log('Réunions passées trouvées:', past.length);
   if (!past.length) {
     el.innerHTML = '<div class="no-data"><div class="no-data-icon">🗂️</div><div class="no-data-title">Aucune réunion archivée</div>' +
-      '<p style="font-size:13px;color:var(--muted);margin-top:8px">Réunions chargées : ' + state.reunions.length + '</p></div>';
+      '<p style="font-size:13px;color:var(--muted);margin-top:8px">Réunions chargées : ' + state.reunions.length + ' | Aujourd\'hui : ' + todayStr + '</p></div>';
     return;
   }
   var allThemes = getThemes();
