@@ -1018,7 +1018,7 @@ function renderArchivesList() {
   console.log('Toutes réunions:', state.reunions.map(function(r){ return {id:r.id, title:r.title, date:r.date}; }));
   var past = state.reunions
     .filter(function(r) {
-      var isPast = r.date && r.date < todayStr;
+      var isPast = !r.date || r.date <= todayStr;
       console.log('Réunion', r.title, '| date:', r.date, '| passée:', isPast);
       return isPast;
     })
