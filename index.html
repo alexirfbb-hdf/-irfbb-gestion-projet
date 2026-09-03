@@ -1074,26 +1074,35 @@ function openArchive(rid) {
 
 // Wrapper qui utilise renderReunions existant sur une seule réunion
 function renderOneReunion(r) {
-  // Conteneur temporaire totalement isolé — ne pas toucher au DOM principal
-  var tmp = document.createElement('div');
-  // Injecter sans changer id pour ne pas perturber reunionsList existant
-  tmp.style.display = 'none';
-  document.body.appendChild(tmp);
+  // Approche isolée : div caché complètement séparé du DOM principal
+  var wrapper = document.createElement('div');
+  wrapper.style.cssText = 'position:absolute;left:-9999px;top:-9999px;visibility:hidden';
+  var inner = document.createElement('div');
+  inner.id = 'reunionsList';
+  wrapper.appendChild(inner);
+  document.body.appendChild(wrapper);
+
   var saved = state.reunions;
-  var savedEl = document.getElementById('reunionsList');
-  // Renommer temporairement reunionsList pour éviter les conflits
-  if (savedEl) savedEl.id = '_reunionsList_bak';
-  tmp.id = 'reunionsList';
   state.reunions = [r];
-  renderReunions();
+  try {
+    renderReunions();
+  } catch(e) {
+    console.error('renderOneReunion error:', e);
+  }
   state.reunions = saved;
-  tmp.id = '';
-  // Restaurer
-  if (savedEl) savedEl.id = 'reunionsList';
-  var card = tmp.firstElementChild ? tmp.firstElementChild.cloneNode(true) : document.createElement('div');
-  document.body.removeChild(tmp);
+
+  var card = inner.firstElementChild ? inner.firstElementChild.cloneNode(true) : null;
+  document.body.removeChild(wrapper);
+
+  if (!card) {
+    card = document.createElement('div');
+    card.className = 'reunion-card';
+    card.style.padding = '20px';
+    card.textContent = 'Erreur de rendu pour : ' + r.title;
+  }
   return card;
 }
+
 
 // Ajouter thème personnalisé
 function addCustomTheme(name) {
@@ -1121,6 +1130,9 @@ function promptNewTheme() {
 
 
 function renderReunions() {
+  // Ne pas interférer si on est sur archives
+  var active = document.querySelector('.tab-view.active');
+  if (active && active.id === 'tab-archives') { renderArchivesList(); return; }
   // S'assurer que reunionsList est dans homeContent
   var home = document.getElementById('homeContent');
   var el = document.getElementById('reunionsList');
@@ -1132,8 +1144,6 @@ function renderReunions() {
   } else if (home && !home.contains(el)) {
     home.appendChild(el);
   }
-  var active = document.querySelector('.tab-view.active');
-  if (active && active.id === 'tab-archives') { renderArchivesList(); return; }
 
   var elR = document.getElementById('reunionsList');
   const now = new Date(); now.setHours(0,0,0,0);
