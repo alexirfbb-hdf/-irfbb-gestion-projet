@@ -413,31 +413,6 @@ main { padding: 24px; max-width: 1400px; margin: 0 auto; }
 .status-done-s  { background:#dcfce7; color:#16a34a; }
 .status-report  { background:#fef3c7; color:#d97706; }
 
-
-.app-header { display:flex; align-items:center; justify-content:space-between; padding:10px 24px; background:white; border-bottom:1px solid var(--border); position:sticky; top:0; z-index:100; gap:12px; }
-.logo-text { font-size:16px; font-weight:800; color:var(--text); }
-.logo-text span { color:var(--accent); }
-.app-nav { display:flex; gap:6px; }
-.nav-btn { padding:7px 14px; border-radius:8px; border:1px solid var(--border); background:white; font-size:13px; font-weight:500; cursor:pointer; color:var(--muted); transition:all .15s; }
-.nav-btn:hover { background:#f8fafc; color:var(--text); }
-.nav-btn.active { background:var(--accent); color:white; border-color:var(--accent); }
-.app-actions { display:flex; align-items:center; gap:8px; }
-.tab-view { display:none; padding:20px 24px; max-width:900px; margin:0 auto; }
-.tab-view.active { display:block; }
-.archive-item { background:white; border:1px solid var(--border); border-radius:10px; padding:12px 16px; margin-bottom:8px; cursor:pointer; display:flex; align-items:center; gap:12px; transition:all .15s; }
-.archive-item:hover { border-color:#94a3b8; background:#fafbfc; box-shadow:0 2px 8px rgba(0,0,0,.06); }
-.arc-badge { background:var(--accent); color:white; border-radius:8px; padding:5px 10px; text-align:center; flex-shrink:0; min-width:44px; }
-.arc-day { font-size:18px; font-weight:800; line-height:1; }
-.arc-month { font-size:10px; font-weight:600; opacity:.85; }
-.arc-info { flex:1; }
-.arc-title { font-size:14px; font-weight:600; color:var(--text); }
-.arc-meta { font-size:12px; color:var(--muted); margin-top:2px; }
-.arc-tags { display:flex; gap:4px; flex-wrap:wrap; margin-top:4px; }
-.arc-tag { font-size:10px; padding:2px 7px; border-radius:8px; font-weight:600; }
-.no-data { text-align:center; padding:60px 24px; color:var(--muted); }
-.no-data-icon { font-size:48px; margin-bottom:12px; }
-.no-data-text { font-size:15px; font-weight:500; margin-bottom:6px; }
-
 @media (max-width: 768px) {
   .kanban-board { grid-template-columns: 1fr; }
   .form-row { grid-template-columns: 1fr; }
@@ -446,22 +421,7 @@ main { padding: 24px; max-width: 1400px; margin: 0 auto; }
 </style>
 </head>
 <body>
-<header>
-  <div class="logo">
-    <div class="logo-icon">🏀</div>
-    <div class="logo-text">IRFBB <span>HDF</span></div>
-  </div>
-  <div class="nav-tabs">
-    <button class="nav-tab active" onclick="showView('dashboard')">🏠 Projets</button>
-    <button class="nav-tab" onclick="showView('reunions')" id="navReunionTab">📅 Réunions<span class="nav-tab-sub" id="navNextDate"></span></button>
-    <button class="nav-tab" onclick="showView('planning')">📆 Planning</button>
-  </div>
-  <div class="header-right">
-    <span id="save-indicator" style="font-size:12px;color:#22c55e;font-weight:600;opacity:0;transition:opacity .3s;margin-right:8px">✓ Sauvegardé</span>
-    <div class="team-avatars" id="headerAvatars"></div>
-    <button class="btn btn-primary btn-sm" onclick="openModal('project')">+ Projet</button>
-  </div>
-</header>
+
 <!-- Barre de chargement -->
 <div id="loadingBar" style="display:none;position:fixed;top:60px;left:0;right:0;z-index:200">
   <div style="height:3px;background:linear-gradient(90deg,#e63946,#f4a261,#e63946);background-size:200%;animation:slide 1.2s linear infinite"></div>
@@ -470,11 +430,40 @@ main { padding: 24px; max-width: 1400px; margin: 0 auto; }
 <div id="errorBanner" style="display:none;position:fixed;top:70px;left:50%;transform:translateX(-50%);z-index:300;background:#fff5f5;border:1px solid #fecaca;color:#dc2626;padding:12px 20px;border-radius:10px;font-size:14px;box-shadow:0 4px 12px rgba(0,0,0,.1);max-width:500px;text-align:center"></div>
 <style>
 @keyframes slide { 0%{background-position:0%} 100%{background-position:200%} }
+
+/* ── NOUVEAU HEADER & NAV ── */
+.app-header { display:flex; align-items:center; justify-content:space-between; padding:10px 24px; background:white; border-bottom:1px solid var(--border); position:sticky; top:0; z-index:100; gap:12px; box-shadow:0 1px 3px rgba(0,0,0,.06); }
+.logo-text { font-size:16px; font-weight:800; color:var(--text); margin-left:8px; }
+.app-nav { display:flex; gap:6px; }
+.nav-btn { padding:7px 14px; border-radius:8px; border:1px solid var(--border); background:white; font-size:13px; font-weight:500; cursor:pointer; color:var(--muted); transition:all .15s; white-space:nowrap; }
+.nav-btn:hover { background:#f8fafc; color:var(--text); }
+.nav-btn.active { background:var(--accent); color:white; border-color:var(--accent); }
+.app-actions { display:flex; align-items:center; gap:8px; flex-shrink:0; }
+.tab-view { display:none; padding:20px 24px; max-width:860px; margin:0 auto; }
+.tab-view.active { display:block; }
+/* Archives */
+.arc-item { background:white; border:1px solid var(--border); border-radius:10px; padding:12px 16px; margin-bottom:8px; cursor:pointer; display:flex; align-items:center; gap:12px; transition:all .15s; }
+.arc-item:hover { border-color:#94a3b8; box-shadow:0 2px 8px rgba(0,0,0,.06); }
+.arc-badge { background:var(--accent); color:white; border-radius:8px; padding:5px 10px; text-align:center; flex-shrink:0; min-width:44px; }
+.arc-day { font-size:18px; font-weight:800; line-height:1; }
+.arc-month { font-size:10px; font-weight:600; opacity:.85; }
+.arc-info { flex:1; min-width:0; }
+.arc-title { font-size:14px; font-weight:600; color:var(--text); }
+.arc-meta { font-size:12px; color:var(--muted); margin-top:2px; }
+.arc-tags { display:flex; gap:4px; flex-wrap:wrap; margin-top:4px; }
+.arc-tag { font-size:10px; padding:2px 7px; border-radius:8px; font-weight:600; }
+.no-data { text-align:center; padding:60px 24px; color:var(--muted); }
+.no-data-icon { font-size:48px; margin-bottom:12px; }
+.no-data-title { font-size:15px; font-weight:600; margin-bottom:6px; }
 </style>
 
 <main>
+  <!-- NOUVEAU HEADER -->
   <div class="app-header">
-    <div class="app-logo"><span style="font-size:22px">🏀</span><span class="logo-text">IRFBB <span>HDF</span></span></div>
+    <div class="app-logo">
+      <div class="logo-icon" style="width:32px;height:32px;background:#e63946;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:18px">🏀</div>
+      <span class="logo-text">IRFBB <span style="color:var(--accent)">HDF</span></span>
+    </div>
     <div class="app-nav">
       <button class="nav-btn active" id="nav-home" onclick="showTab('home',this)">📅 Réunion</button>
       <button class="nav-btn" id="nav-archives" onclick="showTab('archives',this)">🗂️ Archives</button>
@@ -485,14 +474,24 @@ main { padding: 24px; max-width: 1400px; margin: 0 auto; }
       <button class="btn btn-primary btn-sm" onclick="openModal('reunion')">+ Nouvelle réunion</button>
     </div>
   </div>
-  <div class="tab-view active" id="tab-home"><div id="homeContent"></div></div>
+
+  <!-- VUE PROCHAINE RÉUNION -->
+  <div class="tab-view active" id="tab-home">
+    <div id="homeContent"></div>
+  </div>
+
+  <!-- VUE ARCHIVES -->
   <div class="tab-view" id="tab-archives">
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
-      <div class="section-title">Réunions archivées</div>
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:0 0 16px">
+      <h2 style="font-size:18px;font-weight:700;color:var(--text)">Réunions archivées</h2>
     </div>
     <div id="archivesList"></div>
   </div>
-  <div class="tab-view" id="tab-match"><div id="matchContent"></div></div>
+
+  <!-- VUE MATCH DU MOIS -->
+  <div class="tab-view" id="tab-match">
+    <div id="matchContent"></div>
+  </div>
 </main>
 
 <div class="modal-overlay" id="modalOverlay" onclick="closeModal(event)">
@@ -984,10 +983,9 @@ function cleanTime(t) {
   return t;
 }
 
-
-// ═══════════════════════════════════════════════════════════
-// NAVIGATION
-// ═══════════════════════════════════════════════════════════
+// ═════════════════════════════════════════════════════════════
+// NAVIGATION & RENDU PRINCIPAL
+// ═════════════════════════════════════════════════════════════
 var customThemes = [];
 
 function showTab(tab, el) {
@@ -998,7 +996,7 @@ function showTab(tab, el) {
   if (el) el.classList.add('active');
   if (tab === 'home') renderHomeReunion();
   else if (tab === 'archives') renderArchivesList();
-  else if (tab === 'match') { renderMatchDuMois(); }
+  else if (tab === 'match') renderMatchDuMois();
 }
 
 function renderHomeReunion() {
@@ -1007,14 +1005,18 @@ function renderHomeReunion() {
   var now = new Date(); now.setHours(0,0,0,0);
   var upcoming = state.reunions
     .filter(function(r) { return r.date && new Date(r.date) >= now; })
-    .sort(function(a,b) { return new Date(a.date) - new Date(b.date); });
+    .sort(function(a,b) { return new Date(a.date)-new Date(b.date); });
   el.innerHTML = '';
   if (!upcoming.length) {
-    el.innerHTML = '<div class="no-data"><div class="no-data-icon">📅</div><div class="no-data-text">Aucune réunion à venir</div>' +
+    el.innerHTML = '<div class="no-data"><div class="no-data-icon">📅</div>' +
+      '<div class="no-data-title">Aucune réunion à venir</div>' +
       '<button class="btn btn-primary" style="margin-top:16px" onclick="openModal(&quot;reunion&quot;)">+ Nouvelle réunion</button></div>';
     return;
   }
-  el.appendChild(buildReunionCard(upcoming[0]));
+  // Afficher la prochaine + les suivantes
+  upcoming.forEach(function(r) {
+    el.appendChild(buildFullReunionCard(r));
+  });
 }
 
 function renderArchivesList() {
@@ -1023,9 +1025,9 @@ function renderArchivesList() {
   var now = new Date(); now.setHours(0,0,0,0);
   var past = state.reunions
     .filter(function(r) { return r.date && new Date(r.date) < now; })
-    .sort(function(a,b) { return new Date(b.date) - new Date(a.date); });
+    .sort(function(a,b) { return new Date(b.date)-new Date(a.date); });
   if (!past.length) {
-    el.innerHTML = '<div class="no-data"><div class="no-data-icon">🗂️</div><div class="no-data-text">Aucune réunion archivée</div></div>';
+    el.innerHTML = '<div class="no-data"><div class="no-data-icon">🗂️</div><div class="no-data-title">Aucune réunion archivée</div></div>';
     return;
   }
   var allThemes = getThemes();
@@ -1033,91 +1035,401 @@ function renderArchivesList() {
     var dt = new Date(r.date);
     var themeMap = {};
     try { themeMap = r.agendaThemes ? JSON.parse(r.agendaThemes) : {}; } catch(e) {}
-    var usedIds = Object.values(themeMap).filter(function(v,i,a) { return a.indexOf(v)===i; });
+    var usedIds = [];
+    Object.values(themeMap).forEach(function(v) { if (usedIds.indexOf(v)<0) usedIds.push(v); });
     var tags = usedIds.map(function(tid) {
       var t = allThemes.find(function(x) { return x.id===tid; });
       return t ? '<span class="arc-tag" style="background:'+t.bg+';color:'+t.color+'">'+t.label+'</span>' : '';
     }).filter(Boolean).slice(0,4).join('');
     var meta = getMetaNotes(r.id);
     var cap = getMember(meta.capitaine);
-    return '<div class="archive-item" onclick="openArchive(\'' + r.id + '\')">' +
+    var nbSujets = (r.agenda||[]).length;
+    return '<div class="arc-item" onclick="openArchive(\'' + r.id + '\')">' +
       '<div class="arc-badge"><div class="arc-day">'+dt.getDate()+'</div>' +
       '<div class="arc-month">'+dt.toLocaleDateString('fr-FR',{month:'short',year:'2-digit'})+'</div></div>' +
-      '<div class="arc-info"><div class="arc-title">'+r.title+'</div>' +
-      '<div class="arc-meta">'+(r.time?'🕐 '+cleanTime(r.time)+' · ':'')+''+(cap?'👤 '+cap.name+' · ':'')+((r.agenda||[]).length)+' sujets</div>' +
-      (tags?'<div class="arc-tags">'+tags+'</div>':'')+
-      '</div><div style="color:var(--muted);font-size:20px">›</div></div>';
+      '<div class="arc-info">' +
+        '<div class="arc-title">'+r.title+'</div>' +
+        '<div class="arc-meta">'+(r.time?'🕐 '+cleanTime(r.time)+' ':'')+
+          (r.location?'· 📍 '+r.location+' ':'')+
+          (cap?'· 👤 '+cap.name+' ':'')+'· '+nbSujets+' sujet'+(nbSujets>1?'s':'')+'</div>'+
+        (tags?'<div class="arc-tags">'+tags+'</div>':'')+
+      '</div>' +
+      '<div style="color:var(--muted);font-size:20px;flex-shrink:0">›</div>' +
+    '</div>';
   }).join('');
 }
 
 function openArchive(rid) {
-  var el = document.getElementById('archivesList');
-  if (!el) return;
   var r = state.reunions.find(function(x) { return x.id===rid; });
   if (!r) return;
-  el.innerHTML = '<button class="btn btn-outline btn-sm" onclick="renderArchivesList()" style="margin-bottom:16px">← Retour aux archives</button>';
-  el.appendChild(buildReunionCard(r));
+  var el = document.getElementById('archivesList');
+  if (!el) return;
+  el.innerHTML = '<button class="btn btn-sm btn-outline" onclick="renderArchivesList()" style="margin-bottom:16px">← Retour aux archives</button>';
+  el.appendChild(buildFullReunionCard(r));
 }
 
-// Thématiques personnalisées
-// getThemes() défini dans nav fns
+function buildFullReunionCard(r) {
+  // Crée une div temporaire, lance renderReunions sur [r] seulement,
+  // récupère le premier enfant
+  var tmp = document.createElement('div');
+  tmp.id = 'reunionsList';
+  var saved = state.reunions;
+  state.reunions = [r];
+  _renderReunionsInto(tmp);
+  state.reunions = saved;
+  var card = tmp.firstElementChild;
+  if (!card) { card = document.createElement('div'); card.textContent = 'Erreur de rendu'; }
+  return card;
+}
+
+
 function addCustomTheme(name) {
   if (!name || !name.trim()) return null;
-  var colors = ['#059669','#7c3aed','#b45309','#0e7490','#be185d'];
-  var bgs    = ['#ecfdf5','#f5f3ff','#fffbeb','#ecfeff','#fdf2f8'];
-  var idx = (state.customThemes||[]).length % colors.length;
-  var theme = { id:'custom_'+Date.now(), label:name.trim(), color:colors[idx], bg:bgs[idx] };
+  var pal = [{c:'#059669',bg:'#ecfdf5'},{c:'#7c3aed',bg:'#f5f3ff'},{c:'#b45309',bg:'#fffbeb'},{c:'#0e7490',bg:'#ecfeff'}];
+  var p = pal[(state.customThemes||[]).length % pal.length];
+  var t = { id:'ct_'+Date.now(), label:name.trim(), color:p.c, bg:p.bg };
   if (!state.customThemes) state.customThemes = [];
-  state.customThemes.push(theme);
+  state.customThemes.push(t);
   customThemes = state.customThemes;
   localStorage.setItem('hdf_themes', JSON.stringify(state.customThemes));
-  return theme;
+  return t;
 }
 
 function promptNewTheme() {
   var name = prompt('Nom de la nouvelle thématique :');
   if (!name) return;
-  var theme = addCustomTheme(name);
-  if (!theme) return;
-  addAgendaItem(theme.id);
+  var t = addCustomTheme(name);
+  if (!t) return;
+  addAgendaItem(t.id);
   var row = document.querySelector('.ab-add-row');
-  if (row) {
-    row.innerHTML = getThemes().map(function(t) {
-      return '<button class="agenda-add-btn" style="border-color:'+t.color+';color:'+t.color+'" onclick="addAgendaItem(\'' + t.id + '\')" >+ '+t.label+'</button>';
-    }).join('') + '<button class="agenda-add-btn" style="border-color:#94a3b8;color:#64748b" onclick="promptNewTheme()">+ Thème...</button>';
-  }
+  if (row) row.innerHTML = getThemes().map(function(th) {
+    return '<button class="agenda-add-btn" style="border-color:'+th.color+';color:'+th.color+'" onclick="addAgendaItem(\'' + th.id + '\')" >+ '+th.label+'</button>';
+  }).join('') + '<button class="agenda-add-btn" style="border-color:#94a3b8;color:#64748b" onclick="promptNewTheme()">+ Thème...</button>';
 }
 
 
 function renderReunions() {
   var active = document.querySelector('.tab-view.active');
-  if (!active) return;
+  if (!active) { renderHomeReunion(); return; }
   if (active.id === 'tab-home') renderHomeReunion();
   else if (active.id === 'tab-archives') renderArchivesList();
 }
 
-// buildReunionCard — construit la carte complète d'une réunion
-function buildReunionCard(r) {
+// Lance le rendu des réunions dans un container donné (utilisé par buildFullReunionCard)
+function _renderReunionsInto(container) {
   var now = new Date(); now.setHours(0,0,0,0);
-  var el = document.getElementById('reunionsList');
-  if (el) el.innerHTML = '';
-  var container = document.createElement('div');
-  container.id = 'reunionsList';
-  if (el && el.parentNode) { el.parentNode.replaceChild(container, el); }
-  var dummy = document.createElement('div');
-  dummy.id = 'reunionsList';
-  document.body.appendChild(dummy);
-  // Utiliser le renderReunions original sur une réunion
-  var orig = state.reunions;
-  state.reunions = [r];
-  _renderReunionsList(dummy);
-  state.reunions = orig;
-  var result = dummy.firstChild || dummy;
-  dummy.remove();
-  return result;
-}
+  container.innerHTML = '';
+  state.reunions.forEach(function(r) {
+    var dt = new Date(r.date);
+    var isPast = dt < now;
+    var notes = getReunionNotes(r.id);
+    var themeMap = {};
+    try { themeMap = r.agendaThemes ? JSON.parse(r.agendaThemes) : {}; } catch(e) {}
+    var meta = getMetaNotes(r.id);
+    var starred = new Set(meta.starred);
+    var capId = meta.capitaine || '';
+    var capMember = getMember(capId);
+    var QUARTS_LOCAL = [
+      {q:'Q1', range:"0-5'",  title:'Météo sentimentale'},
+      {q:'Q2', range:"5-15'", title:'Sujet prio du jour ⭐'},
+      {q:'Q3', range:"15-25'",title:'Décisions & rôles'},
+      {q:'Q4', range:"25-60'",title:'Coup de sirène · Prochaine réunion'},
+    ];
 
-// Rendu d'une liste de réunions dans un élément
+    var card = document.createElement('div');
+    card.className = 'reunion-card';
+    card.id = 'rcard-' + r.id;
+
+        // Header — DOM pur pour éviter les conflits de guillemets
+    var hdr = document.createElement('div');
+    hdr.className = 'reunion-card-header';
+    var hdrLeft = document.createElement('div');
+    hdrLeft.innerHTML = '<div class="reunion-date-big">'+dt.getDate()+'</div><div class="reunion-month">'+dt.toLocaleDateString('fr-FR',{month:'long'})+' '+dt.getFullYear()+'</div>';
+    var hdrMid = document.createElement('div');
+    hdrMid.style.cssText = 'flex:1;margin-left:20px';
+    hdrMid.innerHTML = '<div class="reunion-card-title">'+r.title+(isPast?' <span style="font-size:12px;background:#f1f5f9;color:var(--muted);padding:2px 8px;border-radius:8px;font-weight:500">Archivée</span>':'')+'</div>'+
+      '<div class="reunion-card-time">🕐 '+cleanTime(r.time||'')+(r.location?' · 📍 '+r.location:'')+'</div>';
+    var hdrRight = document.createElement('div');
+    hdrRight.style.cssText = 'display:flex;gap:8px;flex-shrink:0';
+    var btnEdit = document.createElement('button');
+    btnEdit.className = 'btn btn-sm btn-outline';
+    btnEdit.textContent = '✏️ Modifier';
+    btnEdit.addEventListener('click', (function(rid){ return function(){ editReunion(rid); }; })(r.id));
+    var btnDel = document.createElement('button');
+    btnDel.className = 'btn btn-sm btn-outline';
+    btnDel.style.color = 'var(--accent)';
+    btnDel.textContent = '🗑️';
+    btnDel.addEventListener('click', (function(rid){ return function(){ deleteReunion(rid); }; })(r.id));
+    hdrRight.appendChild(btnEdit); hdrRight.appendChild(btnDel);
+    hdr.appendChild(hdrLeft); hdr.appendChild(hdrMid); hdr.appendChild(hdrRight);
+    card.appendChild(hdr);
+
+    // Timer
+    var timerBlock = document.createElement('div');
+    timerBlock.className = 'timer-block';
+    var PICTOS = ['🗣️','🏀','⚖️','🔔'];
+    // Timer — construit en DOM pour éviter les conflits de guillemets
+    (function(rid) {
+      // Ligne de temps
+      var timeBarHtml =
+        '<div style="display:flex;align-items:center;gap:10px;margin-bottom:12px">' +
+          '<div class="timer-clock" id="tclock-'+rid+'">60:00</div>' +
+          '<div style="flex:1">' +
+            '<div style="height:8px;background:rgba(255,255,255,.1);border-radius:4px;overflow:hidden">' +
+              '<div style="display:flex;height:100%">' +
+                '<div style="flex:5;background:rgba(34,197,94,.5)"></div><div style="width:1px;background:rgba(255,255,255,.2)"></div>' +
+                '<div style="flex:10;background:rgba(59,130,246,.4)"></div><div style="width:1px;background:rgba(255,255,255,.2)"></div>' +
+                '<div style="flex:10;background:rgba(245,158,11,.35)"></div><div style="width:1px;background:rgba(255,255,255,.2)"></div>' +
+                '<div style="flex:35;background:rgba(230,57,70,.35)"></div>' +
+              '</div>' +
+            '</div>' +
+            '<div style="position:relative;height:0">' +
+              '<div id="tlc-'+rid+'" style="position:absolute;top:-12px;width:14px;height:14px;background:white;border-radius:50%;transform:translateX(-50%);left:0%;transition:left .5s;box-shadow:0 0 5px rgba(0,0,0,.4)">' +
+                '<div style="position:absolute;inset:3px;background:#e63946;border-radius:50%"></div>' +
+              '</div>' +
+            '</div>' +
+            '<div style="display:flex;justify-content:space-between;margin-top:6px;font-size:9px;opacity:.35">' +
+              '<span>0\u2019</span><span>5\u2019</span><span>15\u2019</span><span>25\u2019</span><span>60\u2019</span>' +
+            '</div>' +
+          '</div>' +
+          '<div id="tbudget-'+rid+'" style="flex-shrink:0"></div>' +
+        '</div>';
+      timerBlock.innerHTML = timeBarHtml;
+
+      // Q blocs
+      var qGrid = document.createElement('div');
+      qGrid.style.cssText = 'display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:12px';
+      var PICTOS = ['🗣️','🏀','⚖️','🔔'];
+      QUARTS_LOCAL.forEach(function(q,i) {
+        var qDiv = document.createElement('div');
+        qDiv.className = 'quart inactive';
+        qDiv.id = 'quart-'+rid+'-'+i;
+        qDiv.innerHTML =
+          '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">' +
+            '<span style="font-size:10px;font-weight:800;letter-spacing:1px;opacity:.4" id="ql-'+rid+'-'+i+'">'+q.q+'</span>' +
+            '<span id="qs-'+rid+'-'+i+'" style="font-size:10px;font-weight:700"></span>' +
+          '</div>' +
+          '<div style="font-size:20px;margin-bottom:4px">'+PICTOS[i]+'</div>' +
+          '<div style="font-size:11px;font-weight:700;margin-bottom:2px">'+q.range+'</div>' +
+          '<div style="font-size:10px;opacity:.65;line-height:1.3">'+q.title+'</div>';
+        qDiv.addEventListener('click', (function(r2,qi){ return function(){ jumpToQuart(r2,qi); }; })(rid,i));
+        qGrid.appendChild(qDiv);
+      });
+      timerBlock.appendChild(qGrid);
+
+      // Boutons + capitaine
+      var bottomRow = document.createElement('div');
+      bottomRow.style.cssText = 'display:flex;align-items:center;justify-content:space-between;gap:10px';
+      var btns = document.createElement('div');
+      btns.style.cssText = 'display:flex;gap:6px';
+      var btnStart = document.createElement('button');
+      btnStart.className = 'tbtn tbtn-start'; btnStart.id = 'tbtn-'+rid; btnStart.textContent = '▶ Démarrer';
+      btnStart.addEventListener('click', (function(r2){ return function(){ toggleTimer(r2); }; })(rid));
+      var btnReset = document.createElement('button');
+      btnReset.className = 'tbtn tbtn-reset'; btnReset.textContent = '↺';
+      btnReset.addEventListener('click', (function(r2){ return function(){ resetTimer(r2); }; })(rid));
+      btns.appendChild(btnStart); btns.appendChild(btnReset);
+
+      var capDiv = document.createElement('div');
+      capDiv.style.cssText = 'display:flex;align-items:center;gap:8px;background:rgba(255,255,255,.06);border-radius:8px;padding:6px 12px';
+      var capInfo = document.createElement('div');
+      capInfo.innerHTML = '<div style="font-size:9px;opacity:.5;text-transform:uppercase;letter-spacing:.5px">Capitaine</div>' +
+        '<div style="font-size:13px;font-weight:700" id="cap-'+rid+'">'+(capMember?capMember.name:'Non désigné')+'</div>';
+      var capSel = document.createElement('select');
+      capSel.className = 'cap-select';
+      capSel.innerHTML = '<option value="">Désigner…</option>' +
+        MEMBERS.map(function(m){ return '<option value="'+m.id+'"'+(capId===m.id?' selected':'')+'>'+m.name+'</option>'; }).join('');
+      capSel.addEventListener('change', (function(r2){ return function(){ saveCapitaine(r2, this.value); }; })(rid));
+      capDiv.appendChild(capInfo); capDiv.appendChild(capSel);
+      bottomRow.appendChild(btns); bottomRow.appendChild(capDiv);
+      timerBlock.appendChild(bottomRow);
+    })(r.id);
+    card.appendChild(timerBlock);
+
+    // ODJ
+    var themes = getThemes();
+    if ((r.agenda||[]).length) {
+      var odj = document.createElement('div');
+      odj.className = 'odj-wrap';
+
+      // Sujet du jour — DOM pur
+      var sdjNote = getItemNote(r.id, '_sdj');
+      var sdjEl = document.createElement('div');
+      sdjEl.style.cssText = 'background:#f0f9ff;border:1.5px solid #38bdf8;border-radius:10px;margin:8px 0;padding:12px;';
+      var sdjTitle = document.createElement('div');
+      sdjTitle.style.cssText = 'font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:#0369a1;margin-bottom:10px';
+      sdjTitle.textContent = '🎯 Sujet du jour';
+      sdjEl.appendChild(sdjTitle);
+      var sdjGrid = document.createElement('div');
+      sdjGrid.className = 'body-grid';
+      // Colonne notes
+      var sdjNotesCol = document.createElement('div');
+      var sdjNotesLbl = document.createElement('div'); sdjNotesLbl.className='body-lbl'; sdjNotesLbl.textContent='💬 Notes';
+      var sdjTa = document.createElement('textarea');
+      sdjTa.className='body-ta'; sdjTa.placeholder='Notes…'; sdjTa.value=sdjNote.decision||'';
+      sdjTa.addEventListener('input', (function(rid){ return function(){ debounceNote(rid,'_sdj','decision',this.value); }; })(r.id));
+      sdjNotesCol.appendChild(sdjNotesLbl); sdjNotesCol.appendChild(sdjTa);
+      // Colonne actions
+      var sdjActCol = document.createElement('div');
+      var sdjActLbl = document.createElement('div'); sdjActLbl.className='body-lbl'; sdjActLbl.textContent='🎯 Actions';
+      var sdjActList = document.createElement('div'); sdjActList.className='actions-list'; sdjActList.id='al-'+r.id+'-_sdj';
+      // Remplir les actions existantes
+      (sdjNote.actions||[]).forEach(function(ac,ai) {
+        var m = getMember(ac.assignee);
+        var bg = m&&typeof AVATAR_BG!=='undefined'?(AVATAR_BG[m.id]||'#94a3b8'):'#94a3b8';
+        var row = document.createElement('div'); row.className='action-row';
+        var av = document.createElement('div'); av.className='action-av'; av.style.background=bg; av.textContent=m?m.name.substring(0,2):'?';
+        var txt = document.createElement('span'); txt.className='action-txt'; txt.innerHTML=(m?'<strong>'+m.name+'</strong> : ':'')+ac.text;
+        var del = document.createElement('button'); del.className='action-del'; del.textContent='×';
+        del.addEventListener('click', (function(rid,idx){ return function(){ removeSubjectAction(rid,'_sdj',idx); }; })(r.id,ai));
+        row.appendChild(av); row.appendChild(txt); row.appendChild(del);
+        sdjActList.appendChild(row);
+      });
+      var sdjAddBtn = document.createElement('button'); sdjAddBtn.className='add-action-btn'; sdjAddBtn.textContent='+ Ajouter une action';
+      sdjAddBtn.addEventListener('click', (function(rid){ return function(){ openAddActionForm(rid,'_sdj'); }; })(r.id));
+      // Formulaire ajout action
+      var sdjAaf = document.createElement('div'); sdjAaf.className='aaf'; sdjAaf.id='aaf-'+r.id+'-_sdj'; sdjAaf.style.display='none';
+      var sdjSel = document.createElement('select'); sdjSel.id='aaf-sel-'+r.id+'-_sdj';
+      sdjSel.innerHTML='<option value="">Assigner…</option>'+MEMBERS.map(function(m){return '<option value="'+m.id+'">'+m.name+'</option>';}).join('');
+      var sdjTxt2 = document.createElement('textarea'); sdjTxt2.id='aaf-txt-'+r.id+'-_sdj'; sdjTxt2.placeholder="Décrivez l'action…";
+      var sdjBtns = document.createElement('div'); sdjBtns.className='aaf-btns';
+      var sdjSave = document.createElement('button'); sdjSave.className='aaf-save'; sdjSave.textContent='Enregistrer';
+      sdjSave.addEventListener('click', (function(rid){ return function(){ confirmSubjectAction(rid,'_sdj'); }; })(r.id));
+      var sdjCancel = document.createElement('button'); sdjCancel.className='aaf-cancel'; sdjCancel.textContent='Annuler';
+      sdjCancel.addEventListener('click', (function(rid){ return function(){ closeAddActionForm(rid,'_sdj'); }; })(r.id));
+      sdjBtns.appendChild(sdjSave); sdjBtns.appendChild(sdjCancel);
+      sdjAaf.appendChild(sdjSel); sdjAaf.appendChild(sdjTxt2); sdjAaf.appendChild(sdjBtns);
+      sdjActCol.appendChild(sdjActLbl); sdjActCol.appendChild(sdjActList); sdjActCol.appendChild(sdjAddBtn); sdjActCol.appendChild(sdjAaf);
+      sdjGrid.appendChild(sdjNotesCol); sdjGrid.appendChild(sdjActCol);
+      sdjEl.appendChild(sdjGrid);
+      odj.appendChild(sdjEl);
+
+
+      // Prioritaires
+      if (starred.size > 0) {
+        var prioItems = [];
+        starred.forEach(function(i) { var s=(r.agenda||[])[i]; if(s) prioItems.push({subj:s,i:i}); });
+        if (prioItems.length) {
+          var prioSec = document.createElement('div');
+          prioSec.style.cssText = 'background:#fffbeb;border:1.5px solid #f59e0b;border-radius:10px;margin:8px 0;padding:10px 12px;';
+          prioSec.innerHTML = '<div style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:#d97706;margin-bottom:10px">⭐ Prioritaires du jour <span style="background:#f59e0b;color:white;font-size:10px;padding:2px 7px;border-radius:10px">'+prioItems.length+'</span></div>';
+          prioItems.forEach(function(item) {
+            prioSec.appendChild(buildSubjectCard(r, item.i, item.subj, notes, starred, 'p'));
+          });
+          odj.appendChild(prioSec);
+        }
+      }
+
+      // Thématiques
+      var grouped = {};
+      themes.forEach(function(t) { grouped[t.id] = []; });
+      grouped['_autre'] = [];
+      (r.agenda||[]).forEach(function(subj,i) {
+        var tid = themeMap[i] || '_autre';
+        if (!grouped[tid]) grouped[tid] = [];
+        grouped[tid].push({subj:subj,i:i});
+      });
+      var allThemes = themes.concat([{id:'_autre',label:'Autre',color:'#6366f1',bg:'#eef2ff'}]);
+      // Éviter doublon _autre
+      var seen = {};
+      allThemes = allThemes.filter(function(t) { if(seen[t.id]) return false; seen[t.id]=true; return true; });
+      allThemes.forEach(function(t) {
+        var items = grouped[t.id] || [];
+        if (!items.length) return;
+        var thdr = document.createElement('div');
+        thdr.className = 'theme-hdr';
+        thdr.style.cssText = 'background:'+t.bg+';border-left-color:'+t.color+';margin-top:10px';
+        thdr.innerHTML = '<span class="theme-hdr-label" style="color:'+t.color+'">'+t.label+'</span><span class="theme-hdr-count" style="color:'+t.color+'">'+items.length+' sujet'+(items.length>1?'s':'')+'</span>';
+        odj.appendChild(thdr);
+        items.forEach(function(item) {
+          odj.appendChild(buildSubjectCard(r, item.i, item.subj, notes, starred));
+        });
+      });
+      card.appendChild(odj);
+    }
+
+      // CR section — DOM pur
+      var crWrap = document.createElement('div');
+      crWrap.className = 'cr-wrap';
+
+      // Checklist Paul
+      var clPaul = document.createElement('div'); clPaul.className='cl-blk cl-paul';
+      var clPaulHdr = document.createElement('div'); clPaulHdr.className='cl-hdr';
+      var clPaulTtl = document.createElement('span'); clPaulTtl.className='cl-ttl'; clPaulTtl.textContent='⚡ À valider par Paul';
+      var clPaulCopy = document.createElement('button'); clPaulCopy.className='cl-copy-btn'; clPaulCopy.textContent='📋 Copier';
+      clPaulCopy.addEventListener('click',(function(rid){return function(){exportChecklist(rid,'paul');};})(r.id));
+      clPaulHdr.appendChild(clPaulTtl); clPaulHdr.appendChild(clPaulCopy);
+      var clPaulList = document.createElement('div'); clPaulList.className='cl-items-list'; clPaulList.id='cl-paul-'+r.id;
+      var clPaulRow = document.createElement('div'); clPaulRow.className='cl-add-row';
+      var clPaulInp = document.createElement('input'); clPaulInp.id='cl-paul-inp-'+r.id; clPaulInp.placeholder='Ajouter un sujet…';
+      clPaulInp.addEventListener('keydown',(function(rid){return function(e){if(e.key==='Enter')addChecklistItem(rid,'paul');};})(r.id));
+      var clPaulBtn = document.createElement('button'); clPaulBtn.className='cl-plus-btn'; clPaulBtn.textContent='+';
+      clPaulBtn.addEventListener('click',(function(rid){return function(){addChecklistItem(rid,'paul');};})(r.id));
+      clPaulRow.appendChild(clPaulInp); clPaulRow.appendChild(clPaulBtn);
+      clPaul.appendChild(clPaulHdr); clPaul.appendChild(clPaulList); clPaul.appendChild(clPaulRow);
+      crWrap.appendChild(clPaul);
+
+      // Checklist Olivier
+      var clOliv = document.createElement('div'); clOliv.className='cl-blk cl-olivier';
+      var clOlivHdr = document.createElement('div'); clOlivHdr.className='cl-hdr';
+      var clOlivTtl = document.createElement('span'); clOlivTtl.className='cl-ttl'; clOlivTtl.textContent='👁️ À voir avec Olivier Deruwez';
+      var clOlivCopy = document.createElement('button'); clOlivCopy.className='cl-copy-btn'; clOlivCopy.textContent='📋 Copier';
+      clOlivCopy.addEventListener('click',(function(rid){return function(){exportChecklist(rid,'olivier');};})(r.id));
+      clOlivHdr.appendChild(clOlivTtl); clOlivHdr.appendChild(clOlivCopy);
+      var clOlivList = document.createElement('div'); clOlivList.className='cl-items-list'; clOlivList.id='cl-olivier-'+r.id;
+      var clOlivRow = document.createElement('div'); clOlivRow.className='cl-add-row';
+      var clOlivInp = document.createElement('input'); clOlivInp.id='cl-olivier-inp-'+r.id; clOlivInp.placeholder='Ajouter un sujet…';
+      clOlivInp.addEventListener('keydown',(function(rid){return function(e){if(e.key==='Enter')addChecklistItem(rid,'olivier');};})(r.id));
+      var clOlivBtn = document.createElement('button'); clOlivBtn.className='cl-plus-btn'; clOlivBtn.textContent='+';
+      clOlivBtn.addEventListener('click',(function(rid){return function(){addChecklistItem(rid,'olivier');};})(r.id));
+      clOlivRow.appendChild(clOlivInp); clOlivRow.appendChild(clOlivBtn);
+      clOliv.appendChild(clOlivHdr); clOliv.appendChild(clOlivList); clOliv.appendChild(clOlivRow);
+      crWrap.appendChild(clOliv);
+
+      // Export membres
+      var expDiv = document.createElement('div'); expDiv.className='exp-members';
+      var expLbl = document.createElement('div'); expLbl.className='exp-members-lbl'; expLbl.textContent='📋 Export tâches par personne';
+      var expBtns = document.createElement('div'); expBtns.className='exp-btns';
+      MEMBERS.forEach(function(m) {
+        var bg = (typeof AVATAR_BG!=='undefined'?AVATAR_BG[m.id]:null)||'#94a3b8';
+        var btn = document.createElement('button'); btn.className='exp-btn'; btn.style.borderColor=bg; btn.textContent=m.name;
+        btn.addEventListener('click',(function(rid,mid){return function(){exportMemberActions(rid,mid);};})(r.id,m.id));
+        expBtns.appendChild(btn);
+      });
+      expDiv.appendChild(expLbl); expDiv.appendChild(expBtns);
+      crWrap.appendChild(expDiv);
+
+      // CR Rapide
+      var crExportBtns = document.createElement('div'); crExportBtns.className='cr-export-btns';
+      var crBtn = document.createElement('button'); crBtn.className='crbtn crbtn-quick'; crBtn.textContent='📤 CR rapide (WhatsApp)';
+      crBtn.addEventListener('click',(function(rid){return function(){toggleCRExport(rid,'quick');};})(r.id));
+      crExportBtns.appendChild(crBtn);
+      crWrap.appendChild(crExportBtns);
+
+      // Export box
+      (function(rid) {
+        var crBox = document.createElement('div'); crBox.className='cr-export-box'; crBox.id='cr-box-'+rid;
+        var crTabRow = document.createElement('div'); crTabRow.className='cr-tabs-row';
+        var crTabBtn = document.createElement('button'); crTabBtn.className='cr-tab-btn active'; crTabBtn.id='crt-quick-'+rid; crTabBtn.textContent='Rapide';
+        crTabBtn.addEventListener('click',(function(r2){return function(){switchCRTab(r2,'quick');};})(rid));
+        crTabRow.appendChild(crTabBtn);
+        var crPane = document.createElement('div'); crPane.className='cr-tab-pane active'; crPane.id='crp-quick-'+rid;
+        var crTxt = document.createElement('div'); crTxt.className='cr-txt'; crTxt.id='crtxt-quick-'+rid;
+        var crBtnRow = document.createElement('div'); crBtnRow.className='cr-btn-row';
+        var crCopyBtn = document.createElement('button'); crCopyBtn.className='cr-copy-btn2'; crCopyBtn.textContent='📋 Copier';
+        crCopyBtn.addEventListener('click',(function(r2){return function(){copyCRTab(r2,'quick');};})(rid));
+        crBtnRow.appendChild(crCopyBtn);
+        crPane.appendChild(crTxt); crPane.appendChild(crBtnRow);
+        crBox.appendChild(crTabRow); crBox.appendChild(crPane);
+        crWrap.appendChild(crBox);
+      })(r.id);
+
+      card.appendChild(crWrap);
+      setTimeout(function() { renderChecklists(r.id); }, 10);
+      container.appendChild(card);
+
+  });
+}
 
 function renderMatchDuMois() {
   const el = document.getElementById('reunionsList');
@@ -1238,6 +1550,7 @@ function buildTaskForm(statusHint, data) {
 }
 // Thématiques dynamiques basées sur les projets
 function getThemes() {
+  // Thèmes fixes IRFBB + thèmes personnalisés
   var fixed = [
     { id:'bpjeps',        label:'BPJEPS',        color:'#3b82f6', bg:'#eff6ff' },
     { id:'bf',            label:'Brevet Fédéral', color:'#8b5cf6', bg:'#f5f3ff' },
@@ -1251,6 +1564,8 @@ function getThemes() {
   customThemes = state.customThemes || [];
   return fixed.concat(customThemes);
 }
+
+
 
 function buildReunionForm(data) {
   // Reconstruire les items depuis agenda + agendaThemes
@@ -1273,8 +1588,7 @@ function buildReunionForm(data) {
       <label class="form-label">Ordre du jour</label>
       <div class="agenda-builder" id="agenda-builder"></div>
       <div class="agenda-add-row" style="margin-top:10px">
-        ${getThemes().map(t => `<button class="agenda-add-btn" style="border-color:${t.color};color:${t.color}" onclick="addAgendaItem('${t.id}')">+ ${t.label}</button>`).join('')}
-      <button class="agenda-add-btn" style="border-color:#94a3b8;color:#64748b" onclick="promptNewTheme()">+ Thème...</button>
+        ${getThemes().map(t => `<button class="agenda-add-btn" style="border-color:${t.color};color:${t.color}" onclick="addAgendaItem('${t.id}')">+ ${t.label}</button>`).join('')}<button class="agenda-add-btn" style="border-color:#94a3b8;color:#64748b" onclick="promptNewTheme()">+ Thème...</button>
       </div>
     </div>
     <div class="modal-actions">
@@ -1489,8 +1803,8 @@ async function saveReunion() {
   const d = {
     id: newId,
     title,
-    date: (document.getElementById('f-rdate')||{value:''}).value,
-    time: (document.getElementById('f-rtime')||{value:''}).value,
+    date: (document.getElementById('f-rdate')||{value:''}).value || '',
+    time: (document.getElementById('f-rtime')||{value:''}).value || '',
     location: document.getElementById('f-rlocation').value.trim(),
     agenda,
     agendaThemes: JSON.stringify(agendaThemesObj),
@@ -1573,9 +1887,8 @@ async function deleteTask(id) {
 }
 
 // INIT
-try { state.customThemes = JSON.parse(localStorage.getItem('hdf_themes')||'[]'); customThemes=state.customThemes; } catch(e){}
 try { state.match = JSON.parse(localStorage.getItem('hdf_match')||'{}'); } catch(e){ state.match={}; }
-loadData().then(function() { renderHomeReunion(); });
+loadData().then(function() { try { state.customThemes=JSON.parse(localStorage.getItem('hdf_themes')||'[]'); customThemes=state.customThemes; } catch(e){} renderHomeReunion(); });
 // Rafraîchissement auto toutes les 30 secondes
 setInterval(async () => {
   if (state.loading) return;
