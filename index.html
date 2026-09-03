@@ -413,6 +413,31 @@ main { padding: 24px; max-width: 1400px; margin: 0 auto; }
 .status-done-s  { background:#dcfce7; color:#16a34a; }
 .status-report  { background:#fef3c7; color:#d97706; }
 
+
+.app-header { display:flex; align-items:center; justify-content:space-between; padding:10px 24px; background:white; border-bottom:1px solid var(--border); position:sticky; top:0; z-index:100; gap:12px; }
+.logo-text { font-size:16px; font-weight:800; color:var(--text); }
+.logo-text span { color:var(--accent); }
+.app-nav { display:flex; gap:6px; }
+.nav-btn { padding:7px 14px; border-radius:8px; border:1px solid var(--border); background:white; font-size:13px; font-weight:500; cursor:pointer; color:var(--muted); transition:all .15s; }
+.nav-btn:hover { background:#f8fafc; color:var(--text); }
+.nav-btn.active { background:var(--accent); color:white; border-color:var(--accent); }
+.app-actions { display:flex; align-items:center; gap:8px; }
+.tab-view { display:none; padding:20px 24px; max-width:900px; margin:0 auto; }
+.tab-view.active { display:block; }
+.archive-item { background:white; border:1px solid var(--border); border-radius:10px; padding:12px 16px; margin-bottom:8px; cursor:pointer; display:flex; align-items:center; gap:12px; transition:all .15s; }
+.archive-item:hover { border-color:#94a3b8; background:#fafbfc; box-shadow:0 2px 8px rgba(0,0,0,.06); }
+.arc-badge { background:var(--accent); color:white; border-radius:8px; padding:5px 10px; text-align:center; flex-shrink:0; min-width:44px; }
+.arc-day { font-size:18px; font-weight:800; line-height:1; }
+.arc-month { font-size:10px; font-weight:600; opacity:.85; }
+.arc-info { flex:1; }
+.arc-title { font-size:14px; font-weight:600; color:var(--text); }
+.arc-meta { font-size:12px; color:var(--muted); margin-top:2px; }
+.arc-tags { display:flex; gap:4px; flex-wrap:wrap; margin-top:4px; }
+.arc-tag { font-size:10px; padding:2px 7px; border-radius:8px; font-weight:600; }
+.no-data { text-align:center; padding:60px 24px; color:var(--muted); }
+.no-data-icon { font-size:48px; margin-bottom:12px; }
+.no-data-text { font-size:15px; font-weight:500; margin-bottom:6px; }
+
 @media (max-width: 768px) {
   .kanban-board { grid-template-columns: 1fr; }
   .form-row { grid-template-columns: 1fr; }
@@ -427,9 +452,9 @@ main { padding: 24px; max-width: 1400px; margin: 0 auto; }
     <div class="logo-text">IRFBB <span>HDF</span></div>
   </div>
   <div class="nav-tabs">
-    
+    <button class="nav-tab active" onclick="showView('dashboard')">🏠 Projets</button>
     <button class="nav-tab" onclick="showView('reunions')" id="navReunionTab">📅 Réunions<span class="nav-tab-sub" id="navNextDate"></span></button>
-    
+    <button class="nav-tab" onclick="showView('planning')">📆 Planning</button>
   </div>
   <div class="header-right">
     <span id="save-indicator" style="font-size:12px;color:#22c55e;font-weight:600;opacity:0;transition:opacity .3s;margin-right:8px">✓ Sauvegardé</span>
@@ -448,35 +473,26 @@ main { padding: 24px; max-width: 1400px; margin: 0 auto; }
 </style>
 
 <main>
-  <!-- KANBAN -->
-  <div class="view" id="view-kanban">
-    <div class="kanban-header">
-      <div class="back-btn" onclick="showView('dashboard')">← Retour</div>
-      <span id="kanbanEmoji" style="font-size:24px"></span>
-      <div class="kanban-title" id="kanbanTitle"></div>
-      <div style="display:flex;gap:8px;margin-left:auto">
-        <button class="btn btn-sm btn-outline" onclick="editCurrentProject()">✏️ Modifier</button>
-        <button class="btn btn-sm btn-outline" onclick="openModal('subproject')">+ Sous-projet</button>
-        <button class="btn btn-primary btn-sm" onclick="openModal('task')">+ Tâche</button>
-      </div>
+  <div class="app-header">
+    <div class="app-logo"><span style="font-size:22px">🏀</span><span class="logo-text">IRFBB <span>HDF</span></span></div>
+    <div class="app-nav">
+      <button class="nav-btn active" id="nav-home" onclick="showTab('home',this)">📅 Réunion</button>
+      <button class="nav-btn" id="nav-archives" onclick="showTab('archives',this)">🗂️ Archives</button>
+      <button class="nav-btn" id="nav-match" onclick="showTab('match',this)">🏟️ Match du mois</button>
     </div>
-    <div class="subproject-tabs" id="subprojectTabs"></div>
-    <div class="kanban-board" id="kanbanBoard"></div>
+    <div class="app-actions">
+      <span id="save-indicator" style="font-size:12px;color:#22c55e;font-weight:600;opacity:0;transition:opacity .3s;margin-right:8px">✓ Sauvegardé</span>
+      <button class="btn btn-primary btn-sm" onclick="openModal('reunion')">+ Nouvelle réunion</button>
+    </div>
   </div>
-
-  <!-- REUNIONS -->
-  <div class="view" id="view-reunions">
-    <div class="section-header">
-      <div class="section-title">Réunions</div>
-      <button class="btn btn-primary" onclick="openModal('reunion')">+ Nouvelle réunion</button>
+  <div class="tab-view active" id="tab-home"><div id="homeContent"></div></div>
+  <div class="tab-view" id="tab-archives">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+      <div class="section-title">Réunions archivées</div>
     </div>
-    <div class="reunions-tabs">
-      <button class="rtab active" onclick="switchReunionTab('upcoming',this)">📅 À venir</button>
-      <button class="rtab" onclick="switchReunionTab('past',this)">🗂️ Archives <span class="archive-badge" id="archiveCount">0</span></button>
-      <button class="rtab" onclick="switchReunionTab('match',this)">🏟️ Match du mois</button>
-    </div>
-    <div id="reunionsList"></div>
+    <div id="archivesList"></div>
   </div>
+  <div class="tab-view" id="tab-match"><div id="matchContent"></div></div>
 </main>
 
 <div class="modal-overlay" id="modalOverlay" onclick="closeModal(event)">
@@ -529,6 +545,7 @@ let state = {
   reunions: [],
   planningEvents: [],
   agendaNotes: {},
+  customThemes: [],
   match: {},
   currentProject: null,
   loading: false,
@@ -967,989 +984,141 @@ function cleanTime(t) {
   return t;
 }
 
-function renderReunions() {
-  const el = document.getElementById('reunionsList');
-  const now = new Date(); now.setHours(0,0,0,0);
-  const upcoming = state.reunions.filter(r => r.date && new Date(r.date) >= now).sort((a,b) => new Date(a.date)-new Date(b.date));
-  const past     = state.reunions.filter(r => !r.date || new Date(r.date) < now).sort((a,b) => new Date(b.date)-new Date(a.date));
-  const badge = document.getElementById('archiveCount');
-  if (badge) badge.textContent = past.length;
-  const list = _reunionTab === 'past' ? past : upcoming;
-  if (!list.length) {
-    el.innerHTML = '<div class="empty-state"><div class="empty-icon">📅</div><div class="empty-text">' + (_reunionTab==='past'?'Aucune r\u00e9union archiv\u00e9e':'Aucune r\u00e9union \u00e0 venir') + '</div></div>';
+
+// ═══════════════════════════════════════════════════════════
+// NAVIGATION
+// ═══════════════════════════════════════════════════════════
+var customThemes = [];
+
+function showTab(tab, el) {
+  document.querySelectorAll('.tab-view').forEach(function(v) { v.classList.remove('active'); });
+  document.querySelectorAll('.nav-btn').forEach(function(b) { b.classList.remove('active'); });
+  var view = document.getElementById('tab-' + tab);
+  if (view) view.classList.add('active');
+  if (el) el.classList.add('active');
+  if (tab === 'home') renderHomeReunion();
+  else if (tab === 'archives') renderArchivesList();
+  else if (tab === 'match') { renderMatchDuMois(); }
+}
+
+function renderHomeReunion() {
+  var el = document.getElementById('homeContent');
+  if (!el) return;
+  var now = new Date(); now.setHours(0,0,0,0);
+  var upcoming = state.reunions
+    .filter(function(r) { return r.date && new Date(r.date) >= now; })
+    .sort(function(a,b) { return new Date(a.date) - new Date(b.date); });
+  el.innerHTML = '';
+  if (!upcoming.length) {
+    el.innerHTML = '<div class="no-data"><div class="no-data-icon">📅</div><div class="no-data-text">Aucune réunion à venir</div>' +
+      '<button class="btn btn-primary" style="margin-top:16px" onclick="openModal(&quot;reunion&quot;)">+ Nouvelle réunion</button></div>';
     return;
   }
-  const QUARTS = [
-    {q:'Q1', range:"0-5'",  title:'M\u00e9t\u00e9o sentimentale'},
-    {q:'Q2', range:"5-15'", title:'Sujet prio du jour \u2b50'},
-    {q:'Q3', range:"15-25'",title:'D\u00e9cisions & r\u00f4les'},
-    {q:'Q4', range:"25-60'",title:'Coup de sir\u00e8ne \u00b7 Prog. prochaine r\u00e9union'},
-  ];
-  el.innerHTML = '';
-  list.forEach(r => {
-    const dt = new Date(r.date);
-    const isPast = dt < now;
-    const notes = getReunionNotes(r.id);
-    let themeMap = {};
+  el.appendChild(buildReunionCard(upcoming[0]));
+}
+
+function renderArchivesList() {
+  var el = document.getElementById('archivesList');
+  if (!el) return;
+  var now = new Date(); now.setHours(0,0,0,0);
+  var past = state.reunions
+    .filter(function(r) { return r.date && new Date(r.date) < now; })
+    .sort(function(a,b) { return new Date(b.date) - new Date(a.date); });
+  if (!past.length) {
+    el.innerHTML = '<div class="no-data"><div class="no-data-icon">🗂️</div><div class="no-data-text">Aucune réunion archivée</div></div>';
+    return;
+  }
+  var allThemes = getThemes();
+  el.innerHTML = past.map(function(r) {
+    var dt = new Date(r.date);
+    var themeMap = {};
     try { themeMap = r.agendaThemes ? JSON.parse(r.agendaThemes) : {}; } catch(e) {}
-    const meta = getMetaNotes(r.id);
-    const starred = new Set(meta.starred);
-    const capId = meta.capitaine || '';
-    const capMember = getMember(capId);
-
-    // Bâtir la carte
-    const card = document.createElement('div');
-    card.className = 'reunion-card';
-    card.id = 'rcard-' + r.id;
-
-    // ── Header ──────────────────────────────────────────────
-    const hdr = document.createElement('div');
-    hdr.className = 'reunion-card-header';
-    hdr.innerHTML =
-      '<div>' +
-        '<div class="reunion-date-big">' + dt.getDate() + '</div>' +
-        '<div class="reunion-month">' + dt.toLocaleDateString('fr-FR',{month:'long'}) + ' ' + dt.getFullYear() + '</div>' +
-      '</div>' +
-      '<div style="flex:1;margin-left:20px">' +
-        '<div class="reunion-card-title">' + r.title + (isPast ? ' <span style="font-size:12px;background:#f1f5f9;color:var(--muted);padding:2px 8px;border-radius:8px;font-weight:500">Archiv\u00e9e</span>' : '') + '</div>' +
-        '<div class="reunion-card-time">\uD83D\uDD50 ' + cleanTime(r.time) + (r.location ? ' \u00b7 \uD83D\uDCCD ' + r.location : '') + '</div>' +
-      '</div>' +
-      '<div style="display:flex;gap:8px;flex-shrink:0">' +
-        '<button class="btn btn-sm btn-outline" onclick="editReunion(\'' + r.id + '\')">\u270F\uFE0F Modifier</button>' +
-        '<button class="btn btn-sm btn-outline" style="color:var(--accent)" onclick="deleteReunion(\'' + r.id + '\')">\uD83D\uDDD1\uFE0F</button>' +
-      '</div>';
-    card.appendChild(hdr);
-
-    // ── Timer ───────────────────────────────────────────────
-    const timerBlock = document.createElement('div');
-    timerBlock.className = 'timer-block';
-    const PICTOS = ['🗣️','🏀','⚖️','🔔'];
-    timerBlock.innerHTML =
-      // Ligne horloge + terrain
-      '<div style="display:flex;align-items:center;gap:10px;margin-bottom:12px">' +
-        '<div class="timer-clock" id="tclock-'+r.id+'">30:00</div>' +
-        '<div style="flex:1">' +
-          '<div style="height:8px;background:rgba(255,255,255,.1);border-radius:4px;overflow:hidden;position:relative">' +
-            '<div style="display:flex;height:100%">' +
-              '<div style="flex:5;background:rgba(34,197,94,.5)"></div>' +
-              '<div style="width:1px;background:rgba(255,255,255,.2)"></div>' +
-              '<div style="flex:10;background:rgba(59,130,246,.4)"></div>' +
-              '<div style="width:1px;background:rgba(255,255,255,.2)"></div>' +
-              '<div style="flex:10;background:rgba(245,158,11,.35)"></div>' +
-              '<div style="width:1px;background:rgba(255,255,255,.2)"></div>' +
-              '<div style="flex:5;background:rgba(230,57,70,.35)"></div>' +
-            '</div>' +
-          '</div>' +
-          '<div style="position:relative;height:0">' +
-            '<div id="tlc-'+r.id+'" style="position:absolute;top:-12px;width:14px;height:14px;background:white;border-radius:50%;transform:translateX(-50%);left:0%;transition:left .5s;box-shadow:0 0 5px rgba(0,0,0,.4)">' +
-              '<div style="position:absolute;inset:3px;background:#e63946;border-radius:50%"></div>' +
-            '</div>' +
-          '</div>' +
-          '<div style="display:flex;justify-content:space-between;margin-top:6px;font-size:9px;opacity:.35;letter-spacing:.5px">' +
-            '<span>0\'</span><span>5\'</span><span>15\'</span><span>25\'</span><span>30\'</span>' +
-          '</div>' +
-        '</div>' +
-        '<div id="tbudget-'+r.id+'" style="flex-shrink:0"></div>' +
-      '</div>' +
-      // 4 Q cliquables avec pictos
-      '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:12px">' +
-        QUARTS.map((q,i) =>
-          '<div class="quart inactive" id="quart-'+r.id+'-'+i+'" onclick="jumpToQuart(\'' + r.id + '\',' + i + ')">' +
-            '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">' +
-              '<span style="font-size:10px;font-weight:800;letter-spacing:1px;opacity:.4" id="ql-'+r.id+'-'+i+'">' + q.q + '</span>' +
-              '<span id="qs-'+r.id+'-'+i+'" style="font-size:10px;font-weight:700"></span>' +
-            '</div>' +
-            '<div style="font-size:20px;margin-bottom:4px">' + PICTOS[i] + '</div>' +
-            '<div style="font-size:11px;font-weight:700;margin-bottom:2px">' + q.range + '</div>' +
-            '<div style="font-size:10px;opacity:.65;line-height:1.3">' + q.title + '</div>' +
-          '</div>'
-        ).join('') +
-      '</div>' +
-      // Bas : boutons + capitaine
-      '<div style="display:flex;align-items:center;justify-content:space-between;gap:10px">' +
-        '<div style="display:flex;gap:6px">' +
-          '<button class="tbtn tbtn-start" id="tbtn-'+r.id+'" onclick="toggleTimer(\'' + r.id + '\')">\u25B6 D\u00e9marrer</button>' +
-          '<button class="tbtn tbtn-reset" onclick="resetTimer(\'' + r.id + '\')" title="Reset">\u21BA</button>' +
-        '</div>' +
-        '<div style="display:flex;align-items:center;gap:8px;background:rgba(255,255,255,.06);border-radius:8px;padding:6px 12px">' +
-          '<div>' +
-            '<div style="font-size:9px;opacity:.5;text-transform:uppercase;letter-spacing:.5px">Capitaine</div>' +
-            '<div style="font-size:13px;font-weight:700" id="cap-'+r.id+'">' + (capMember ? capMember.name : 'Non d\u00e9sign\u00e9') + '</div>' +
-          '</div>' +
-          '<select class="cap-select" onchange="saveCapitaine(\'' + r.id + '\',this.value)">' +
-            '<option value="">D\u00e9signer\u2026</option>' +
-            MEMBERS.map(m => '<option value="' + m.id + '"' + (capId === m.id ? ' selected' : '') + '>' + m.name + '</option>').join('') +
-          '</select>' +
-        '</div>' +
-      '</div>';
-    card.appendChild(timerBlock);
-
-    // ── Bandeau priorités ───────────────────────────────────
-
-    // ── Ordre du jour par thématique ───────────────────────
-    if ((r.agenda||[]).length) {
-      const odj = document.createElement('div');
-      odj.className = 'odj-wrap';
-      // Grouper par thème
-      const themes = getThemes();
-      const grouped = {};
-      themes.forEach(t => { grouped[t.id] = []; });
-      grouped['_autre'] = [];
-      (r.agenda||[]).forEach((subj, i) => {
-        const tid = themeMap[i] || '_autre';
-        if (!grouped[tid]) grouped[tid] = [];
-        grouped[tid].push({subj, i});
-      });
-
-      const allThemes = [...themes, {id:'_autre', label:'Autre', color:'#6366f1', bg:'#eef2ff'}];
-
-      // ── Sujet du jour ──────────────────────────
-      const sdjNote = getItemNote(r.id, '_sdj');
-      const sdjActions = sdjNote.actions || [];
-      const sdjActHtml = sdjActions.map(function(ac, ai) {
-        const m = getMember(ac.assignee);
-        const bg = m && typeof AVATAR_BG !== 'undefined' ? (AVATAR_BG[m.id]||'#94a3b8') : '#94a3b8';
-        const avImg = m && m.avatar ? '<img src="'+m.avatar+'">' : (m ? m.name.substring(0,2) : '?');
-        return '<div class="action-row">' +
-          '<div class="action-av" style="background:'+bg+'">'+avImg+'</div>' +
-          '<span class="action-txt">'+(m?'<strong>'+m.name+'</strong> : ':'')+ac.text+'</span>' +
-          '<button class="action-del" onclick="removeSubjectAction(\''+r.id+'\',\'_sdj\','+ai+')">\u00d7</button>' +
-        '</div>';
-      }).join('');
-      const sdjEl = document.createElement('div');
-      sdjEl.style.cssText = 'background:#f0f9ff;border:1.5px solid #38bdf8;border-radius:10px;margin:8px 0;padding:12px;';
-      sdjEl.innerHTML =
-        '<div style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:#0369a1;margin-bottom:10px">' +
-          '\uD83C\uDFAF Sujet du jour' +
-        '</div>' +
-        '<div class="body-grid">' +
-          '<div>' +
-            '<div class="body-lbl">\uD83D\uDCAC Notes</div>' +
-            '<textarea class="body-ta" placeholder="Notes\u2026" oninput="debounceNote(\''+r.id+'\',\'_sdj\',\'decision\',this.value)">'+(sdjNote.decision||'')+'</textarea>' +
-          '</div>' +
-          '<div>' +
-            '<div class="body-lbl">\uD83C\uDFAF Actions</div>' +
-            '<div class="actions-list" id="al-'+r.id+'-_sdj">'+sdjActHtml+'</div>' +
-            '<button class="add-action-btn" onclick="openAddActionForm(\''+r.id+'\',\'_sdj\')">+ Ajouter une action</button>' +
-            '<div class="aaf" id="aaf-'+r.id+'-_sdj" style="display:none">' +
-              '<select id="aaf-sel-'+r.id+'-_sdj"><option value="">Assigner\u2026</option>'+MEMBERS.map(function(m){return '<option value="'+m.id+'">'+m.name+'</option>';}).join('')+'</select>' +
-              '<textarea id="aaf-txt-'+r.id+'-_sdj" placeholder="D\u00e9crivez l\u2019action\u2026"></textarea>' +
-              '<div class="aaf-btns">' +
-                '<button class="aaf-save" onclick="confirmSubjectAction(\''+r.id+'\',\'_sdj\')">Enregistrer</button>' +
-                '<button class="aaf-cancel" onclick="closeAddActionForm(\''+r.id+'\',\'_sdj\')">Annuler</button>' +
-              '</div>' +
-            '</div>' +
-          '</div>' +
-        '</div>';
-      odj.appendChild(sdjEl);
-
-      // ── Section Prioritaires en haut ──────────────
-      if (starred.size > 0) {
-        const prioItems = Array.from(starred)
-          .map(i => ({ subj: (r.agenda||[])[i], i }))
-          .filter(x => x.subj);
-        if (prioItems.length) {
-          const prioSection = document.createElement('div');
-          prioSection.style.cssText = 'background:#fffbeb;border:1.5px solid #f59e0b;border-radius:10px;margin:12px 0;padding:10px 12px;';
-
-          const prioHdr = document.createElement('div');
-          prioHdr.style.cssText = 'font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:#d97706;margin-bottom:10px;display:flex;align-items:center;gap:6px;';
-          prioHdr.innerHTML = '\u2B50 Prioritaires du jour <span style="background:#f59e0b;color:white;font-size:10px;padding:2px 7px;border-radius:10px;">' + prioItems.length + '</span>';
-          prioSection.appendChild(prioHdr);
-
-          prioItems.forEach(({subj, i}) => {
-            prioSection.appendChild(buildSubjectCard(r, i, subj, notes, starred, 'p'));
-          });
-          odj.appendChild(prioSection);
-        }
-      }
-
-      // ── Sujets par thématique ─────────────────────────────
-      allThemes.forEach(t => {
-        const items = grouped[t.id] || [];
-        if (!items.length) return;
-        // Header thème
-        const thdr = document.createElement('div');
-        thdr.className = 'theme-hdr';
-        thdr.style.cssText = 'background:' + t.bg + ';border-left-color:' + t.color;
-        thdr.innerHTML = '<span class="theme-hdr-label" style="color:' + t.color + '">' + t.label + '</span><span class="theme-hdr-count" style="color:' + t.color + '">' + items.length + ' sujet' + (items.length>1?'s':'') + '</span>';
-        odj.appendChild(thdr);
-
-        // Cartes sujets
-        items.forEach(({subj, i}) => {
-          odj.appendChild(buildSubjectCard(r, i, subj, notes, starred));
-        });
-      });
-      card.appendChild(odj);
-    }
-
-    // ── CR section ──────────────────────────────────────────
-    const crWrap = document.createElement('div');
-    crWrap.className = 'cr-wrap';
-    crWrap.innerHTML =
-      '<div class="cl-blk cl-paul">' +
-        '<div class="cl-hdr"><span class="cl-ttl">\u26A1 \u00c0 valider par Paul</span><button class="cl-copy-btn" onclick="exportChecklist(\'' + r.id + '\',\'paul\')">\uD83D\uDCCB Copier</button></div>' +
-        '<div class="cl-items-list" id="cl-paul-' + r.id + '"></div>' +
-        '<div class="cl-add-row"><input id="cl-paul-inp-' + r.id + '" placeholder="Ajouter un sujet\u2026" onkeydown="if(event.key===\'Enter\')addChecklistItem(\'' + r.id + '\',\'paul\')"><button class="cl-plus-btn" onclick="addChecklistItem(\'' + r.id + '\',\'paul\')">+</button></div>' +
-      '</div>' +
-
-      // Checklist Olivier
-      '<div class="cl-blk cl-olivier">' +
-        '<div class="cl-hdr"><span class="cl-ttl">\uD83D\uDC41\uFE0F \u00c0 voir avec Olivier Deruwez</span><button class="cl-copy-btn" onclick="exportChecklist(\'' + r.id + '\',\'olivier\')">\uD83D\uDCCB Copier</button></div>' +
-        '<div class="cl-items-list" id="cl-olivier-' + r.id + '"></div>' +
-        '<div class="cl-add-row"><input id="cl-olivier-inp-' + r.id + '" placeholder="Ajouter un sujet\u2026" onkeydown="if(event.key===\'Enter\')addChecklistItem(\'' + r.id + '\',\'olivier\')"><button class="cl-plus-btn" onclick="addChecklistItem(\'' + r.id + '\',\'olivier\')">+</button></div>' +
-      '</div>' +
-
-      // Export membres
-      '<div class="exp-members">' +
-        '<div class="exp-members-lbl">\uD83D\uDCCB Export t\u00e2ches par personne</div>' +
-        '<div class="exp-btns">' +
-          MEMBERS.map(m => {
-            const bg = (typeof AVATAR_BG !== 'undefined' ? AVATAR_BG[m.id] : null) || '#94a3b8';
-            const av = m.avatar ? '<img src="' + m.avatar + '" style="width:18px;height:18px;border-radius:50%;object-fit:cover">' : '';
-            return '<button class="exp-btn" style="border-color:' + bg + '" onclick="exportMemberActions(\'' + r.id + '\',\'' + m.id + '\')">' + av + ' ' + m.name + '</button>';
-          }).join('') +
-        '</div>' +
-      '</div>' +
-
-      // Export CR
-      '<div class="cr-export-btns">' +
-        '<button class="crbtn crbtn-quick" onclick="toggleCRExport(\'' + r.id + '\',\'quick\')">\uD83D\uDCE4 CR rapide (WhatsApp)</button>' +
-        '<button class="crbtn crbtn-paul" onclick="toggleCRExport(\'' + r.id + '\',\'paul\')">\uD83D\uDCE8 CR pour Paul</button>' +
-      '</div>' +
-      '<div class="cr-export-box" id="cr-box-' + r.id + '">' +
-        '<div class="cr-tabs-row">' +
-          '<button class="cr-tab-btn active" id="crt-quick-' + r.id + '" onclick="switchCRTab(\'' + r.id + '\',\'quick\')">Rapide</button>' +
-          '<button class="cr-tab-btn" id="crt-paul-' + r.id + '" onclick="switchCRTab(\'' + r.id + '\',\'paul\')">Pour Paul</button>' +
-        '</div>' +
-        '<div class="cr-tab-pane active" id="crp-quick-' + r.id + '"><div class="cr-txt" id="crtxt-quick-' + r.id + '"></div><div class="cr-btn-row"><button class="cr-copy-btn2" onclick="copyCRTab(\'' + r.id + '\',\'quick\')">\uD83D\uDCCB Copier</button></div></div>' +
-        '<div class="cr-tab-pane" id="crp-paul-' + r.id + '"><div class="cr-txt" id="crtxt-paul-' + r.id + '"></div><div class="cr-btn-row"><button class="cr-copy-btn2" onclick="copyCRTab(\'' + r.id + '\',\'paul\')">\uD83D\uDCCB Copier</button><a class="cr-mail-link" id="crmail-' + r.id + '" href="#">\u2709\uFE0F Mail</a></div></div>' +
-      '</div>';
-    card.appendChild(crWrap);
-
-    el.appendChild(card);
-
-    // Init checklists et timer display
-    setTimeout(() => {
-      renderChecklists(r.id);
-    }, 10);
-  });
-}
-
-
-// ── Lecture notes agenda depuis state ────────────────────────
-function getReunionNotes(rid) {
-  return state.agendaNotes[rid] || {};
-}
-function getItemNote(rid, idx) {
-  const notes = getReunionNotes(rid);
-  var key = (typeof idx === 'string' && idx.charAt(0) === '_') ? idx : 'item_' + idx;
-  return notes[key] || {};
-}
-function getMetaNotes(rid) {
-  const notes = getReunionNotes(rid);
-  return {
-    starred:    notes._starred    || [],
-    capitaine:  notes._capitaine  || notes.capitaine || '',
-    cl_paul:    notes._cl_paul    || notes.cl_paul   || [],
-    cl_olivier: notes._cl_olivier || notes.cl_olivier|| [],
-  };
-}
-
-// ── Sauvegarde item individuel ────────────────────────────────
-async function saveItemNote(rid, idx, data) {
-  if (!state.agendaNotes[rid]) state.agendaNotes[rid] = {};
-  var key = (typeof idx === 'string' && idx.charAt(0) === '_') ? idx : 'item_' + idx;
-  if (!state.agendaNotes[rid][key]) state.agendaNotes[rid][key] = {};
-  Object.assign(state.agendaNotes[rid][key], data);
-  return apiCall('saveAgendaNote', {reunionId: rid, key: key, data: state.agendaNotes[rid][key]});
-}
-
-// ── Sauvegarde meta (starred, capitaine, checklists) ─────────
-async function saveMetaNotes(rid, data) {
-  if (!state.agendaNotes[rid]) state.agendaNotes[rid] = {};
-  Object.assign(state.agendaNotes[rid], data);
-  return apiCall('saveMeta', {reunionId: rid, data: data});
-}
-
-// ── Construction carte sujet ─────────────────────────────────
-function buildSubjectCard(r, i, subj, notes, starred, prefix) {
-  const pfx = prefix ? prefix + '-' : '';
-  const noteKey = 'item_' + i;
-  const noteData = notes[noteKey] || {};
-  const st = noteData.status || 'todo';
-  const isStar = starred.has(i);
-  // Compatibilité ancien format (action string) → nouveau format (actions array)
-  let actions = noteData.actions || [];
-  if (!actions.length && noteData.action) {
-    actions = [{ assignee: noteData.assignee || '', text: noteData.action }];
-  }
-
-  const sc = document.createElement('div');
-  sc.id = 'sc-' + pfx + r.id + '-' + i;
-  sc.className = 'subj-card' + (isStar ? ' priority' : '') + (st==='report' ? ' report-card' : '') + (st==='done' ? ' done-card' : '');
-
-  const stLabel = st==='done' ? '\u2705 Trait\u00e9' : st==='report' ? '\uD83D\uDD04 Report\u00e9' : '\u25A1 \u00c0 traiter';
-  const stCls = st==='done' ? 'st-done' : st==='report' ? 'st-report' : 'st-todo';
-
-  const sh = document.createElement('div');
-  sh.className = 'subj-hdr';
-
-  // Étoile
-  const starBtn = document.createElement('button');
-  starBtn.className = 'star-btn' + (isStar ? ' on' : '');
-  starBtn.textContent = '\u2605';
-  starBtn.addEventListener('click', e => { e.stopPropagation(); toggleStarSubject(r.id, i); });
-  sh.appendChild(starBtn);
-
-  // Statut
-  const statusBtn = document.createElement('button');
-  statusBtn.className = 'subj-status ' + stCls;
-  statusBtn.textContent = stLabel;
-  statusBtn.addEventListener('click', e => { e.stopPropagation(); cycleSubjectStatus(r.id, i); });
-  sh.appendChild(statusBtn);
-
-  // Titre
-  const titleSpan = document.createElement('span');
-  titleSpan.className = 'subj-title' + (st==='done' ? ' crossed' : '');
-  titleSpan.textContent = subj;
-  sh.appendChild(titleSpan);
-
-  // Chevron
-  const chevron = document.createElement('span');
-  chevron.className = 'subj-chevron';
-  chevron.id = 'chev-' + pfx + r.id + '-' + i;
-  chevron.textContent = '\u25BC';
-  sh.appendChild(chevron);
-
-  // Clic header → accordéon
-  sh.addEventListener('click', () => toggleSubjectCardById('sb-'+pfx+r.id+'-'+i, 'chev-'+pfx+r.id+'-'+i));
-  sc.appendChild(sh);
-
-  const sb = document.createElement('div');
-  sb.className = 'subj-body';
-  sb.id = 'sb-' + pfx + r.id + '-' + i;
-
-  let actionsHtml = '<div class="actions-list" id="al-'+r.id+'-'+i+'">';
-  actions.forEach((ac, ai) => {
-    const m = getMember(ac.assignee);
-    const bg = m && typeof AVATAR_BG !== 'undefined' ? (AVATAR_BG[m.id]||'#94a3b8') : '#94a3b8';
-    const avImg = m && m.avatar ? '<img src="' + m.avatar + '">' : (m ? m.name.substring(0,2) : '?');
-    actionsHtml +=
-      '<div class="action-row">' +
-        '<div class="action-av" style="background:' + bg + '">' + avImg + '</div>' +
-        '<span class="action-txt" contenteditable="true" onblur="updateSubjectAction(\'' + r.id + '\',' + i + ',' + ai + ',this.innerText)" style="flex:1;font-size:12px;outline:none;cursor:text">' + (m ? '<strong>' + m.name + '</strong> : ' : '') + ac.text + '</span>' +
-        '<button class="action-del" onclick="removeSubjectAction(\'' + r.id + '\',' + i + ',' + ai + ')">\u00d7</button>' +
-      '</div>';
-  });
-  actionsHtml += '</div>';
-  actionsHtml += '<button class="add-action-btn" onclick="openAddActionForm(\'' + r.id + '\',' + i + ')">+ Ajouter une action</button>';
-  actionsHtml += '<div class="aaf" id="aaf-'+r.id+'-'+i+'" style="display:none">';
-  actionsHtml += '<select id="aaf-sel-'+r.id+'-'+i+'"><option value="">Assigner \u00e0\u2026</option>' + MEMBERS.map(m=>'<option value="'+m.id+'">'+m.name+'</option>').join('') + '</select>';
-  actionsHtml += '<textarea id="aaf-txt-'+r.id+'-'+i+'" placeholder="D\u00e9crivez l\u2019action\u2026"></textarea>';
-  actionsHtml += '<div class="aaf-btns"><button class="aaf-save" onclick="confirmSubjectAction(\'' + r.id + '\',' + i + ')">Enregistrer</button><button class="aaf-cancel" onclick="closeAddActionForm(\'' + r.id + '\',' + i + ')">Annuler</button></div>';
-  actionsHtml += '</div>';
-
-  sb.innerHTML =
-    '<div class="body-grid">' +
-      '<div>' +
-        '<div class="body-lbl">\uD83D\uDCAC Commentaires</div>' +
-        '<textarea class="body-ta" id="com-'+r.id+'-'+i+'" placeholder="Notes, contexte\u2026" oninput="debounceNote(\'' + r.id + '\',' + i + ',\'decision\',this.value)">' + (noteData.decision||'') + '</textarea>' +
-      '</div>' +
-      '<div>' +
-        '<div class="body-lbl">\uD83C\uDFAF Actions \u00e0 mener</div>' +
-        actionsHtml +
-      '</div>' +
-    '</div>';
-  sc.appendChild(sb);
-  return sc;
-}
-
-// ── Sujet accordéon ─────────────────────────────────────────
-function toggleSubjectCardById(sbId, chevId) {
-  const body = document.getElementById(sbId);
-  const chev = document.getElementById(chevId);
-  if (!body) return;
-  const isOpen = body.classList.contains('open');
-  body.classList.toggle('open', !isOpen);
-  if (chev) chev.classList.toggle('open', !isOpen);
-}
-
-function toggleSubjectCard(rid, idx) {
-  toggleSubjectCardById('sb-' + rid + '-' + idx, 'chev-' + rid + '-' + idx);
-}
-
-// ── Multi-étoiles ────────────────────────────────────────────
-async function toggleStarSubject(rid, idx) {
-  const meta = getMetaNotes(rid);
-  const starred = new Set(meta.starred);
-  if (starred.has(idx)) starred.delete(idx); else starred.add(idx);
-
-  // Mise à jour visuelle immédiate de l'étoile
-  ['', 'p-'].forEach(pfx => {
-    const sc = document.getElementById('sc-' + pfx + rid + '-' + idx);
-    if (!sc) return;
-    const starBtn = sc.querySelector('.star-btn');
-    if (starBtn) starBtn.classList.toggle('on', starred.has(idx));
-    sc.classList.toggle('priority', starred.has(idx));
-  });
-
-  // Sauvegarder puis recharger pour mettre à jour le bandeau priorités
-  apiCall('saveCR', {id: rid, field: 'agendaNotes', value: r.agendaNotes})
-    .then(() => renderReunions())
-    .catch(e => showError(e.message));
-}
-
-// ── Statut sujet ─────────────────────────────────────────────
-async function cycleSubjectStatus(rid, idx) {
-  const noteData = getItemNote(rid, idx);
-  const cur = noteData.status || 'todo';
-  const next = cur === 'todo' ? 'done' : cur === 'done' ? 'report' : 'todo';
-
-  // Mise à jour dans le state local
-  if (!state.agendaNotes[rid]) state.agendaNotes[rid] = {};
-  var key = (typeof idx === 'string' && idx.charAt(0) === '_') ? idx : 'item_' + idx;
-  if (!state.agendaNotes[rid][key]) state.agendaNotes[rid][key] = {};
-  state.agendaNotes[rid][key].status = next;
-
-  // Mise à jour visuelle immédiate
-  const starred = new Set(getMetaNotes(rid).starred || []);
-  const updateCard = (prefix) => {
-    const sc = document.getElementById('sc-' + prefix + rid + '-' + idx);
-    if (!sc) return;
-    const statusBtn = sc.querySelector('.subj-status');
-    if (statusBtn) {
-      const labels = {todo:'\u25A1 \u00c0 traiter', done:'\u2705 Trait\u00e9', report:'\uD83D\uDD04 Report\u00e9'};
-      const cls    = {todo:'subj-status st-todo', done:'subj-status st-done', report:'subj-status st-report'};
-      statusBtn.textContent = labels[next];
-      statusBtn.className = cls[next];
-    }
-    const titleEl = sc.querySelector('.subj-title');
-    if (titleEl) titleEl.classList.toggle('crossed', next === 'done');
-    sc.className = 'subj-card' +
-      (starred.has(idx) ? ' priority' : '') +
-      (next === 'report' ? ' report-card' : '') +
-      (next === 'done'   ? ' done-card'   : '');
-  };
-  updateCard('');
-  updateCard('p-');
-
-  // Sauvegarde en arrière-plan
-  saveItemNote(rid, idx, {status: next})
-    .then(() => showSaveIndicator())
-    .catch(e => showError(e.message));
-}
-
-// ── Actions multi ─────────────────────────────────────────────
-function openAddActionForm(rid, idx) {
-  const aaf = document.getElementById('aaf-' + rid + '-' + idx);
-  if (aaf) aaf.style.display = aaf.style.display === 'none' ? 'flex' : 'none';
-}
-function closeAddActionForm(rid, idx) {
-  const aaf = document.getElementById('aaf-' + rid + '-' + idx);
-  if (aaf) { aaf.style.display = 'none'; }
-  const txt = document.getElementById('aaf-txt-' + rid + '-' + idx);
-  if (txt) txt.value = '';
-}
-async function confirmSubjectAction(rid, idx) {
-  const selEl = document.getElementById('aaf-sel-' + rid + '-' + idx);
-  const txtEl = document.getElementById('aaf-txt-' + rid + '-' + idx);
-  if (!txtEl || !txtEl.value.trim()) return;
-  const r = state.reunions.find(x => x.id === rid);
-  if (!r) return;
-  const notes = getReunionNotes(rid);
-  const key = 'item_' + idx;
-  if (!notes[key]) notes[key] = {};
-  if (!notes[key].actions) notes[key].actions = [];
-  notes[key].actions.push({assignee: selEl ? selEl.value : '', text: txtEl.value.trim()});
-  r.agendaNotes = JSON.stringify(notes);
-  // Envoyer uniquement l'item modifié (payload court)
-  try {
-    await apiCall('saveAgendaItem', {id: rid, key: key, data: notes[key]});
-    closeAddActionForm(rid, idx);
-    refreshActionsList(rid, idx, notes);
-  } catch(e) { showError(e.message); }
-}
-async function updateSubjectAction(rid, idx, ai, newText) {
-  const text = newText.replace(/<[^>]*>/g, '').trim();
-  if (!text) return;
-  const noteData = getItemNote(rid, idx);
-  const actions = [...(noteData.actions || [])];
-  if (!actions.length && noteData.action) actions.push({assignee: noteData.assignee||'', text: noteData.action});
-  if (actions[ai]) {
-    actions[ai].text = text;
-    saveItemNote(rid, idx, {actions})
-      .then(() => showSaveIndicator())
-      .catch(e => showError(e.message));
-  }
-}
-
-async function removeSubjectAction(rid, idx, ai) {
-  const noteData = getItemNote(rid, idx);
-  const actions = [...(noteData.actions || [])];
-  if (!actions.length && noteData.action) actions.push({assignee: noteData.assignee||'', text: noteData.action});
-  actions.splice(ai, 1);
-  try {
-    await saveItemNote(rid, idx, {actions});
-    const notes = getReunionNotes(rid);
-    refreshActionsList(rid, idx, notes);
-  } catch(e) { showError(e.message); }
-}
-
-
-// ── Refresh partiel liste d'actions (sans recharger toute la page) ──
-function refreshActionsList(rid, idx, notes) {
-  var key = (typeof idx === 'string' && idx.charAt(0) === '_') ? idx : 'item_' + idx;
-  const noteData = (notes && notes[key]) ? notes[key] : getItemNote(rid, idx);
-  // Compatibilité ancien format (action string) → nouveau format (actions array)
-  let actions = noteData.actions || [];
-  if (!actions.length && noteData.action) {
-    actions = [{ assignee: noteData.assignee || '', text: noteData.action }];
-  }
-  const el = document.getElementById('al-' + rid + '-' + idx);
-  if (!el) return;
-  el.innerHTML = actions.map((ac, ai) => {
-    const m = getMember(ac.assignee);
-    const bg = m && typeof AVATAR_BG !== 'undefined' ? (AVATAR_BG[m.id]||'#94a3b8') : '#94a3b8';
-    const avImg = m && m.avatar ? '<img src="' + m.avatar + '">' : (m ? m.name.substring(0,2) : '?');
-    return '<div class="action-row">' +
-      '<div class="action-av" style="background:' + bg + '">' + avImg + '</div>' +
-      '<span class="action-txt" contenteditable="true" onblur="updateSubjectAction(\'' + rid + '\',' + idx + ',' + ai + ',this.innerText)" style="flex:1;font-size:12px;outline:none;cursor:text">' + (m ? '<strong>' + m.name + '</strong> : ' : '') + ac.text + '</span>' +
-      '<button class="action-del" onclick="removeSubjectAction(\'' + rid + '\',' + idx + ',' + ai + ')">×</button>' +
-    '</div>';
+    var usedIds = Object.values(themeMap).filter(function(v,i,a) { return a.indexOf(v)===i; });
+    var tags = usedIds.map(function(tid) {
+      var t = allThemes.find(function(x) { return x.id===tid; });
+      return t ? '<span class="arc-tag" style="background:'+t.bg+';color:'+t.color+'">'+t.label+'</span>' : '';
+    }).filter(Boolean).slice(0,4).join('');
+    var meta = getMetaNotes(r.id);
+    var cap = getMember(meta.capitaine);
+    return '<div class="archive-item" onclick="openArchive(\'' + r.id + '\')">' +
+      '<div class="arc-badge"><div class="arc-day">'+dt.getDate()+'</div>' +
+      '<div class="arc-month">'+dt.toLocaleDateString('fr-FR',{month:'short',year:'2-digit'})+'</div></div>' +
+      '<div class="arc-info"><div class="arc-title">'+r.title+'</div>' +
+      '<div class="arc-meta">'+(r.time?'🕐 '+cleanTime(r.time)+' · ':'')+''+(cap?'👤 '+cap.name+' · ':'')+((r.agenda||[]).length)+' sujets</div>' +
+      (tags?'<div class="arc-tags">'+tags+'</div>':'')+
+      '</div><div style="color:var(--muted);font-size:20px">›</div></div>';
   }).join('');
-  showSaveIndicator();
 }
 
-function showSaveIndicator() {
-  const ind = document.getElementById('save-indicator');
-  if (ind) { ind.style.opacity='1'; setTimeout(()=>ind.style.opacity='0',1500); }
-}
-
-// ── Debounce notes sujet ──────────────────────────────────────
-const _debNotes = {};
-var _saveTimers = {};
-function debounceNote(rid, idx, field, value) {
-  var k = String(rid) + "_" + String(idx) + "_" + field;
-  clearTimeout(_saveTimers[k]);
-  _saveTimers[k] = setTimeout(function() { saveSubjectNote(rid, idx, field, value); }, 1500);
-}
-async function saveSubjectNote(rid, idx, field, value) {
-  try {
-    await saveItemNote(rid, idx, {[field]: value});
-    showSaveIndicator();
-  } catch(e) { showError(e.message); }
-}
-
-// ── CR Export ─────────────────────────────────────────────────
-function toggleCRExport(rid, tab) {
-  const box = document.getElementById('cr-box-' + rid);
-  if (!box) return;
-  const r = state.reunions.find(x => x.id === rid);
-  if (!r) return;
-  const notes = getReunionNotes(rid);
-  const meta = getMetaNotes(rid);
-  let themeMap = {};
-  try { themeMap = r.agendaThemes ? JSON.parse(r.agendaThemes) : {}; } catch(e) {}
-  const dt = new Date(r.date);
-  const dateShort = dt.toLocaleDateString('fr-FR', {day:'numeric', month:'long', year:'numeric'});
-  const dateStr = dt.toLocaleDateString('fr-FR', {weekday:'long', day:'numeric', month:'long', year:'numeric'});
-  const cap = getMember(meta.capitaine);
-  const themes = getThemes();
-  const byTheme = {};
-  themes.forEach(t => { byTheme[t.id] = {label: t.label, comments: [], actions: []}; });
-  byTheme['_autre'] = {label: 'Divers', comments: [], actions: []};
-  (r.agenda||[]).forEach((subj, i) => {
-    const key = 'item_' + i;
-    const nd = notes[key] || {};
-    const tid = themeMap[i] || '_autre';
-    const bucket = byTheme[tid] || byTheme['_autre'];
-    if (nd.decision) bucket.comments.push(subj + ' : ' + nd.decision);
-    let acts = nd.actions || [];
-    if (!acts.length && nd.action) acts = [{ assignee: nd.assignee||'', text: nd.action }];
-    acts.forEach(ac => {
-      const m = getMember(ac.assignee);
-      bucket.actions.push((m ? m.name + ' : ' : '') + ac.text + ' (' + subj + ')');
-    });
-  });
-  const withContent = themes.filter(t => { const b = byTheme[t.id]; return b && (b.comments.length || b.actions.length); });
-
-  // Rapide
-  const ql = ['CR ' + r.title.toUpperCase() + ' - ' + dateStr + (cap ? '  |  Capitaine : ' + cap.name : ''), ''];
-  withContent.forEach(t => {
-    const b = byTheme[t.id];
-    ql.push('[ ' + t.label + ' ]');
-    b.comments.forEach(c => ql.push('  Note : ' + c));
-    b.actions.forEach(a => ql.push('  Action : ' + a));
-    ql.push('');
-  });
-  if (!withContent.length) ql.push('Aucune note formalis\u00e9e.');
-  if (r.nextMeeting) ql.push('', 'Prochaine r\u00e9union : ' + r.nextMeeting);
-  const quickText = ql.join('\n');
-
-  // Paul
-  const pl = ['Objet : Compte rendu ' + r.title + ' du ' + dateShort, '', 'Bonjour Paul,', '', 'Voici le compte rendu de notre r\u00e9union du ' + dateShort + (cap ? '. Capitaine de s\u00e9ance : ' + cap.name + '.' : '.'), ''];
-  if (withContent.length) {
-    pl.push('POINTS TRAIT\u00c9S', '');
-    withContent.forEach(t => {
-      const b = byTheme[t.id];
-      pl.push('[ ' + t.label + ' ]');
-      b.comments.forEach(c => pl.push('  Commentaire : ' + c));
-      b.actions.forEach(a => pl.push('  Action : ' + a));
-      pl.push('');
-    });
-  }
-  if (r.nextMeeting) pl.push('PROCHAINE R\u00c9UNION', r.nextMeeting, '');
-
-  // Checklists Paul et Olivier
-  const clPaul = meta.cl_paul || [];
-  const clOlivier = meta.cl_olivier || [];
-  if (clPaul.length) {
-    pl.push('\u26A1 SUJETS \u00c0 VALIDER PAR PAUL', '');
-    clPaul.forEach(it => pl.push((it.done ? '[x]' : '[ ]') + ' ' + it.text));
-    pl.push('');
-  }
-  if (clOlivier.length) {
-    pl.push('\uD83D\uDC41\uFE0F SUJETS POUR OLIVIER DERUWEZ', '');
-    clOlivier.forEach(it => pl.push((it.done ? '[x]' : '[ ]') + ' ' + it.text));
-    pl.push('');
-  }
-
-  pl.push('Cordialement,', "L'\u00e9quipe IRFBB HDF");
-  const paulText = pl.join('\n');
-
-  const qEl = document.getElementById('crtxt-quick-' + rid);
-  const pEl = document.getElementById('crtxt-paul-' + rid);
-  if (qEl) qEl.textContent = quickText;
-  if (pEl) pEl.textContent = paulText;
-  const mailEl = document.getElementById('crmail-' + rid);
-  if (mailEl) mailEl.href = 'mailto:?subject=' + encodeURIComponent('CR ' + r.title + ' - ' + dateShort) + '&body=' + encodeURIComponent(paulText);
-  switchCRTab(rid, tab || 'quick');
-  box.classList.add('open');
-}
-function switchCRTab(rid, tab) {
-  ['quick','paul'].forEach(t => {
-    const btn = document.getElementById('crt-' + t + '-' + rid);
-    const pane = document.getElementById('crp-' + t + '-' + rid);
-    if (btn) btn.className = 'cr-tab-btn' + (t === tab ? ' active' : '');
-    if (pane) pane.className = 'cr-tab-pane' + (t === tab ? ' active' : '');
-  });
-}
-function copyCRTab(rid, tab) {
-  const el = document.getElementById('crtxt-' + tab + '-' + rid);
+function openArchive(rid) {
+  var el = document.getElementById('archivesList');
   if (!el) return;
-  navigator.clipboard.writeText(el.textContent).then(() => {
-    const btns = document.querySelectorAll('#crp-' + tab + '-' + rid + ' .cr-copy-btn2');
-    btns.forEach(b => { b.textContent = 'Copi\u00e9 !'; setTimeout(() => b.textContent = '\uD83D\uDCCB Copier', 2000); });
-  });
-}
-
-// ── Checklists Paul/Olivier ───────────────────────────────────
-function renderChecklists(rid) {
-  const meta = getMetaNotes(rid);
-  ['paul','olivier'].forEach(who => {
-    const el = document.getElementById('cl-' + who + '-' + rid);
-    if (!el) return;
-    const items = who === 'paul' ? (meta.cl_paul || []) : (meta.cl_olivier || []);
-    el.innerHTML = items.map((item, i) =>
-      '<div class="cl-item">' +
-        '<input type="checkbox"' + (item.done ? ' checked' : '') + ' onchange="toggleChecklistItem(\'' + rid + '\',\'' + who + '\',' + i + ',this.checked)">' +
-        '<span style="' + (item.done ? 'text-decoration:line-through;opacity:.5' : '') + '">' + item.text + '</span>' +
-        '<button onclick="removeChecklistItem(\'' + rid + '\',\'' + who + '\',' + i + ')">x</button>' +
-      '</div>'
-    ).join('');
-  });
-}
-async function addChecklistItem(rid, who) {
-  const inp = document.getElementById('cl-' + who + '-inp-' + rid);
-  if (!inp || !inp.value.trim()) return;
-  const meta = getMetaNotes(rid);
-  const prop = who === 'paul' ? 'cl_paul' : 'cl_olivier';
-  const items = [...(meta[prop] || [])];
-  items.push({text: inp.value.trim(), done: false});
-  inp.value = '';
-  try {
-    await saveMetaNotes(rid, {[prop]: items});
-    renderChecklists(rid);
-  } catch(e) { showError(e.message); }
-}
-async function toggleChecklistItem(rid, who, idx, done) {
-  const meta = getMetaNotes(rid);
-  const prop = who === 'paul' ? 'cl_paul' : 'cl_olivier';
-  const items = [...(meta[prop] || [])];
-  if (items[idx]) items[idx].done = done;
-  try { await saveMetaNotes(rid, {[prop]: items}); renderChecklists(rid); } catch(e) { showError(e.message); }
-}
-async function removeChecklistItem(rid, who, idx) {
-  const meta = getMetaNotes(rid);
-  const prop = who === 'paul' ? 'cl_paul' : 'cl_olivier';
-  const items = [...(meta[prop] || [])];
-  items.splice(idx, 1);
-  try { await saveMetaNotes(rid, {[prop]: items}); renderChecklists(rid); } catch(e) { showError(e.message); }
-}
-function exportChecklist(rid, who) {
-  const meta = getMetaNotes(rid);
-  const items = who === 'paul' ? (meta.cl_paul || []) : (meta.cl_olivier || []);
-  if (!items.length) { alert('Aucun sujet dans cette liste.'); return; }
-  const name = who === 'paul' ? 'Paul' : 'Olivier Deruwez';
-  const dt = new Date(r.date).toLocaleDateString('fr-FR', {day:'numeric', month:'long', year:'numeric'});
-  const lines = ['SUJETS POUR ' + name.toUpperCase() + ' - ' + dt, '', ...items.map(it => (it.done ? '[x]' : '[ ]') + ' ' + it.text)];
-  navigator.clipboard.writeText(lines.join('\n')).then(() => {
-    showError('Copi\u00e9 !');
-    setTimeout(() => document.getElementById('errorBanner').style.display='none', 1500);
-  });
-}
-
-// ── Export tâches par membre ──────────────────────────────────
-function exportMemberActions(rid, memberId) {
-  const r = state.reunions.find(x => x.id === rid);
+  var r = state.reunions.find(function(x) { return x.id===rid; });
   if (!r) return;
-  const notes = getReunionNotes(rid);
-  let themeMap = {};
-  try { themeMap = r.agendaThemes ? JSON.parse(r.agendaThemes) : {}; } catch(e) {}
-  const m = getMember(memberId);
-  if (!m) return;
-  const themes = getThemes();
-  const dt = new Date(r.date).toLocaleDateString('fr-FR', {day:'numeric', month:'long', year:'numeric'});
-  const actions = [];
-  (r.agenda||[]).forEach((subj, i) => {
-    const key = 'item_' + i;
-    const nd = notes[key] || {};
-    const t = themes.find(x => x.id === (themeMap[i]||'')) || {label:'Divers'};
-    const acts = nd.actions || [];
-    acts.forEach(ac => {
-      if (ac.assignee === memberId && ac.text) actions.push('[' + t.label + '] ' + subj + ' : ' + ac.text);
-    });
-  });
-  if (!actions.length) { alert('Aucune action assign\u00e9e \u00e0 ' + m.name + '.'); return; }
-  const lines = ['TACHES DE ' + m.name.toUpperCase() + ' - ' + dt, 'R\u00e9union : ' + r.title, '', ...actions.map(a => '- ' + a)];
-  navigator.clipboard.writeText(lines.join('\n')).then(() => {
-    const b = document.getElementById('errorBanner');
-    if (b) {
-      b.innerHTML = 'T\u00e2ches de ' + m.name + ' copi\u00e9es !';
-      b.style.cssText = 'display:flex;background:#f0fdf4;color:#16a34a;border-color:#86efac;position:fixed;top:70px;left:50%;transform:translateX(-50%);z-index:300;padding:12px 20px;border-radius:10px;font-size:14px;box-shadow:0 4px 12px rgba(0,0,0,.1);border:1px solid';
-      setTimeout(() => { b.style.display = 'none'; b.style.cssText = ''; }, 2000);
-    }
-  });
+  el.innerHTML = '<button class="btn btn-outline btn-sm" onclick="renderArchivesList()" style="margin-bottom:16px">← Retour aux archives</button>';
+  el.appendChild(buildReunionCard(r));
 }
 
-function debounceSaveNote(rid, index, field, value) {
-  const key = rid + '_note_' + index + '_' + field;
-  clearTimeout(_debounceTimers[key]);
-  _debounceTimers[key] = setTimeout(() => saveAgendaNote(rid, index, field, value), 800);
-}
-function debouncesCR(rid, field, value) {
-  saveCR(rid, field, value);
-}
-
-async function saveAgendaNote(rid, index, field, value) {
-  const r = state.reunions.find(x => x.id === rid);
-  if (!r) return;
-  const notes = getReunionNotes(rid);
-  const key = 'item_' + index;
-  if (!notes[key]) notes[key] = {};
-  notes[key][field] = value;
-  r.agendaNotes = JSON.stringify(notes);
-  // Sauvegarde complète de la réunion (plus fiable que updateCR)
-  try {
-    await api('saveReunion', { data: r });
-    // Feedback visuel discret
-    const indicator = document.getElementById('save-indicator');
-    if (indicator) { indicator.textContent = '✓ Sauvegardé'; indicator.style.opacity = '1'; setTimeout(() => indicator.style.opacity = '0', 1500); }
-  } catch(e) { showError(e.message); }
+// Thématiques personnalisées
+// getThemes() défini dans nav fns
+function addCustomTheme(name) {
+  if (!name || !name.trim()) return null;
+  var colors = ['#059669','#7c3aed','#b45309','#0e7490','#be185d'];
+  var bgs    = ['#ecfdf5','#f5f3ff','#fffbeb','#ecfeff','#fdf2f8'];
+  var idx = (state.customThemes||[]).length % colors.length;
+  var theme = { id:'custom_'+Date.now(), label:name.trim(), color:colors[idx], bg:bgs[idx] };
+  if (!state.customThemes) state.customThemes = [];
+  state.customThemes.push(theme);
+  customThemes = state.customThemes;
+  localStorage.setItem('hdf_themes', JSON.stringify(state.customThemes));
+  return theme;
 }
 
-async function saveCR(rid, field, value) {
-  const r = state.reunions.find(x => x.id === rid);
-  if (!r) return;
-  r[field] = value;
-  try {
-    await apiCall('saveCR', { id: rid, field, value });
-    showSaveIndicator();
-  } catch(e) { showError(e.message); }
-}
-function editReunion(id) { openModal('reunion', null, state.reunions.find(r => r.id === id)); }
-async function deleteReunion(id) {
-  if (!confirm('Supprimer cette réunion ?')) return;
-  showLoading(true);
-  try {
-    await api('deleteReunion', { id });
-    state.reunions = state.reunions.filter(r => r.id !== id);
-    renderReunions(); updateNavNextDate();
-  } catch(e) { showError(e.message); }
-  finally { showLoading(false); }
-}
-
-
-// ── TIMER ────────────────────────────────────────────────────
-const _timers = {};
-const TOTAL = 3600;
-const Q_BOUNDS = [0, 300, 900, 1500, 3600];
-
-function initTimer(rid) {
-  if (!_timers[rid]) _timers[rid] = { elapsed: 0, running: false };
-  return _timers[rid];
-}
-function toggleTimer(rid) {
-  if (_timers[rid] && _timers[rid].running) pauseTimer(rid);
-  else startTimer(rid);
-}
-function startTimer(rid) {
-  var t = initTimer(rid);
-  t.running = true;
-  t.startTime = Date.now() - (t.elapsed * 1000);
-  var btn = document.getElementById('tbtn-' + rid);
-  if (btn) btn.textContent = 'Pause';
-  t.iv = setInterval(function() {
-    t.elapsed = Math.floor((Date.now() - t.startTime) / 1000);
-    if (t.elapsed >= TOTAL) {
-      t.elapsed = TOTAL;
-      clearInterval(t.iv);
-      t.running = false;
-      if (btn) btn.textContent = 'D\u00e9marrer';
-    }
-    updateTimerDisplay(rid);
-  }, 500);
-}
-function pauseTimer(rid) {
-  var t = _timers[rid];
-  if (t) { clearInterval(t.iv); t.running = false; t.elapsed = Math.floor((Date.now() - (t.startTime||Date.now())) / 1000); }
-  var btn = document.getElementById('tbtn-' + rid);
-  if (btn) btn.textContent = 'Reprendre';
-}
-function resetTimer(rid) {
-  var t = _timers[rid];
-  if (t) { clearInterval(t.iv); }
-  _timers[rid] = { elapsed: 0, running: false };
-  var btn = document.getElementById('tbtn-' + rid);
-  if (btn) btn.textContent = 'Démarrer';
-  updateTimerDisplay(rid);
-}
-function jumpToQuart(rid, qIdx) {
-  var t = initTimer(rid);
-  t.forcedQ = qIdx; // Forcer la surbrillance sans changer le temps
-  updateTimerDisplay(rid);
-}
-function updateTimerDisplay(rid) {
-  var t = _timers[rid] || initTimer(rid);
-  var rem = TOTAL - t.elapsed;
-  if (rem < 0) rem = 0;
-  var mins = Math.floor(rem / 60);
-  var secs = rem % 60;
-  var clock = document.getElementById('tclock-' + rid);
-  if (!clock) return;
-  clock.textContent = (mins < 10 ? '0' : '') + mins + ':' + (secs < 10 ? '0' : '') + secs;
-  clock.className = 'timer-clock' + (rem <= 300 ? ' danger' : rem <= 600 ? ' warn' : '');
-  // Q actif = forcé par clic OU automatique selon temps
-  var autoQ = 0;
-  for (var j = 0; j < 4; j++) { if (t.elapsed >= Q_BOUNDS[j]) autoQ = j; }
-  var activeQ = (t.forcedQ !== undefined && t.forcedQ >= autoQ) ? t.forcedQ : autoQ;
-  // Réinitialiser forcedQ si le temps dépasse le Q forcé
-  if (t.forcedQ !== undefined && t.elapsed >= Q_BOUNDS[t.forcedQ + 1 < 4 ? t.forcedQ + 1 : 4]) {
-    t.forcedQ = undefined;
+function promptNewTheme() {
+  var name = prompt('Nom de la nouvelle thématique :');
+  if (!name) return;
+  var theme = addCustomTheme(name);
+  if (!theme) return;
+  addAgendaItem(theme.id);
+  var row = document.querySelector('.ab-add-row');
+  if (row) {
+    row.innerHTML = getThemes().map(function(t) {
+      return '<button class="agenda-add-btn" style="border-color:'+t.color+';color:'+t.color+'" onclick="addAgendaItem(\'' + t.id + '\')" >+ '+t.label+'</button>';
+    }).join('') + '<button class="agenda-add-btn" style="border-color:#94a3b8;color:#64748b" onclick="promptNewTheme()">+ Thème...</button>';
   }
-  var QCOLS  = ['rgba(34,197,94,.5)','rgba(59,130,246,.4)','rgba(245,158,11,.35)','rgba(230,57,70,.35)'];
-  var QBORDS = ['#22c55e','#3b82f6','#f59e0b','#e63946'];
-  for (var i = 0; i < 4; i++) {
-    var q  = document.getElementById('quart-' + rid + '-' + i);
-    var ql = document.getElementById('ql-'    + rid + '-' + i);
-    var qs = document.getElementById('qs-'    + rid + '-' + i);
-    if (!q) continue;
-    if (i === activeQ) {
-      q.className = 'quart active';
-      q.style.borderColor = QBORDS[i];
-      q.style.background  = QCOLS[i];
-      if (ql) { ql.style.opacity = '1'; ql.style.color = QBORDS[i]; }
-      if (qs) qs.textContent = '';
-    } else if (i < autoQ) {
-      q.className = 'quart done';
-      q.style.borderColor = '#22c55e';
-      q.style.background  = 'rgba(34,197,94,.08)';
-      if (ql) { ql.style.opacity = '1'; ql.style.color = '#22c55e'; }
-      if (qs) { qs.textContent = '✓'; qs.style.color = '#22c55e'; }
-    } else {
-      q.className = 'quart inactive';
-      q.style.borderColor = 'transparent';
-      q.style.background  = 'rgba(255,255,255,.06)';
-      if (ql) { ql.style.opacity = '.4'; ql.style.color = ''; }
-      if (qs) qs.textContent = '';
-    }
-  }
-  var cursor = document.getElementById('tlc-' + rid);
-  if (cursor) cursor.style.left = Math.min(100, (t.elapsed / TOTAL) * 100) + '%';
-  var budget = document.getElementById('tbudget-' + rid);
-  if (budget) budget.innerHTML = '';
 }
 
 
-// ── STATUT SUJET ─────────────────────────────────────────────
-async function cycleStatus(rid, idx) {
-  const r = state.reunions.find(x=>x.id===rid);
-  if (!r) return;
-  const notes = getReunionNotes(rid);
-  const key='item_'+idx;
-  if (!notes[key]) notes[key]={};
-  const cur = notes[key].status||'todo';
-  notes[key].status = cur==='todo'?'done':cur==='done'?'report':'todo';
-  r.agendaNotes = JSON.stringify(notes);
-  try { await api('saveReunion',{data:r}); renderReunions(); } catch(e){ showError(e.message); }
+function renderReunions() {
+  var active = document.querySelector('.tab-view.active');
+  if (!active) return;
+  if (active.id === 'tab-home') renderHomeReunion();
+  else if (active.id === 'tab-archives') renderArchivesList();
 }
 
-// ── CAPITAINE ────────────────────────────────────────────────
-async function saveCapitaine(rid, memberId) {
-  const el = document.getElementById('cap-'+rid);
-  const m = getMember(memberId);
-  if (el) el.textContent = m ? m.name : 'Non d\u00e9sign\u00e9';
-  // Mettre à jour le state local
-  if (!state.agendaNotes[rid]) state.agendaNotes[rid] = {};
-  state.agendaNotes[rid]._capitaine = memberId;
-  try { await saveMetaNotes(rid, {capitaine: memberId}); showSaveIndicator(); } catch(e){ showError(e.message); }
+// buildReunionCard — construit la carte complète d'une réunion
+function buildReunionCard(r) {
+  var now = new Date(); now.setHours(0,0,0,0);
+  var el = document.getElementById('reunionsList');
+  if (el) el.innerHTML = '';
+  var container = document.createElement('div');
+  container.id = 'reunionsList';
+  if (el && el.parentNode) { el.parentNode.replaceChild(container, el); }
+  var dummy = document.createElement('div');
+  dummy.id = 'reunionsList';
+  document.body.appendChild(dummy);
+  // Utiliser le renderReunions original sur une réunion
+  var orig = state.reunions;
+  state.reunions = [r];
+  _renderReunionsList(dummy);
+  state.reunions = orig;
+  var result = dummy.firstChild || dummy;
+  dummy.remove();
+  return result;
 }
 
-// ── ÉTOILE MULTI ─────────────────────────────────────────────
-async function toggleStar(rid, idx) {
-  const r = state.reunions.find(x=>x.id===rid);
-  if (!r) return;
-  const notes = getReunionNotes(rid);
-  const starred = new Set(Array.isArray(notes._starred)?notes._starred:(notes._starred>=0?[notes._starred]:[]));
-  if (starred.has(idx)) starred.delete(idx); else starred.add(idx);
-  notes._starred = Array.from(starred);
-  r.agendaNotes = JSON.stringify(notes);
-  try { await api('saveReunion',{data:r}); renderReunions(); } catch(e){ showError(e.message); }
-}
+// Rendu d'une liste de réunions dans un élément
 
-// ── BANDEAU PRIORITES ─────────────────────────────────────────
-function updatePriorityBanner(rid) {
-  const r = state.reunions.find(x=>x.id===rid);
-  if (!r) return;
-  const notes = getReunionNotes(rid);
-  const starred = new Set(Array.isArray(notes._starred)?notes._starred:(notes._starred>=0?[notes._starred]:[]));
-  const banner = document.getElementById('prio-banner-'+rid);
-  const chips = document.getElementById('prio-chips-'+rid);
-  if (!banner||!chips) return;
-  if (!starred.size) { banner.classList.remove('visible'); return; }
-  banner.classList.add('visible');
-  chips.innerHTML = Array.from(starred).map(i=>{ const a=(r.agenda||[])[i]; return a?'<span class="priority-chip">&#11088; '+a+'</span>':''; }).join('');
-}
-
-
-
-
-
-
-
-
-
-function copyCR(rid) {
-  const el = document.getElementById('cr-txt-'+rid);
-  if (!el) return;
-  navigator.clipboard.writeText(el.textContent).then(()=>{
-    const btn = el.nextElementSibling;
-    if (btn){ btn.textContent='✓ Copié !'; setTimeout(()=>btn.textContent='📋 Copier',2000); }
-  });
-}
-
-// ── MATCH DU MOIS ────────────────────────────────────────────
 function renderMatchDuMois() {
   const el = document.getElementById('reunionsList');
   const m = state.match||{};
@@ -2069,25 +1238,19 @@ function buildTaskForm(statusHint, data) {
 }
 // Thématiques dynamiques basées sur les projets
 function getThemes() {
-  const colors = ['#3b82f6','#8b5cf6','#14b8a6','#f59e0b','#ec4899','#e63946','#6366f1','#f97316','#22c55e','#0ea5e9'];
-  const bgs    = ['#eff6ff','#f5f3ff','#f0fdfa','#fffbeb','#fdf2f8','#fff5f5','#eef2ff','#fff7ed','#f0fdf4','#f0f9ff'];
-  return state.projects.map((p, i) => ({
-    id:    p.id,
-    label: p.name,
-    color: p.color || colors[i % colors.length],
-    bg:    bgs[i % bgs.length],
-  }));
+  var fixed = [
+    { id:'bpjeps',        label:'BPJEPS',        color:'#3b82f6', bg:'#eff6ff' },
+    { id:'bf',            label:'Brevet Fédéral', color:'#8b5cf6', bg:'#f5f3ff' },
+    { id:'detb',          label:'DETB',           color:'#14b8a6', bg:'#f0fdfa' },
+    { id:'arbitrage',     label:'Arbitrage',      color:'#f59e0b', bg:'#fffbeb' },
+    { id:'communication', label:'Communication',  color:'#ec4899', bg:'#fdf2f8' },
+    { id:'ttbb',          label:'TTBB',           color:'#e63946', bg:'#fff5f5' },
+    { id:'cdssa',         label:'CDSSA',          color:'#0369a1', bg:'#f0f9ff' },
+    { id:'autre',         label:'Autre',          color:'#6366f1', bg:'#eef2ff' },
+  ];
+  customThemes = state.customThemes || [];
+  return fixed.concat(customThemes);
 }
-
-const THEMES = [
-  { id:'bpjeps',         label:'BPJEPS',        color:'#3b82f6', bg:'#eff6ff' },
-  { id:'bf',             label:'Brevet Fédéral', color:'#8b5cf6', bg:'#f5f3ff' },
-  { id:'detb',           label:'DETB',           color:'#14b8a6', bg:'#f0fdfa' },
-  { id:'arbitrage',      label:'Arbitrage',      color:'#f59e0b', bg:'#fffbeb' },
-  { id:'communication',  label:'Communication',  color:'#ec4899', bg:'#fdf2f8' },
-  { id:'ttbb',           label:'TTBB',           color:'#e63946', bg:'#fff5f5' },
-  { id:'autre',          label:'Autre',          color:'#6366f1', bg:'#eef2ff' },
-];
 
 function buildReunionForm(data) {
   // Reconstruire les items depuis agenda + agendaThemes
@@ -2111,6 +1274,7 @@ function buildReunionForm(data) {
       <div class="agenda-builder" id="agenda-builder"></div>
       <div class="agenda-add-row" style="margin-top:10px">
         ${getThemes().map(t => `<button class="agenda-add-btn" style="border-color:${t.color};color:${t.color}" onclick="addAgendaItem('${t.id}')">+ ${t.label}</button>`).join('')}
+      <button class="agenda-add-btn" style="border-color:#94a3b8;color:#64748b" onclick="promptNewTheme()">+ Thème...</button>
       </div>
     </div>
     <div class="modal-actions">
@@ -2325,8 +1489,8 @@ async function saveReunion() {
   const d = {
     id: newId,
     title,
-    date: document.getElementById('f-rdate').value,
-    time: document.getElementById('f-rtime').value,
+    date: (document.getElementById('f-rdate')||{value:''}).value,
+    time: (document.getElementById('f-rtime')||{value:''}).value,
     location: document.getElementById('f-rlocation').value.trim(),
     agenda,
     agendaThemes: JSON.stringify(agendaThemesObj),
@@ -2409,8 +1573,9 @@ async function deleteTask(id) {
 }
 
 // INIT
+try { state.customThemes = JSON.parse(localStorage.getItem('hdf_themes')||'[]'); customThemes=state.customThemes; } catch(e){}
 try { state.match = JSON.parse(localStorage.getItem('hdf_match')||'{}'); } catch(e){ state.match={}; }
-loadData().then(() => renderDashboard());
+loadData().then(function() { renderHomeReunion(); });
 // Rafraîchissement auto toutes les 30 secondes
 setInterval(async () => {
   if (state.loading) return;
@@ -2419,9 +1584,9 @@ setInterval(async () => {
   if (active && (active.tagName === 'TEXTAREA' || active.tagName === 'INPUT')) return;
   await loadData();
   const v = document.querySelector('.view.active');
-  if (v?.id === 'view-dashboard') renderDashboard();
-  else if (v?.id === 'view-kanban' && state.currentProject) renderKanban(state.currentProject);
-  else if (v?.id === 'view-reunions') { if (_reunionTab==='match') renderMatchDuMois(); else renderReunions(); }
+  if (false) {}
+  
+  else { renderReunions(); }
 }, 30000);
 </script>
 </body>
