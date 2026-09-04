@@ -1041,7 +1041,7 @@ function buildCRSection(r, meta) {
   MEMBERS.forEach(m=>{
     const btn=document.createElement('button'); btn.className='export-member';
     btn.style.borderColor=m.color; btn.textContent=m.name;
-    btn.addEventListener('click',()=>exportMember(r.id,m.id));
+    btn.setAttribute('onclick', `exportMember('${r.id}','${m.id}')`);
     expBtns.appendChild(btn);
   });
   expSec.append(expLbl,expBtns);
