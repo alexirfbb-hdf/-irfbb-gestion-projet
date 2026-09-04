@@ -1333,6 +1333,39 @@ function openArchive(rid) {
     detail.appendChild(sec);
   });
 
+  // Tâches par personne
+  const memberActions = {};
+  MEMBERS.forEach(m => { memberActions[m.id] = []; });
+  (r.agenda||[]).forEach((subj,i) => {
+    const n = notes['item_'+i]||{};
+    let acts = n.actions||[];
+    if(!acts.length && n.action) acts=[{assignee:n.assignee||'',text:n.action}];
+    acts.filter(a=>a.assignee&&a.text).forEach(a => {
+      if(!memberActions[a.assignee]) memberActions[a.assignee]=[];
+      const t = themes.find(x=>x.id===themeMap[i]);
+      memberActions[a.assignee].push({theme:t?t.label:'Autre', subj, text:a.text});
+    });
+  });
+  const hasAnyAction = MEMBERS.some(m=>(memberActions[m.id]||[]).length>0);
+  if(hasAnyAction) {
+    const taskSec = document.createElement('div'); taskSec.className='arc-section';
+    taskSec.innerHTML='<div class="arc-section-title">📋 Tâches par personne</div>';
+    MEMBERS.forEach(m => {
+      const acts = memberActions[m.id]||[];
+      if(!acts.length) return;
+      const memberDiv = document.createElement('div');
+      memberDiv.style.cssText='margin-bottom:12px;background:var(--surface);border-radius:8px;padding:10px 12px;border-left:3px solid '+m.color;
+      memberDiv.innerHTML=`<div style="font-size:12px;font-weight:700;color:${m.color};margin-bottom:6px">${m.name}</div>`+
+        acts.map(a=>`<div style="display:flex;gap:6px;font-size:12px;padding:3px 0;border-bottom:1px solid var(--border)">
+          <span style="color:var(--muted);flex-shrink:0">[${a.theme}]</span>
+          <span style="flex:1;color:var(--muted)">${a.subj} :</span>
+          <span style="flex:2">${a.text}</span>
+        </div>`).join('');
+      taskSec.appendChild(memberDiv);
+    });
+    detail.appendChild(taskSec);
+  }
+
   // Checklists résumé
   if((meta.cl_paul||[]).length||(meta.cl_olivier||[]).length){
     const clSec=document.createElement('div'); clSec.className='arc-section';
