@@ -1186,16 +1186,21 @@ function exportMember(rid,memberId) {
   try{themeMap=r.agendaThemes?JSON.parse(r.agendaThemes):{};}catch(e){}
   const m=getMember(memberId);
   const dt=r.date?new Date(r.date).toLocaleDateString('fr-FR',{day:'numeric',month:'long',year:'numeric'}):'';
+  console.log('=== exportMember ===', memberId);
+  console.log('agenda:', r.agenda);
+  console.log('notes keys:', Object.keys(notes));
   const actions=[];
   (r.agenda||[]).forEach((subj,i)=>{
     const n=notes['item_'+i]||{};
     let acts=n.actions||[];
     if(!acts.length&&n.action) acts=[{assignee:n.assignee||'',text:n.action}];
+    console.log(`item_${i}:`, subj, '| actions:', acts);
     acts.filter(a=>a.assignee===memberId&&a.text).forEach(a=>{
       const t=themes.find(x=>x.id===themeMap[i]);
       actions.push(`[${t?t.label:'Autre'}] ${subj} : ${a.text}`);
     });
   });
+  console.log('actions trouvées:', actions);
   if(!actions.length){
     alert(`Aucune action assignée à ${m?m.name:memberId} dans cette réunion.`);
     return;
