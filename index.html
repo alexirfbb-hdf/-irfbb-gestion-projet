@@ -5,19 +5,31 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>IRFBB HDF — Réunions</title>
 <style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+
 /* ── RESET & BASE ── */
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 :root {
   --accent: #e63946;
+  --accent-light: #fef2f2;
+  --accent-dark: #c1121f;
   --blue: #3b82f6;
-  --text: #1e293b;
+  --blue-light: #eff6ff;
+  --green: #22c55e;
+  --text: #0f172a;
+  --text2: #334155;
   --muted: #64748b;
   --border: #e2e8f0;
-  --surface: #f8fafc;
+  --border2: #cbd5e1;
+  --surface: #f1f5f9;
+  --surface2: #f8fafc;
   --white: #ffffff;
-  --shadow: 0 1px 3px rgba(0,0,0,.08), 0 1px 2px rgba(0,0,0,.04);
-  --radius: 10px;
-  --font: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --shadow-sm: 0 1px 3px rgba(0,0,0,.07);
+  --shadow: 0 4px 12px rgba(0,0,0,.08);
+  --shadow-lg: 0 8px 24px rgba(0,0,0,.12);
+  --radius: 12px;
+  --radius-sm: 8px;
+  --font: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
 }
 body { font-family: var(--font); color: var(--text); background: var(--surface); min-height: 100vh; }
 button { font-family: var(--font); cursor: pointer; }
@@ -26,36 +38,57 @@ textarea, input, select { font-family: var(--font); }
 /* ── HEADER ── */
 .header {
   display: flex; align-items: center; justify-content: space-between;
-  padding: 10px 20px; background: var(--white); border-bottom: 1px solid var(--border);
-  position: sticky; top: 0; z-index: 100; gap: 12px;
-  box-shadow: 0 1px 3px rgba(0,0,0,.06);
+  padding: 0 28px; height: 58px;
+  background: var(--white);
+  border-bottom: 1px solid var(--border);
+  position: sticky; top: 0; z-index: 100; gap: 16px;
+  box-shadow: 0 1px 0 var(--border), 0 2px 8px rgba(0,0,0,.04);
 }
-.logo { display: flex; align-items: center; gap: 8px; }
-.logo-icon { width: 30px; height: 30px; background: var(--accent); border-radius: 7px; display: flex; align-items: center; justify-content: center; font-size: 16px; }
-.logo-text { font-size: 15px; font-weight: 800; color: var(--text); }
+.logo { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
+.logo-icon {
+  width: 34px; height: 34px;
+  background: linear-gradient(135deg, var(--accent), var(--accent-dark));
+  border-radius: 9px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 17px;
+  box-shadow: 0 2px 6px rgba(230,57,70,.35);
+}
+.logo-text { font-size: 16px; font-weight: 800; color: var(--text); letter-spacing: -.3px; }
 .logo-text span { color: var(--accent); }
-.nav { display: flex; gap: 4px; }
-.nav-btn { padding: 6px 14px; border-radius: 8px; border: 1px solid var(--border); background: var(--white); font-size: 13px; font-weight: 500; color: var(--muted); transition: all .15s; white-space: nowrap; }
-.nav-btn:hover { background: var(--surface); color: var(--text); }
-.nav-btn.active { background: var(--accent); color: white; border-color: var(--accent); }
-.header-right { display: flex; align-items: center; gap: 8px; }
-.save-ok { font-size: 12px; color: #22c55e; font-weight: 600; opacity: 0; transition: opacity .3s; }
+.logo-sub { font-size: 11px; color: var(--muted); font-weight: 500; margin-top: 1px; display: block; }
+.nav { display: flex; gap: 4px; background: var(--surface); padding: 4px; border-radius: 10px; border: 1px solid var(--border); }
+.nav-btn {
+  padding: 6px 18px; border-radius: 7px; border: none;
+  background: transparent; font-size: 13px; font-weight: 500;
+  color: var(--muted); transition: all .18s; white-space: nowrap;
+}
+.nav-btn:hover { background: var(--white); color: var(--text); box-shadow: var(--shadow-sm); }
+.nav-btn.active { background: var(--white); color: var(--text); font-weight: 700; box-shadow: var(--shadow-sm); }
+.header-right { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
+.save-ok { font-size: 12px; color: var(--green); font-weight: 600; opacity: 0; transition: opacity .3s; display: flex; align-items: center; gap: 4px; }
 
 /* ── BOUTONS ── */
-.btn { display: inline-flex; align-items: center; gap: 6px; padding: 7px 14px; border-radius: 8px; border: none; font-size: 13px; font-weight: 600; cursor: pointer; transition: all .15s; white-space: nowrap; }
-.btn-primary { background: var(--accent); color: white; }
-.btn-primary:hover { opacity: .9; }
-.btn-secondary { background: var(--surface); color: var(--text); border: 1px solid var(--border); }
-.btn-secondary:hover { background: var(--border); }
-.btn-sm { padding: 5px 10px; font-size: 12px; }
+.btn { display: inline-flex; align-items: center; gap: 6px; padding: 7px 16px; border-radius: var(--radius-sm); border: none; font-size: 13px; font-weight: 600; cursor: pointer; transition: all .18s; white-space: nowrap; }
+.btn-primary { background: linear-gradient(135deg, var(--accent), var(--accent-dark)); color: white; box-shadow: 0 2px 6px rgba(230,57,70,.3); }
+.btn-primary:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(230,57,70,.35); }
+.btn-secondary { background: var(--white); color: var(--text2); border: 1px solid var(--border2); }
+.btn-secondary:hover { background: var(--surface); border-color: var(--muted); }
+.btn-sm { padding: 5px 11px; font-size: 12px; }
 .btn-ghost { background: transparent; color: var(--muted); border: 1px solid var(--border); }
-.btn-ghost:hover { background: var(--surface); }
-.btn-danger { background: #fee2e2; color: #dc2626; border: 1px solid #fca5a5; }
-.btn-danger:hover { background: #fca5a5; }
+.btn-ghost:hover { background: var(--surface2); color: var(--text); }
+.btn-danger { background: var(--accent-light); color: var(--accent); border: 1px solid #fecaca; }
+.btn-danger:hover { background: #fee2e2; }
 
-/* ── TABS ── */
-.tab { display: none; padding: 20px; max-width: 900px; margin: 0 auto; }
+/* ── LAYOUT PLEINE LARGEUR ── */
+.tab { display: none; padding: 24px 28px; }
 .tab.active { display: block; }
+.page-grid {
+  display: grid;
+  grid-template-columns: minmax(0,1fr) 340px;
+  gap: 20px;
+  align-items: start;
+}
+.page-grid-full { grid-column: 1 / -1; }
 
 /* ── CARDS ── */
 .card { background: var(--white); border-radius: var(--radius); box-shadow: var(--shadow); margin-bottom: 16px; overflow: hidden; }
@@ -151,7 +184,7 @@ textarea, input, select { font-family: var(--font); }
 .aaf-cancel { padding: 6px 10px; background: #f1f5f9; border: none; border-radius: 6px; font-size: 12px; cursor: pointer; }
 
 /* ── CHECKLISTS ── */
-.cr-wrap { padding: 12px 16px 16px; border-top: 1px solid var(--border); }
+.cr-wrap { padding: 12px 16px 16px; }
 .cl-block { border-radius: 9px; padding: 11px; margin-bottom: 10px; }
 .cl-paul { background: #fff5f5; border: 1.5px solid #fca5a5; }
 .cl-olivier { background: #f0f9ff; border: 1.5px solid #7dd3fc; }
@@ -506,9 +539,10 @@ function showTab(tab, btn) {
 // ═══════════════════════════════════════════════════════════════
 function renderHome() {
   const el = document.getElementById('homeContent');
-  const now = new Date(); now.setHours(0,0,0,0);
+  const now = new Date();
+  const todayStr = now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0')+'-'+String(now.getDate()).padStart(2,'0');
   const upcoming = state.reunions
-    .filter(r => r.date && new Date(r.date) >= now)
+    .filter(r => r.date && r.date >= todayStr)
     .sort((a,b) => new Date(a.date)-new Date(b.date));
 
   el.innerHTML = '';
@@ -523,15 +557,19 @@ function renderHome() {
   el.appendChild(buildReunionCard(upcoming[0]));
   if (upcoming.length > 1) {
     const next = document.createElement('div');
-    next.style.cssText = 'background:white;border:1px solid var(--border);border-radius:10px;padding:14px 18px;margin-top:16px';
-    next.innerHTML = '<div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);margin-bottom:10px">📅 Réunions à venir</div>' +
+    next.className = 'card';
+    next.style.cssText = 'margin-top:20px;padding:14px 18px';
+    next.innerHTML = '<div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);margin-bottom:10px">📅 Prochaines réunions</div>' +
       upcoming.slice(1).map(r => {
         const dt = new Date(r.date);
-        return `<div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-top:1px solid var(--border)">
-          <div style="font-size:13px;font-weight:600;color:var(--accent);min-width:80px">${dt.toLocaleDateString('fr-FR',{day:'numeric',month:'short'})}</div>
-          <div style="font-size:13px;flex:1">${r.title}</div>
+        return `<div style="display:flex;align-items:center;gap:12px;padding:9px 0;border-top:1px solid var(--border)">
+          <div style="background:var(--accent-light);border-radius:7px;padding:4px 9px;text-align:center;flex-shrink:0">
+            <div style="font-size:15px;font-weight:800;color:var(--accent);line-height:1">${dt.getDate()}</div>
+            <div style="font-size:10px;color:var(--accent);font-weight:600">${dt.toLocaleDateString('fr-FR',{month:'short'})}</div>
+          </div>
+          <div style="font-size:13px;font-weight:600;flex:1">${r.title}</div>
           <button class="btn btn-ghost btn-sm" onclick="editReunion('${r.id}')">✏️</button>
-          <button class="btn btn-ghost btn-sm" onclick="deleteReunion('${r.id}')">🗑️</button>
+          <button class="btn btn-danger btn-sm" onclick="deleteReunion('${r.id}')">🗑️</button>
         </div>`;
       }).join('');
     el.appendChild(next);
@@ -542,30 +580,34 @@ function renderHome() {
 // CARTE RÉUNION COMPLÈTE
 // ═══════════════════════════════════════════════════════════════
 function buildReunionCard(r) {
-  const card = document.createElement('div');
-  card.className = 'card';
-  card.id = 'rcard-'+r.id;
+  const wrap = document.createElement('div');
+  wrap.id = 'rcard-'+r.id;
 
   const dt = r.date ? new Date(r.date) : null;
   const notes = getReunionNotes(r.id);
   const meta = getMetaNotes(r.id);
   const starred = new Set(meta.starred);
-  const capMember = getMember(meta.capitaine);
   let themeMap = {};
   try { themeMap = r.agendaThemes ? JSON.parse(r.agendaThemes) : {}; } catch(e) {}
 
-  // Header
+  // ── HEADER pleine largeur ──
   const hdr = document.createElement('div');
-  hdr.className = 'card-header';
+  hdr.className = 'card page-grid-full';
+  hdr.style.cssText = 'margin-bottom:16px;padding:16px 20px;display:flex;align-items:flex-start;gap:16px';
   const dateDiv = document.createElement('div');
+  dateDiv.style.cssText = 'text-align:center;background:var(--accent-light);border-radius:10px;padding:8px 14px;flex-shrink:0;border:1.5px solid #fecaca';
   dateDiv.innerHTML = dt
-    ? `<div style="font-size:26px;font-weight:800;color:var(--accent);line-height:1">${dt.getDate()}</div>
-       <div style="font-size:12px;color:var(--muted)">${dt.toLocaleDateString('fr-FR',{month:'long'})}&nbsp;${dt.getFullYear()}</div>`
-    : '<div style="font-size:13px;color:var(--muted)">Sans date</div>';
+    ? `<div style="font-size:28px;font-weight:800;color:var(--accent);line-height:1">${dt.getDate()}</div>
+       <div style="font-size:11px;font-weight:600;color:var(--accent);text-transform:uppercase;letter-spacing:.5px;margin-top:2px">${dt.toLocaleDateString('fr-FR',{month:'short'})}</div>
+       <div style="font-size:11px;color:var(--muted)">${dt.getFullYear()}</div>`
+    : '<div style="font-size:13px;color:var(--muted)">?</div>';
   const infoDiv = document.createElement('div');
-  infoDiv.style.cssText = 'flex:1;margin-left:16px';
-  infoDiv.innerHTML = `<div style="font-size:18px;font-weight:700;margin-bottom:3px">${r.title}</div>
-    <div style="font-size:13px;color:var(--muted)">${r.time?'🕐 '+cleanTime(r.time):''}${r.location?' · 📍 '+r.location:''}</div>`;
+  infoDiv.style.cssText = 'flex:1';
+  infoDiv.innerHTML = `<div style="font-size:20px;font-weight:800;letter-spacing:-.3px;margin-bottom:4px">${r.title}</div>
+    <div style="font-size:13px;color:var(--muted);display:flex;flex-wrap:wrap;gap:12px">
+      ${r.time?`<span>🕐 ${cleanTime(r.time)}</span>`:''}
+      ${r.location?`<span>📍 ${r.location}</span>`:''}
+    </div>`;
   const actDiv = document.createElement('div');
   actDiv.style.cssText = 'display:flex;gap:6px;flex-shrink:0';
   const btnEdit = document.createElement('button');
@@ -576,12 +618,23 @@ function buildReunionCard(r) {
   btnDel.addEventListener('click', () => deleteReunion(r.id));
   actDiv.append(btnEdit, btnDel);
   hdr.append(dateDiv, infoDiv, actDiv);
-  card.appendChild(hdr);
+  wrap.appendChild(hdr);
 
-  // Timer
-  card.appendChild(buildTimer(r.id, meta));
+  // ── GRILLE 2 COLONNES ──
+  const grid = document.createElement('div');
+  grid.className = 'page-grid';
+  wrap.appendChild(grid);
 
-  // ODJ
+  // ── COLONNE GAUCHE : ODJ ──
+  const leftCol = document.createElement('div');
+  const odjCard = document.createElement('div');
+  odjCard.className = 'card';
+
+  const odjCardHdr = document.createElement('div');
+  odjCardHdr.className = 'card-header';
+  odjCardHdr.innerHTML = `<div style="font-size:14px;font-weight:700">📋 Ordre du jour <span style="background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:2px 9px;font-size:12px;font-weight:600;color:var(--muted);margin-left:6px">${(r.agenda||[]).length} sujets</span></div>`;
+  odjCard.appendChild(odjCardHdr);
+
   if ((r.agenda||[]).length) {
     const odj = document.createElement('div');
     odj.className = 'odj-wrap';
@@ -601,7 +654,7 @@ function buildReunionCard(r) {
       }
     }
 
-    // Par thématique — regrouper les IDs inconnus dans "autre"
+    // Par thématique
     const themes = getThemes();
     const grouped = {};
     themes.forEach(t => { grouped[t.id] = []; });
@@ -626,13 +679,32 @@ function buildReunionCard(r) {
       items.forEach(({subj,i}) => odj.appendChild(buildSubjectCard(r,i,subj,notes,starred)));
     });
 
-    card.appendChild(odj);
+    odjCard.appendChild(odj);
+  } else {
+    odjCard.innerHTML += `<div style="padding:20px;text-align:center;color:var(--muted);font-size:13px">Aucun sujet à l'ordre du jour.</div>`;
   }
 
-  // CR section
-  card.appendChild(buildCRSection(r, meta));
+  leftCol.appendChild(odjCard);
+  grid.appendChild(leftCol);
 
-  return card;
+  // ── COLONNE DROITE : Timer + CR ──
+  const rightCol = document.createElement('div');
+  rightCol.style.cssText = 'position:sticky;top:74px;display:flex;flex-direction:column;gap:16px';
+
+  const timerCard = document.createElement('div');
+  timerCard.className = 'card';
+  timerCard.style.cssText = 'overflow:hidden';
+  timerCard.appendChild(buildTimer(r.id, meta));
+  rightCol.appendChild(timerCard);
+
+  const crCard = document.createElement('div');
+  crCard.className = 'card';
+  crCard.appendChild(buildCRSection(r, meta));
+  rightCol.appendChild(crCard);
+
+  grid.appendChild(rightCol);
+
+  return wrap;
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -1186,21 +1258,16 @@ function exportMember(rid,memberId) {
   try{themeMap=r.agendaThemes?JSON.parse(r.agendaThemes):{};}catch(e){}
   const m=getMember(memberId);
   const dt=r.date?new Date(r.date).toLocaleDateString('fr-FR',{day:'numeric',month:'long',year:'numeric'}):'';
-  console.log('=== exportMember ===', memberId);
-  console.log('agenda:', r.agenda);
-  console.log('notes keys:', Object.keys(notes));
   const actions=[];
   (r.agenda||[]).forEach((subj,i)=>{
     const n=notes['item_'+i]||{};
     let acts=n.actions||[];
     if(!acts.length&&n.action) acts=[{assignee:n.assignee||'',text:n.action}];
-    console.log(`item_${i}:`, subj, '| actions:', acts);
     acts.filter(a=>a.assignee===memberId&&a.text).forEach(a=>{
       const t=themes.find(x=>x.id===themeMap[i]);
       actions.push(`[${t?t.label:'Autre'}] ${subj} : ${a.text}`);
     });
   });
-  console.log('actions trouvées:', actions);
   if(!actions.length){
     alert(`Aucune action assignée à ${m?m.name:memberId} dans cette réunion.`);
     return;
@@ -1225,9 +1292,10 @@ function fallbackCopy(text) {
 // ═══════════════════════════════════════════════════════════════
 function renderArchives() {
   const el=document.getElementById('archivesList');
-  const now=new Date(); now.setHours(0,0,0,0);
+  const now=new Date();
+  const todayStr=now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0')+'-'+String(now.getDate()).padStart(2,'0');
   const past=state.reunions
-    .filter(r=>!r.date||new Date(r.date)<now)
+    .filter(r=>!r.date||r.date<todayStr)
     .sort((a,b)=>{
       if(!a.date&&!b.date) return 0;
       if(!a.date) return 1; if(!b.date) return -1;
