@@ -949,7 +949,8 @@ function buildSujDuJour(rid) {
   const notesCol = document.createElement('div');
   const notesLbl = document.createElement('div'); notesLbl.className='body-lbl'; notesLbl.textContent='💬 Notes';
   const ta = document.createElement('textarea');
-  ta.className='body-ta'; ta.placeholder='Notes…'; ta.value=note.decision||'';
+  ta.className='body-ta'; ta.placeholder='Notes libres, points à aborder, contexte…'; ta.value=note.decision||'';
+  ta.style.minHeight = '140px';
   ta.addEventListener('input', () => debounceNote(rid,'_sdj','decision',ta.value));
   notesCol.append(notesLbl, ta);
 
