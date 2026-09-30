@@ -642,7 +642,16 @@ function buildReunionCard(r) {
 
   const odjCardHdr = document.createElement('div');
   odjCardHdr.className = 'card-header';
-  odjCardHdr.innerHTML = `<div style="font-size:14px;font-weight:700">📋 Ordre du jour <span style="background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:2px 9px;font-size:12px;font-weight:600;color:var(--muted);margin-left:6px">${(r.agenda||[]).length} sujets</span></div>`;
+  odjCardHdr.style.cssText = 'display:flex;align-items:center;justify-content:space-between;gap:8px';
+  const odjHdrLeft = document.createElement('div');
+  odjHdrLeft.style.cssText = 'font-size:14px;font-weight:700;display:flex;align-items:center;gap:6px';
+  odjHdrLeft.innerHTML = `📋 Ordre du jour <span style="background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:2px 9px;font-size:12px;font-weight:600;color:var(--muted)">${(r.agenda||[]).length} sujets</span>`;
+  const addSubjBtn = document.createElement('button');
+  addSubjBtn.className = 'btn btn-ghost btn-sm';
+  addSubjBtn.textContent = '+ Sujet';
+  addSubjBtn.addEventListener('click', () => addSubjectInline(r, odjCard, addSubjBtn));
+  odjCardHdr.appendChild(odjHdrLeft);
+  odjCardHdr.appendChild(addSubjBtn);
   odjCard.appendChild(odjCardHdr);
 
   if ((r.agenda||[]).length) {
@@ -1024,6 +1033,57 @@ function editSubjectTitle(r, i, titleEl) {
   inp.addEventListener('blur', save);
   inp.addEventListener('keydown', e => { if(e.key==='Enter') inp.blur(); if(e.key==='Escape'){ inp.value=orig; inp.blur(); } });
 }
+
+function addSubjectInline(r, odjCard, triggerBtn) {
+  // Éviter double-ouverture
+  if(document.getElementById('quick-add-subj-'+r.id)) return;
+  const row = document.createElement('div');
+  row.id = 'quick-add-subj-'+r.id;
+  row.style.cssText = 'display:flex;gap:6px;padding:10px 16px 10px;border-top:1px solid var(--border)';
+  const inp = document.createElement('input');
+  inp.placeholder = 'Titre du sujet…';
+  inp.style.cssText = 'flex:1;border:1px solid var(--blue);border-radius:6px;padding:6px 10px;font-size:13px;font-family:var(--font);outline:none;';
+  const saveBtn = document.createElement('button');
+  saveBtn.className = 'btn btn-primary btn-sm';
+  saveBtn.textContent = 'Ajouter';
+  const cancelBtn = document.createElement('button');
+  cancelBtn.className = 'btn btn-ghost btn-sm';
+  cancelBtn.textContent = 'Annuler';
+  row.append(inp, saveBtn, cancelBtn);
+  odjCard.appendChild(row);
+  inp.focus();
+
+  async function doSave() {
+    const val = inp.value.trim();
+    if (!val) { row.remove(); return; }
+    const newAgenda = [...(r.agenda||[]), val];
+    const updated = { ...r, agenda: newAgenda };
+    try {
+      saveBtn.disabled = true; saveBtn.textContent = '…';
+      await apiCall('saveReunion', { data: updated });
+      const idx = state.reunions.findIndex(x=>x.id===r.id);
+      if(idx>=0) state.reunions[idx] = updated;
+      // Mettre à jour le compteur
+      const counter = odjCard.querySelector('span[style*="border-radius:20px"]');
+      if(counter) counter.textContent = newAgenda.length + ' sujets';
+      // Rafraîchir la carte de réunion complète
+      const cardWrap = document.getElementById('rcard-'+r.id);
+      if(cardWrap) {
+        const fresh = buildReunionCard(updated);
+        cardWrap.replaceWith(fresh);
+      }
+      showSaveOk();
+    } catch(e) { showError(e.message); saveBtn.disabled=false; saveBtn.textContent='Ajouter'; }
+  }
+
+  saveBtn.addEventListener('click', doSave);
+  cancelBtn.addEventListener('click', () => row.remove());
+  inp.addEventListener('keydown', e => {
+    if(e.key==='Enter') doSave();
+    if(e.key==='Escape') row.remove();
+  });
+}
+
 
 // ═══════════════════════════════════════════════════════════════
 // ACTIONS
