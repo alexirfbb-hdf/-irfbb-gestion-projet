@@ -1579,10 +1579,10 @@ function buildReunionForm(data) {
     </div>
     <div class="form-row">
       <div class="form-group"><label class="form-label">Date</label>
-        <input class="form-input" id="f-date" type="date" value="${data?.date||''}">
+        <input class="form-input" id="f-date" type="date" value="${dateToStr(data?.date)||''}">
       </div>
       <div class="form-group"><label class="form-label">Heure</label>
-        <input class="form-input" id="f-time" type="time" value="${data?.time||''}">
+        <input class="form-input" id="f-time" type="time" value="${cleanTime(data?.time)||''}">
       </div>
     </div>
     <div class="form-group"><label class="form-label">Lieu</label>
