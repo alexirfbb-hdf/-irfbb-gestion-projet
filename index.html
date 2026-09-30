@@ -1625,13 +1625,21 @@ function changeTheme(i,theme) {
   _agendaItems[i].theme=theme;
   refreshBuilder();
 }
+function syncAgendaInputs() {
+  _agendaItems.forEach((_,i)=>{
+    const inp=document.getElementById('agenda-builder')?.querySelector(`#abi-${i} .ab-inp`);
+    if(inp) _agendaItems[i].txt=inp.value;
+  });
+}
 function refreshBuilder() {
+  syncAgendaInputs();
   const b=document.getElementById('agenda-builder');
   const r=document.getElementById('ab-add-row');
   if(b) b.innerHTML=renderAgendaItems();
   if(r) r.innerHTML=renderAddBtns();
 }
 async function saveReunion() {
+  syncAgendaInputs();
   const title=(document.getElementById('f-title')||{}).value?.trim();
   if(!title){alert('Le titre est requis');return;}
   const date=(document.getElementById('f-date')||{}).value||'';
