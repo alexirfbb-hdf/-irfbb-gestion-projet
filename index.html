@@ -152,7 +152,7 @@ textarea, input, select { font-family: var(--font); }
 .star-btn { background: none; border: none; font-size: 15px; color: #e2e8f0; cursor: pointer; padding: 0; line-height: 1; flex-shrink: 0; transition: transform .15s; }
 .star-btn:hover { transform: scale(1.2); }
 .star-btn.on { color: #f59e0b; }
-.status-btn { border: none; border-radius: 20px; padding: 3px 9px; font-size: 10px; font-weight: 700; cursor: pointer; flex-shrink: 0; }
+.status-btn { border: none; border-radius: 20px; padding: 3px 9px; font-size: 10px; font-weight: 700; cursor: pointer; flex-shrink: 0; appearance: none; -webkit-appearance: none; outline: none; }
 .st-todo { background: #f1f5f9; color: #64748b; }
 .st-done { background: #dcfce7; color: #16a34a; }
 .st-report { background: #fef3c7; color: #d97706; }
@@ -537,12 +537,22 @@ function showTab(tab, btn) {
 // ═══════════════════════════════════════════════════════════════
 // PAGE PRINCIPALE
 // ═══════════════════════════════════════════════════════════════
+function dateToStr(d) {
+  // Extrait YYYY-MM-DD en heure locale (évite le décalage UTC)
+  if (!d) return '';
+  const dt = d instanceof Date ? d : new Date(d);
+  if (isNaN(dt)) return typeof d === 'string' ? d.substring(0,10) : '';
+  return dt.getFullYear()+'-'+String(dt.getMonth()+1).padStart(2,'0')+'-'+String(dt.getDate()).padStart(2,'0');
+}
+function todayStr() {
+  const now = new Date();
+  return now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0')+'-'+String(now.getDate()).padStart(2,'0');
+}
 function renderHome() {
   const el = document.getElementById('homeContent');
-  const now = new Date();
-  const todayStr = now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0')+'-'+String(now.getDate()).padStart(2,'0');
+  const today = todayStr();
   const upcoming = state.reunions
-    .filter(r => r.date && r.date >= todayStr)
+    .filter(r => r.date && dateToStr(r.date) >= today)
     .sort((a,b) => new Date(a.date)-new Date(b.date));
 
   el.innerHTML = '';
@@ -930,13 +940,18 @@ function buildSubjectCard(r, i, subj, notes, starred, prefix) {
   const starBtn = document.createElement('button'); starBtn.className='star-btn'+(isStar?' on':''); starBtn.textContent='★';
   starBtn.addEventListener('click', e => { e.stopPropagation(); toggleStar(r.id,i); });
 
-  const stBtn = document.createElement('button');
+  const stBtn = document.createElement('select');
   stBtn.className='status-btn '+(st==='done'?'st-done':st==='report'?'st-report':'st-todo');
-  stBtn.textContent = st==='done'?'✅ Traité':st==='report'?'🔄 Reporté':'⬜ À traiter';
-  stBtn.addEventListener('click', e => { e.stopPropagation(); cycleStatus(r.id,i); });
+  stBtn.innerHTML=`<option value="todo"${st==='todo'?' selected':''}>⬜ À traiter</option>
+    <option value="done"${st==='done'?' selected':''}>✅ Traité</option>
+    <option value="report"${st==='report'?' selected':''}>🔄 Reporté</option>`;
+  stBtn.addEventListener('change', e => { e.stopPropagation(); setStatus(r.id,i,stBtn.value); });
+  stBtn.addEventListener('click', e => e.stopPropagation());
 
   const titleEl = document.createElement('span');
   titleEl.className='subj-title'+(st==='done'?' crossed':''); titleEl.textContent=subj;
+  titleEl.title='Double-cliquer pour modifier le titre';
+  titleEl.addEventListener('dblclick', e => { e.stopPropagation(); editSubjectTitle(r,i,titleEl); });
 
   const chevEl = document.createElement('span'); chevEl.className='chevron'; chevEl.textContent='▼';
   chevEl.id='chev-'+pfx+r.id+'-'+i;
@@ -981,6 +996,33 @@ function toggleSubj(id) {
   if (!body) return;
   const open = body.classList.toggle('open');
   if (chev) chev.classList.toggle('open', open);
+}
+function editSubjectTitle(r, i, titleEl) {
+  const orig = titleEl.textContent;
+  const inp = document.createElement('input');
+  inp.value = orig;
+  inp.style.cssText = 'flex:1;border:1px solid var(--blue);border-radius:5px;padding:2px 6px;font-size:13px;font-family:var(--font);outline:none;';
+  titleEl.replaceWith(inp);
+  inp.focus(); inp.select();
+  async function save() {
+    const val = inp.value.trim() || orig;
+    const newAgenda = [...(r.agenda||[])];
+    newAgenda[i] = val;
+    const updated = { ...r, agenda: newAgenda };
+    try {
+      await apiCall('saveReunion', { data: updated });
+      const idx = state.reunions.findIndex(x=>x.id===r.id);
+      if(idx>=0) state.reunions[idx] = updated;
+      showSaveOk();
+    } catch(e) { showError(e.message); }
+    const newSpan = document.createElement('span');
+    newSpan.className = titleEl.className; newSpan.textContent = val;
+    newSpan.title = 'Double-cliquer pour modifier le titre';
+    newSpan.addEventListener('dblclick', e => { e.stopPropagation(); editSubjectTitle(updated, i, newSpan); });
+    inp.replaceWith(newSpan);
+  }
+  inp.addEventListener('blur', save);
+  inp.addEventListener('keydown', e => { if(e.key==='Enter') inp.blur(); if(e.key==='Escape'){ inp.value=orig; inp.blur(); } });
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -1079,6 +1121,9 @@ async function cycleStatus(rid,idx) {
   const note=getItemNote(rid,idx);
   const cur=note.status||'todo';
   const next=cur==='todo'?'done':cur==='done'?'report':'todo';
+  await setStatus(rid,idx,next);
+}
+async function setStatus(rid,idx,next) {
   try {
     await saveItemNote(rid,idx,{status:next});
     // Mise à jour visuelle directe
@@ -1087,7 +1132,11 @@ async function cycleStatus(rid,idx) {
       if(!sc) return;
       sc.className='subj'+(getMetaNotes(rid).starred.includes(idx)?' prio':'')+(next==='report'?' reported':'')+(next==='done'?' done-s':'');
       const stBtn=sc.querySelector('.status-btn');
-      if(stBtn) { stBtn.className='status-btn '+(next==='done'?'st-done':next==='report'?'st-report':'st-todo'); stBtn.textContent=next==='done'?'✅ Traité':next==='report'?'🔄 Reporté':'⬜ À traiter'; }
+      if(stBtn) {
+        stBtn.className='status-btn '+(next==='done'?'st-done':next==='report'?'st-report':'st-todo');
+        if(stBtn.tagName==='SELECT') { stBtn.value=next; }
+        else { stBtn.textContent=next==='done'?'✅ Traité':next==='report'?'🔄 Reporté':'⬜ À traiter'; }
+      }
       const titleEl=sc.querySelector('.subj-title');
       if(titleEl) titleEl.classList.toggle('crossed',next==='done');
     });
@@ -1292,10 +1341,9 @@ function fallbackCopy(text) {
 // ═══════════════════════════════════════════════════════════════
 function renderArchives() {
   const el=document.getElementById('archivesList');
-  const now=new Date();
-  const todayStr=now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0')+'-'+String(now.getDate()).padStart(2,'0');
+  const today=todayStr();
   const past=state.reunions
-    .filter(r=>!r.date||r.date<todayStr)
+    .filter(r=>!r.date||dateToStr(r.date)<today)
     .sort((a,b)=>{
       if(!a.date&&!b.date) return 0;
       if(!a.date) return 1; if(!b.date) return -1;
@@ -1337,11 +1385,20 @@ function openArchive(rid) {
   const r=state.reunions.find(x=>x.id===rid);
   if(!r) return;
   const el=document.getElementById('archivesList');
-  el.innerHTML='<button class="btn btn-ghost btn-sm" onclick="renderArchives()" style="margin-bottom:16px">← Retour aux archives</button>';
-
-  // Vue lecture seule
-  const notes=getReunionNotes(rid);
+  el.innerHTML='';
+  const backBtn=document.createElement('button');
+  backBtn.className='btn btn-ghost btn-sm';
+  backBtn.style.cssText='margin-bottom:16px';
+  backBtn.textContent='← Retour aux archives';
+  backBtn.addEventListener('click',renderArchives);
+  el.appendChild(backBtn);
+  // Carte interactive complète (même que page principale)
   const meta=getMetaNotes(rid);
+  el.appendChild(buildReunionCard(r));
+  return; // on garde le reste du code ci-dessous mort mais inatteignable
+
+  // (code lecture seule conservé ci-dessous pour référence)
+  const notes=getReunionNotes(rid);
   const themes=getThemes();
   let themeMap={};
   try{themeMap=r.agendaThemes?JSON.parse(r.agendaThemes):{};}catch(e){}
