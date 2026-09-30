@@ -1039,7 +1039,16 @@ function addSubjectInline(r, odjCard, triggerBtn) {
   if(document.getElementById('quick-add-subj-'+r.id)) return;
   const row = document.createElement('div');
   row.id = 'quick-add-subj-'+r.id;
-  row.style.cssText = 'display:flex;gap:6px;padding:10px 16px 10px;border-top:1px solid var(--border)';
+  row.style.cssText = 'display:flex;flex-direction:column;gap:6px;padding:10px 16px 12px;border-top:1px solid var(--border)';
+  const topRow = document.createElement('div');
+  topRow.style.cssText = 'display:flex;gap:6px';
+  const sel = document.createElement('select');
+  sel.style.cssText = 'border:1px solid var(--blue);border-radius:6px;padding:6px 8px;font-size:12px;font-family:var(--font);outline:none;background:white;max-width:140px;';
+  getThemes().forEach(t => {
+    const opt = document.createElement('option');
+    opt.value = t.id; opt.textContent = t.label;
+    sel.appendChild(opt);
+  });
   const inp = document.createElement('input');
   inp.placeholder = 'Titre du sujet…';
   inp.style.cssText = 'flex:1;border:1px solid var(--blue);border-radius:6px;padding:6px 10px;font-size:13px;font-family:var(--font);outline:none;';
@@ -1049,7 +1058,8 @@ function addSubjectInline(r, odjCard, triggerBtn) {
   const cancelBtn = document.createElement('button');
   cancelBtn.className = 'btn btn-ghost btn-sm';
   cancelBtn.textContent = 'Annuler';
-  row.append(inp, saveBtn, cancelBtn);
+  topRow.append(sel, inp, saveBtn, cancelBtn);
+  row.appendChild(topRow);
   odjCard.appendChild(row);
   inp.focus();
 
@@ -1057,7 +1067,10 @@ function addSubjectInline(r, odjCard, triggerBtn) {
     const val = inp.value.trim();
     if (!val) { row.remove(); return; }
     const newAgenda = [...(r.agenda||[]), val];
-    const updated = { ...r, agenda: newAgenda };
+    const themeMap = {};
+    try { Object.assign(themeMap, r.agendaThemes ? JSON.parse(r.agendaThemes) : {}); } catch(e){}
+    themeMap[newAgenda.length - 1] = sel.value || 'autre';
+    const updated = { ...r, agenda: newAgenda, agendaThemes: JSON.stringify(themeMap) };
     try {
       saveBtn.disabled = true; saveBtn.textContent = '…';
       await apiCall('saveReunion', { data: updated });
