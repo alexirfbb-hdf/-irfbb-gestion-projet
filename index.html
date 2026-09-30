@@ -140,6 +140,11 @@ textarea, input, select { font-family: var(--font); }
 .theme-hdr { display: flex; align-items: center; gap: 8px; padding: 5px 10px; border-radius: 8px; border-left: 3px solid; margin: 10px 0 6px; }
 .theme-hdr-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .5px; }
 .theme-hdr-count { font-size: 11px; opacity: .6; }
+.odj-section-title { display: flex; align-items: center; gap: 10px; margin: 14px 0 6px; }
+.odj-section-title-text { font-size: 13px; font-weight: 700; color: var(--text); white-space: nowrap; cursor: pointer; }
+.odj-section-title-text:hover { color: var(--blue); }
+.odj-section-title::before, .odj-section-title::after { content: ''; flex: 1; height: 1.5px; background: var(--border); }
+.odj-section-title::before { display: none; }
 
 /* ── SUJET ACCORDÉON ── */
 .subj { border: 1px solid var(--border); border-radius: 9px; margin-bottom: 5px; overflow: hidden; transition: border-color .15s; }
@@ -645,13 +650,22 @@ function buildReunionCard(r) {
   odjCardHdr.style.cssText = 'display:flex;align-items:center;justify-content:space-between;gap:8px';
   const odjHdrLeft = document.createElement('div');
   odjHdrLeft.style.cssText = 'font-size:14px;font-weight:700;display:flex;align-items:center;gap:6px';
-  odjHdrLeft.innerHTML = `📋 Ordre du jour <span style="background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:2px 9px;font-size:12px;font-weight:600;color:var(--muted)">${(r.agenda||[]).length} sujets</span>`;
+  const subjCount = (r.agenda||[]).filter((_,i)=>themeMap[i]!=='_titre').length;
+  odjHdrLeft.innerHTML = `📋 Ordre du jour <span style="background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:2px 9px;font-size:12px;font-weight:600;color:var(--muted)">${subjCount} sujet${subjCount>1?'s':''}</span>`;
+  const hdrBtns = document.createElement('div');
+  hdrBtns.style.cssText = 'display:flex;gap:6px';
   const addSubjBtn = document.createElement('button');
   addSubjBtn.className = 'btn btn-ghost btn-sm';
   addSubjBtn.textContent = '+ Sujet';
-  addSubjBtn.addEventListener('click', () => addSubjectInline(r, odjCard, addSubjBtn));
+  addSubjBtn.addEventListener('click', () => addSubjectInline(r, odjCard, false));
+  const addTitleBtn = document.createElement('button');
+  addTitleBtn.className = 'btn btn-ghost btn-sm';
+  addTitleBtn.style.cssText = 'color:var(--muted);border-color:var(--border)';
+  addTitleBtn.textContent = '+ Titre';
+  addTitleBtn.addEventListener('click', () => addSubjectInline(r, odjCard, true));
+  hdrBtns.append(addSubjBtn, addTitleBtn);
   odjCardHdr.appendChild(odjHdrLeft);
-  odjCardHdr.appendChild(addSubjBtn);
+  odjCardHdr.appendChild(hdrBtns);
   odjCard.appendChild(odjCardHdr);
 
   if ((r.agenda||[]).length) {
@@ -673,30 +687,55 @@ function buildReunionCard(r) {
       }
     }
 
-    // Par thématique
+    // Par thématique — en respectant l'ordre et les titres de section
     const themes = getThemes();
-    const grouped = {};
-    themes.forEach(t => { grouped[t.id] = []; });
-    grouped['_autre'] = [];
-    (r.agenda||[]).forEach((subj,i) => {
-      const tid = themeMap[i];
-      const known = tid && themes.find(t=>t.id===tid);
-      const bucket = known ? tid : '_autre';
-      if (!grouped[bucket]) grouped[bucket] = [];
-      grouped[bucket].push({subj,i});
-    });
+    // Vérifier si on a des titres de section : affichage en ordre linéaire
+    const hasSectionTitles = (r.agenda||[]).some((_,i) => themeMap[i] === '_titre');
 
-    [...themes, {id:'_autre',label:'Autre',color:'#6366f1',bg:'#eef2ff'}].forEach(t => {
-      const items = grouped[t.id]||[];
-      if (!items.length) return;
-      const thdr = document.createElement('div');
-      thdr.className = 'theme-hdr';
-      thdr.style.cssText = `background:${t.bg};border-left-color:${t.color}`;
-      thdr.innerHTML = `<span class="theme-hdr-label" style="color:${t.color}">${t.label}</span>
-        <span class="theme-hdr-count" style="color:${t.color}">${items.length} sujet${items.length>1?'s':''}</span>`;
-      odj.appendChild(thdr);
-      items.forEach(({subj,i}) => odj.appendChild(buildSubjectCard(r,i,subj,notes,starred)));
-    });
+    if (hasSectionTitles) {
+      // Affichage linéaire : respect de l'ordre, titres intercalés
+      (r.agenda||[]).forEach((subj,i) => {
+        if (themeMap[i] === '_titre') {
+          const st = document.createElement('div');
+          st.className = 'odj-section-title';
+          const txt = document.createElement('span');
+          txt.className = 'odj-section-title-text';
+          txt.textContent = subj;
+          txt.title = 'Double-cliquer pour modifier';
+          txt.addEventListener('dblclick', e => { e.stopPropagation(); editSubjectTitle(r, i, txt); });
+          st.appendChild(txt);
+          const after = document.createElement('span');
+          after.style.cssText = 'flex:1;height:1.5px;background:var(--border);display:block';
+          st.appendChild(after);
+          odj.appendChild(st);
+        } else {
+          odj.appendChild(buildSubjectCard(r,i,subj,notes,starred));
+        }
+      });
+    } else {
+      // Affichage groupé par thématique (comportement original)
+      const grouped = {};
+      themes.forEach(t => { grouped[t.id] = []; });
+      grouped['_autre'] = [];
+      (r.agenda||[]).forEach((subj,i) => {
+        const tid = themeMap[i];
+        const known = tid && themes.find(t=>t.id===tid);
+        const bucket = known ? tid : '_autre';
+        if (!grouped[bucket]) grouped[bucket] = [];
+        grouped[bucket].push({subj,i});
+      });
+      [...themes, {id:'_autre',label:'Autre',color:'#6366f1',bg:'#eef2ff'}].forEach(t => {
+        const items = grouped[t.id]||[];
+        if (!items.length) return;
+        const thdr = document.createElement('div');
+        thdr.className = 'theme-hdr';
+        thdr.style.cssText = `background:${t.bg};border-left-color:${t.color}`;
+        thdr.innerHTML = `<span class="theme-hdr-label" style="color:${t.color}">${t.label}</span>
+          <span class="theme-hdr-count" style="color:${t.color}">${items.length} sujet${items.length>1?'s':''}</span>`;
+        odj.appendChild(thdr);
+        items.forEach(({subj,i}) => odj.appendChild(buildSubjectCard(r,i,subj,notes,starred)));
+      });
+    }
 
     odjCard.appendChild(odj);
   } else {
@@ -1034,31 +1073,42 @@ function editSubjectTitle(r, i, titleEl) {
   inp.addEventListener('keydown', e => { if(e.key==='Enter') inp.blur(); if(e.key==='Escape'){ inp.value=orig; inp.blur(); } });
 }
 
-function addSubjectInline(r, odjCard, triggerBtn) {
+function addSubjectInline(r, odjCard, isTitre) {
   // Éviter double-ouverture
   if(document.getElementById('quick-add-subj-'+r.id)) return;
+  const accentColor = isTitre ? '#7c3aed' : 'var(--blue)';
   const row = document.createElement('div');
   row.id = 'quick-add-subj-'+r.id;
-  row.style.cssText = 'display:flex;flex-direction:column;gap:6px;padding:10px 16px 12px;border-top:1px solid var(--border)';
+  row.style.cssText = `display:flex;flex-direction:column;gap:6px;padding:10px 16px 12px;border-top:1.5px solid ${isTitre?'#ede9fe':'var(--border)'};background:${isTitre?'#faf5ff':''}`;
   const topRow = document.createElement('div');
-  topRow.style.cssText = 'display:flex;gap:6px';
-  const sel = document.createElement('select');
-  sel.style.cssText = 'border:1px solid var(--blue);border-radius:6px;padding:6px 8px;font-size:12px;font-family:var(--font);outline:none;background:white;max-width:140px;';
-  getThemes().forEach(t => {
-    const opt = document.createElement('option');
-    opt.value = t.id; opt.textContent = t.label;
-    sel.appendChild(opt);
-  });
+  topRow.style.cssText = 'display:flex;gap:6px;align-items:center';
+  if (isTitre) {
+    const lbl = document.createElement('span');
+    lbl.style.cssText = 'font-size:11px;font-weight:700;color:#7c3aed;text-transform:uppercase;letter-spacing:.5px;white-space:nowrap';
+    lbl.textContent = '— Titre de section';
+    topRow.appendChild(lbl);
+  } else {
+    const sel = document.createElement('select');
+    sel.id = 'quick-add-theme-'+r.id;
+    sel.style.cssText = 'border:1px solid var(--blue);border-radius:6px;padding:6px 8px;font-size:12px;font-family:var(--font);outline:none;background:white;max-width:140px;';
+    getThemes().forEach(t => {
+      const opt = document.createElement('option');
+      opt.value = t.id; opt.textContent = t.label;
+      sel.appendChild(opt);
+    });
+    topRow.appendChild(sel);
+  }
   const inp = document.createElement('input');
-  inp.placeholder = 'Titre du sujet…';
-  inp.style.cssText = 'flex:1;border:1px solid var(--blue);border-radius:6px;padding:6px 10px;font-size:13px;font-family:var(--font);outline:none;';
+  inp.placeholder = isTitre ? 'Ex : Informations générales, Points budgétaires…' : 'Titre du sujet…';
+  inp.style.cssText = `flex:1;border:1px solid ${accentColor};border-radius:6px;padding:6px 10px;font-size:13px;font-family:var(--font);outline:none;${isTitre?'font-weight:600;':''}`;
   const saveBtn = document.createElement('button');
   saveBtn.className = 'btn btn-primary btn-sm';
+  saveBtn.style.cssText = isTitre ? 'background:#7c3aed' : '';
   saveBtn.textContent = 'Ajouter';
   const cancelBtn = document.createElement('button');
   cancelBtn.className = 'btn btn-ghost btn-sm';
   cancelBtn.textContent = 'Annuler';
-  topRow.append(sel, inp, saveBtn, cancelBtn);
+  topRow.append(inp, saveBtn, cancelBtn);
   row.appendChild(topRow);
   odjCard.appendChild(row);
   inp.focus();
@@ -1069,7 +1119,8 @@ function addSubjectInline(r, odjCard, triggerBtn) {
     const newAgenda = [...(r.agenda||[]), val];
     const themeMap = {};
     try { Object.assign(themeMap, r.agendaThemes ? JSON.parse(r.agendaThemes) : {}); } catch(e){}
-    themeMap[newAgenda.length - 1] = sel.value || 'autre';
+    const selEl = document.getElementById('quick-add-theme-'+r.id);
+    themeMap[newAgenda.length - 1] = isTitre ? '_titre' : (selEl?.value || 'autre');
     const updated = { ...r, agenda: newAgenda, agendaThemes: JSON.stringify(themeMap) };
     try {
       saveBtn.disabled = true; saveBtn.textContent = '…';
