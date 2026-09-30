@@ -941,7 +941,49 @@ function buildSujDuJour(rid) {
   const note = getItemNote(rid, '_sdj');
   const el = document.createElement('div');
   el.className = 'sdj-block';
-  el.innerHTML = '<div class="sdj-title">🎯 Sujet du jour</div>';
+
+  // Titre éditable
+  const titleWrap = document.createElement('div');
+  titleWrap.style.cssText = 'display:flex;align-items:center;gap:8px;margin-bottom:10px';
+  const titleIcon = document.createElement('span');
+  titleIcon.className = 'sdj-title';
+  titleIcon.style.margin = '0';
+  titleIcon.textContent = '🎯 Sujet du jour';
+  const titleSpan = document.createElement('span');
+  titleSpan.style.cssText = 'font-size:13px;font-weight:700;color:#0369a1;cursor:pointer;border-bottom:1px dashed #7dd3fc;';
+  titleSpan.textContent = note.sdjTitle || '';
+  titleSpan.title = 'Cliquer pour modifier le titre';
+  titleSpan.placeholder = 'Ajouter un titre…';
+  if (!titleSpan.textContent) {
+    titleSpan.style.cssText += 'color:#94a3b8;font-weight:400;font-style:italic;';
+    titleSpan.textContent = 'Cliquer pour ajouter un titre…';
+  }
+  function editSdjTitle() {
+    const inp = document.createElement('input');
+    inp.value = note.sdjTitle || '';
+    inp.placeholder = 'Ex : Point budget, Actualités fédérales…';
+    inp.style.cssText = 'font-size:13px;font-weight:700;color:#0369a1;border:1px solid #38bdf8;border-radius:5px;padding:2px 8px;font-family:var(--font);outline:none;min-width:200px;';
+    titleSpan.replaceWith(inp);
+    inp.focus(); inp.select();
+    async function saveSdjTitle() {
+      const val = inp.value.trim();
+      note.sdjTitle = val;
+      await debounceNote(rid, '_sdj', 'sdjTitle', val);
+      titleSpan.textContent = val || '';
+      if (!val) {
+        titleSpan.style.cssText = 'font-size:13px;font-weight:700;color:#94a3b8;cursor:pointer;border-bottom:1px dashed #7dd3fc;font-weight:400;font-style:italic;';
+        titleSpan.textContent = 'Cliquer pour ajouter un titre…';
+      } else {
+        titleSpan.style.cssText = 'font-size:13px;font-weight:700;color:#0369a1;cursor:pointer;border-bottom:1px dashed #7dd3fc;';
+      }
+      inp.replaceWith(titleSpan);
+    }
+    inp.addEventListener('blur', saveSdjTitle);
+    inp.addEventListener('keydown', e => { if(e.key==='Enter') inp.blur(); if(e.key==='Escape'){ inp.replaceWith(titleSpan); } });
+  }
+  titleSpan.addEventListener('click', editSdjTitle);
+  titleWrap.append(titleIcon, titleSpan);
+  el.appendChild(titleWrap);
   const grid = document.createElement('div');
   grid.className = 'body-grid';
 
