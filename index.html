@@ -1084,8 +1084,7 @@ function buildSujDuJour(rid) {
     inp.focus(); inp.select();
     async function saveSdjTitle() {
       const val = inp.value.trim();
-      note.sdjTitle = val;
-      await debounceNote(rid, '_sdj', 'sdjTitle', val);
+      try { await saveItemNote(rid, '_sdj', { sdjTitle: val }); } catch(e) { showError(e.message); }
       titleSpan.textContent = val || '';
       if (!val) {
         titleSpan.style.cssText = 'font-size:13px;font-weight:700;color:#94a3b8;cursor:pointer;border-bottom:1px dashed #7dd3fc;font-weight:400;font-style:italic;';
