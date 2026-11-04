@@ -603,17 +603,16 @@ function getMetaNotes(rid) {
 // ═══════════════════════════════════════════════════════════════
 async function apiCall(action, body = {}) {
   const json = JSON.stringify({ action, ...body });
+  const encoded = encodeURIComponent(json);
   let res;
-  if (json.length > 1500) {
-    // Payload volumineux → POST pour éviter la limite d'URL
-    res = await fetch(API_URL, {
+  if (encoded.length > 2000) {
+    // Payload trop long pour l'URL → POST avec payload dans les paramètres URL
+    // Apps Script lit e.parameter.payload même sur POST
+    res = await fetch(API_URL + '?payload=' + encoded, {
       method: 'POST',
       redirect: 'follow',
-      headers: { 'Content-Type': 'text/plain' },
-      body: json
     });
   } else {
-    const encoded = encodeURIComponent(json.replace(/%/g, '%25'));
     res = await fetch(API_URL + '?payload=' + encoded, { method: 'GET', redirect: 'follow' });
   }
   const text = await res.text();
