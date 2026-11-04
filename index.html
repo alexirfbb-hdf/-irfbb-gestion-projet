@@ -1082,20 +1082,32 @@ function buildSujDuJour(rid) {
     inp.style.cssText = 'font-size:13px;font-weight:700;color:#0369a1;border:1px solid #38bdf8;border-radius:5px;padding:2px 8px;font-family:var(--font);outline:none;min-width:200px;';
     titleSpan.replaceWith(inp);
     inp.focus(); inp.select();
+    let _saving = false;
     async function saveSdjTitle() {
+      if (_saving) return;
+      _saving = true;
       const val = inp.value.trim();
-      try { await saveItemNote(rid, '_sdj', { sdjTitle: val }); } catch(e) { showError(e.message); }
-      titleSpan.textContent = val || '';
+      try {
+        await saveItemNote(rid, '_sdj', { sdjTitle: val });
+      } catch(e) {
+        showError(e.message);
+        _saving = false;
+        return;
+      }
       if (!val) {
-        titleSpan.style.cssText = 'font-size:13px;font-weight:700;color:#94a3b8;cursor:pointer;border-bottom:1px dashed #7dd3fc;font-weight:400;font-style:italic;';
+        titleSpan.style.cssText = 'font-size:13px;font-weight:400;font-style:italic;color:#94a3b8;cursor:pointer;border-bottom:1px dashed #7dd3fc;';
         titleSpan.textContent = 'Cliquer pour ajouter un titre…';
       } else {
         titleSpan.style.cssText = 'font-size:13px;font-weight:700;color:#0369a1;cursor:pointer;border-bottom:1px dashed #7dd3fc;';
+        titleSpan.textContent = val;
       }
       inp.replaceWith(titleSpan);
     }
     inp.addEventListener('blur', saveSdjTitle);
-    inp.addEventListener('keydown', e => { if(e.key==='Enter') inp.blur(); if(e.key==='Escape'){ inp.replaceWith(titleSpan); } });
+    inp.addEventListener('keydown', e => {
+      if (e.key === 'Enter') { e.preventDefault(); saveSdjTitle(); }
+      if (e.key === 'Escape') { inp.replaceWith(titleSpan); }
+    });
   }
   titleSpan.addEventListener('click', editSdjTitle);
   titleWrap.append(titleIcon, titleSpan);
