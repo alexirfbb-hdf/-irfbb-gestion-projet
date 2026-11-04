@@ -1056,6 +1056,8 @@ async function saveCapitaine(rid, memberId) {
 // ═══════════════════════════════════════════════════════════════
 function buildSujDuJour(rid) {
   const note = getItemNote(rid, '_sdj');
+  // Lire aussi sdjTitle depuis l'objet réunion (stockage fiable via saveReunion)
+  const reunion = state.reunions.find(r => r.id === rid) || {};
   const el = document.createElement('div');
   el.className = 'sdj-block';
 
@@ -1068,16 +1070,17 @@ function buildSujDuJour(rid) {
   titleIcon.textContent = '🎯 Sujet du jour';
   const titleSpan = document.createElement('span');
   titleSpan.style.cssText = 'font-size:13px;font-weight:700;color:#0369a1;cursor:pointer;border-bottom:1px dashed #7dd3fc;';
-  titleSpan.textContent = note.sdjTitle || '';
+  // Priorité : champ réunion > ancienne note
+  const currentTitle = reunion.sdjTitle || note.sdjTitle || '';
+  titleSpan.textContent = currentTitle;
   titleSpan.title = 'Cliquer pour modifier le titre';
-  titleSpan.placeholder = 'Ajouter un titre…';
-  if (!titleSpan.textContent) {
-    titleSpan.style.cssText += 'color:#94a3b8;font-weight:400;font-style:italic;';
+  if (!currentTitle) {
+    titleSpan.style.cssText = 'font-size:13px;font-weight:400;font-style:italic;color:#94a3b8;cursor:pointer;border-bottom:1px dashed #7dd3fc;';
     titleSpan.textContent = 'Cliquer pour ajouter un titre…';
   }
   function editSdjTitle() {
     const inp = document.createElement('input');
-    inp.value = note.sdjTitle || '';
+    inp.value = reunion.sdjTitle || note.sdjTitle || '';
     inp.placeholder = 'Ex : Point budget, Actualités fédérales…';
     inp.style.cssText = 'font-size:13px;font-weight:700;color:#0369a1;border:1px solid #38bdf8;border-radius:5px;padding:2px 8px;font-family:var(--font);outline:none;min-width:200px;';
     titleSpan.replaceWith(inp);
@@ -1088,10 +1091,17 @@ function buildSujDuJour(rid) {
       _saving = true;
       const val = inp.value.trim();
       try {
-        await saveItemNote(rid, '_sdj', { sdjTitle: val });
+        // Sauvegarder directement dans l'objet réunion (via saveReunion fiable)
+        const updated = { ...reunion, sdjTitle: val };
+        await apiCall('saveReunion', { data: updated });
+        reunion.sdjTitle = val;
+        const idx = state.reunions.findIndex(r => r.id === rid);
+        if (idx >= 0) state.reunions[idx] = updated;
+        showSaveOk();
       } catch(e) {
         showError(e.message);
         _saving = false;
+        inp.replaceWith(titleSpan);
         return;
       }
       if (!val) {
