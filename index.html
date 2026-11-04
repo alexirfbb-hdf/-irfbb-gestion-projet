@@ -1965,7 +1965,7 @@ async function saveReunion() {
   _agendaItems.filter(x=>x.txt.trim()).forEach((x,i)=>{themeMap[i]=x.theme;});
   const existing=_editId?state.reunions.find(r=>r.id===_editId):null;
   const id=_editId||genId();
-  const d={id,title,date,time,location,agenda,agendaThemes:JSON.stringify(themeMap),decisions:existing?.decisions||'',actions:existing?.actions||'',nextMeeting:existing?.nextMeeting||'',paulValidation:existing?.paulValidation||''};
+  const d={id,title,date,time,location,agenda,agendaThemes:JSON.stringify(themeMap),decisions:existing?.decisions||'',actions:existing?.actions||'',nextMeeting:existing?.nextMeeting||'',paulValidation:existing?.paulValidation||'',sdjTitle:existing?.sdjTitle||''};
 
   showLoading(true);
   try {
