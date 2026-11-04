@@ -5,19 +5,31 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>IRFBB HDF — Réunions</title>
 <style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+
 /* ── RESET & BASE ── */
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 :root {
   --accent: #e63946;
+  --accent-light: #fef2f2;
+  --accent-dark: #c1121f;
   --blue: #3b82f6;
-  --text: #1e293b;
+  --blue-light: #eff6ff;
+  --green: #22c55e;
+  --text: #0f172a;
+  --text2: #334155;
   --muted: #64748b;
   --border: #e2e8f0;
-  --surface: #f8fafc;
+  --border2: #cbd5e1;
+  --surface: #f1f5f9;
+  --surface2: #f8fafc;
   --white: #ffffff;
-  --shadow: 0 1px 3px rgba(0,0,0,.08), 0 1px 2px rgba(0,0,0,.04);
-  --radius: 10px;
-  --font: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --shadow-sm: 0 1px 3px rgba(0,0,0,.07);
+  --shadow: 0 4px 12px rgba(0,0,0,.08);
+  --shadow-lg: 0 8px 24px rgba(0,0,0,.12);
+  --radius: 12px;
+  --radius-sm: 8px;
+  --font: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
 }
 body { font-family: var(--font); color: var(--text); background: var(--surface); min-height: 100vh; }
 button { font-family: var(--font); cursor: pointer; }
@@ -26,36 +38,57 @@ textarea, input, select { font-family: var(--font); }
 /* ── HEADER ── */
 .header {
   display: flex; align-items: center; justify-content: space-between;
-  padding: 10px 20px; background: var(--white); border-bottom: 1px solid var(--border);
-  position: sticky; top: 0; z-index: 100; gap: 12px;
-  box-shadow: 0 1px 3px rgba(0,0,0,.06);
+  padding: 0 28px; height: 58px;
+  background: var(--white);
+  border-bottom: 1px solid var(--border);
+  position: sticky; top: 0; z-index: 100; gap: 16px;
+  box-shadow: 0 1px 0 var(--border), 0 2px 8px rgba(0,0,0,.04);
 }
-.logo { display: flex; align-items: center; gap: 8px; }
-.logo-icon { width: 30px; height: 30px; background: var(--accent); border-radius: 7px; display: flex; align-items: center; justify-content: center; font-size: 16px; }
-.logo-text { font-size: 15px; font-weight: 800; color: var(--text); }
+.logo { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
+.logo-icon {
+  width: 34px; height: 34px;
+  background: linear-gradient(135deg, var(--accent), var(--accent-dark));
+  border-radius: 9px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 17px;
+  box-shadow: 0 2px 6px rgba(230,57,70,.35);
+}
+.logo-text { font-size: 16px; font-weight: 800; color: var(--text); letter-spacing: -.3px; }
 .logo-text span { color: var(--accent); }
-.nav { display: flex; gap: 4px; }
-.nav-btn { padding: 6px 14px; border-radius: 8px; border: 1px solid var(--border); background: var(--white); font-size: 13px; font-weight: 500; color: var(--muted); transition: all .15s; white-space: nowrap; }
-.nav-btn:hover { background: var(--surface); color: var(--text); }
-.nav-btn.active { background: var(--accent); color: white; border-color: var(--accent); }
-.header-right { display: flex; align-items: center; gap: 8px; }
-.save-ok { font-size: 12px; color: #22c55e; font-weight: 600; opacity: 0; transition: opacity .3s; }
+.logo-sub { font-size: 11px; color: var(--muted); font-weight: 500; margin-top: 1px; display: block; }
+.nav { display: flex; gap: 4px; background: var(--surface); padding: 4px; border-radius: 10px; border: 1px solid var(--border); }
+.nav-btn {
+  padding: 6px 18px; border-radius: 7px; border: none;
+  background: transparent; font-size: 13px; font-weight: 500;
+  color: var(--muted); transition: all .18s; white-space: nowrap;
+}
+.nav-btn:hover { background: var(--white); color: var(--text); box-shadow: var(--shadow-sm); }
+.nav-btn.active { background: var(--white); color: var(--text); font-weight: 700; box-shadow: var(--shadow-sm); }
+.header-right { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
+.save-ok { font-size: 12px; color: var(--green); font-weight: 600; opacity: 0; transition: opacity .3s; display: flex; align-items: center; gap: 4px; }
 
 /* ── BOUTONS ── */
-.btn { display: inline-flex; align-items: center; gap: 6px; padding: 7px 14px; border-radius: 8px; border: none; font-size: 13px; font-weight: 600; cursor: pointer; transition: all .15s; white-space: nowrap; }
-.btn-primary { background: var(--accent); color: white; }
-.btn-primary:hover { opacity: .9; }
-.btn-secondary { background: var(--surface); color: var(--text); border: 1px solid var(--border); }
-.btn-secondary:hover { background: var(--border); }
-.btn-sm { padding: 5px 10px; font-size: 12px; }
+.btn { display: inline-flex; align-items: center; gap: 6px; padding: 7px 16px; border-radius: var(--radius-sm); border: none; font-size: 13px; font-weight: 600; cursor: pointer; transition: all .18s; white-space: nowrap; }
+.btn-primary { background: linear-gradient(135deg, var(--accent), var(--accent-dark)); color: white; box-shadow: 0 2px 6px rgba(230,57,70,.3); }
+.btn-primary:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(230,57,70,.35); }
+.btn-secondary { background: var(--white); color: var(--text2); border: 1px solid var(--border2); }
+.btn-secondary:hover { background: var(--surface); border-color: var(--muted); }
+.btn-sm { padding: 5px 11px; font-size: 12px; }
 .btn-ghost { background: transparent; color: var(--muted); border: 1px solid var(--border); }
-.btn-ghost:hover { background: var(--surface); }
-.btn-danger { background: #fee2e2; color: #dc2626; border: 1px solid #fca5a5; }
-.btn-danger:hover { background: #fca5a5; }
+.btn-ghost:hover { background: var(--surface2); color: var(--text); }
+.btn-danger { background: var(--accent-light); color: var(--accent); border: 1px solid #fecaca; }
+.btn-danger:hover { background: #fee2e2; }
 
-/* ── TABS ── */
-.tab { display: none; padding: 20px; max-width: 900px; margin: 0 auto; }
+/* ── LAYOUT PLEINE LARGEUR ── */
+.tab { display: none; padding: 24px 28px; }
 .tab.active { display: block; }
+.page-grid {
+  display: grid;
+  grid-template-columns: minmax(0,1fr) 340px;
+  gap: 20px;
+  align-items: start;
+}
+.page-grid-full { grid-column: 1 / -1; }
 
 /* ── CARDS ── */
 .card { background: var(--white); border-radius: var(--radius); box-shadow: var(--shadow); margin-bottom: 16px; overflow: hidden; }
@@ -107,6 +140,11 @@ textarea, input, select { font-family: var(--font); }
 .theme-hdr { display: flex; align-items: center; gap: 8px; padding: 5px 10px; border-radius: 8px; border-left: 3px solid; margin: 10px 0 6px; }
 .theme-hdr-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .5px; }
 .theme-hdr-count { font-size: 11px; opacity: .6; }
+.odj-section-title { display: flex; align-items: center; gap: 10px; margin: 14px 0 6px; }
+.odj-section-title-text { font-size: 13px; font-weight: 700; color: var(--text); white-space: nowrap; cursor: pointer; }
+.odj-section-title-text:hover { color: var(--blue); }
+.odj-section-title::before, .odj-section-title::after { content: ''; flex: 1; height: 1.5px; background: var(--border); }
+.odj-section-title::before { display: none; }
 
 /* ── SUJET ACCORDÉON ── */
 .subj { border: 1px solid var(--border); border-radius: 9px; margin-bottom: 5px; overflow: hidden; transition: border-color .15s; }
@@ -119,7 +157,7 @@ textarea, input, select { font-family: var(--font); }
 .star-btn { background: none; border: none; font-size: 15px; color: #e2e8f0; cursor: pointer; padding: 0; line-height: 1; flex-shrink: 0; transition: transform .15s; }
 .star-btn:hover { transform: scale(1.2); }
 .star-btn.on { color: #f59e0b; }
-.status-btn { border: none; border-radius: 20px; padding: 3px 9px; font-size: 10px; font-weight: 700; cursor: pointer; flex-shrink: 0; }
+.status-btn { border: none; border-radius: 20px; padding: 3px 9px; font-size: 10px; font-weight: 700; cursor: pointer; flex-shrink: 0; appearance: none; -webkit-appearance: none; outline: none; }
 .st-todo { background: #f1f5f9; color: #64748b; }
 .st-done { background: #dcfce7; color: #16a34a; }
 .st-report { background: #fef3c7; color: #d97706; }
@@ -151,7 +189,7 @@ textarea, input, select { font-family: var(--font); }
 .aaf-cancel { padding: 6px 10px; background: #f1f5f9; border: none; border-radius: 6px; font-size: 12px; cursor: pointer; }
 
 /* ── CHECKLISTS ── */
-.cr-wrap { padding: 12px 16px 16px; border-top: 1px solid var(--border); }
+.cr-wrap { padding: 12px 16px 16px; }
 .cl-block { border-radius: 9px; padding: 11px; margin-bottom: 10px; }
 .cl-paul { background: #fff5f5; border: 1.5px solid #fca5a5; }
 .cl-olivier { background: #f0f9ff; border: 1.5px solid #7dd3fc; }
@@ -276,57 +314,25 @@ textarea, input, select { font-family: var(--font); }
 ══════════════════════════════════════════════ */
 @media (max-width: 640px) {
 
-  /* ── Header simplifié ── */
-  .header {
-    padding: 8px 12px;
-    gap: 8px;
-    flex-wrap: nowrap;
-  }
+  /* ── Header ── */
+  .header { padding: 8px 12px; gap: 8px; }
   .logo-text { font-size: 13px; }
   .logo-icon { width: 26px; height: 26px; font-size: 14px; }
-
-  /* Navigation cachée dans le header → barre basse */
   .nav { display: none; }
-  .header-right .btn { display: none; } /* bouton "+ Nouvelle réunion" caché → FAB */
+  .header-right .btn { display: none; }
 
-  /* Barre de navigation basse (style app mobile) */
-  .mobile-nav {
-    display: flex !important;
-    position: fixed; bottom: 0; left: 0; right: 0; z-index: 150;
-    background: var(--white); border-top: 1px solid var(--border);
-    box-shadow: 0 -2px 12px rgba(0,0,0,.08);
-  }
-  .mobile-nav-btn {
-    flex: 1; display: flex; flex-direction: column; align-items: center;
-    justify-content: center; gap: 2px; padding: 8px 4px 10px;
-    background: none; border: none; font-size: 10px; font-weight: 600;
-    color: var(--muted); cursor: pointer; transition: color .15s;
-  }
-  .mobile-nav-btn .mn-icon { font-size: 20px; line-height: 1; }
-  .mobile-nav-btn.active { color: var(--accent); }
-  .mobile-nav-btn.active .mn-icon { transform: scale(1.1); }
+  /* ── Barre nav basse ── */
+  .mobile-nav { display: flex !important; }
+  .mobile-fab { display: flex !important; }
 
-  /* Bouton flottant "+" */
-  .mobile-fab {
-    display: flex !important;
-    position: fixed; bottom: 70px; right: 16px; z-index: 160;
-    width: 52px; height: 52px; border-radius: 50%;
-    background: var(--accent); color: white;
-    align-items: center; justify-content: center;
-    font-size: 24px; font-weight: 300; border: none;
-    box-shadow: 0 4px 16px rgba(230,57,70,.4);
-    cursor: pointer;
-  }
-
-  /* Tab : marge basse pour la nav fixe */
+  /* ── Tab ── */
   .tab { padding: 12px 10px 90px; max-width: 100%; }
 
   /* ── Layout une colonne ── */
   .page-grid { display: flex !important; flex-direction: column !important; gap: 12px !important; }
-  .page-grid-full { margin-bottom: 0 !important; }
 
   /* ── Cards ── */
-  .card { margin-bottom: 10px; border-radius: 10px; }
+  .card { margin-bottom: 10px; }
   .card-header { padding: 12px 14px; gap: 8px; }
 
   /* ── Timer ── */
@@ -335,44 +341,26 @@ textarea, input, select { font-family: var(--font); }
   .timer-quarts { grid-template-columns: repeat(2,1fr); gap: 8px; }
   .quart { padding: 10px; }
   .quart-icon { font-size: 22px; }
-  .quart-range { font-size: 11px; }
-  .quart-label { font-size: 10px; }
   .t-btn { padding: 10px 18px; font-size: 13px; }
   .capitaine-block { flex-wrap: wrap; gap: 6px; }
   .cap-select { font-size: 13px; padding: 6px 10px; }
 
   /* ── ODJ ── */
   .odj-wrap { padding: 0 10px 8px; }
-
-  /* Sujets : zones de tap confortables */
   .subj-hdr { padding: 12px 10px; gap: 8px; min-height: 48px; }
   .subj-title { font-size: 14px; }
   .star-btn { font-size: 18px; padding: 4px; }
   .status-btn { font-size: 11px; padding: 5px 10px; }
-  .chevron { font-size: 12px; }
 
-  /* Corps sujet : colonnes → une colonne */
+  /* Corps sujet : une colonne */
   .body-grid { grid-template-columns: 1fr !important; gap: 8px; }
   .subj-body { padding: 10px; }
   .body-ta { font-size: 14px; min-height: 70px; }
-
-  /* Boutons d'action */
   .add-action-btn { padding: 10px; font-size: 13px; }
   .action-row { padding: 8px 10px; }
   .action-txt { font-size: 13px; }
 
-  /* ── Blocs SDJ / Prio ── */
-  .sdj-block { padding: 12px; }
-  .sdj-title { font-size: 12px; }
-  .prio-block { padding: 10px; }
-
-  /* Thème header */
-  .theme-hdr { padding: 7px 12px; }
-
-  /* Titre de section */
-  .odj-section-title-text { font-size: 14px; }
-
-  /* ── CR / Checklists ── */
+  /* ── CR ── */
   .cr-wrap { padding: 12px 12px 16px; }
   .cl-item { padding: 8px 10px; }
   .cl-item input[type=checkbox] { width: 18px; height: 18px; }
@@ -380,21 +368,18 @@ textarea, input, select { font-family: var(--font); }
   .cr-export-btns { flex-direction: column; gap: 8px; }
   .cr-btn { padding: 12px; font-size: 14px; }
 
-  /* ── Modale : plein écran ── */
+  /* ── Modale plein écran bas ── */
   .modal-overlay { padding: 0; align-items: flex-end; }
-  .modal {
-    max-width: 100%; width: 100%; max-height: 95vh;
-    border-radius: 20px 20px 0 0;
-  }
+  .modal { max-width: 100%; width: 100%; max-height: 95vh; border-radius: 20px 20px 0 0; }
   .modal-body { padding: 16px; }
   .modal-footer { padding: 12px 16px; }
   .form-row { grid-template-columns: 1fr !important; gap: 10px; }
-  .form-input { font-size: 16px; padding: 10px 12px; } /* 16px évite le zoom auto iOS */
+  .form-input { font-size: 16px; padding: 10px 12px; }
 
-  /* Agenda builder dans la modale */
+  /* Agenda builder */
   .ab-item { flex-wrap: wrap; gap: 6px; padding: 8px; }
   .ab-sel { max-width: 100%; font-size: 13px; padding: 6px 8px; }
-  .ab-inp { font-size: 14px; min-width: 0; width: 100%; }
+  .ab-inp { font-size: 14px; width: 100%; }
   .ab-add-btn { padding: 7px 12px; font-size: 12px; }
 
   /* ── Archives ── */
@@ -402,26 +387,28 @@ textarea, input, select { font-family: var(--font); }
   .arc-day { font-size: 20px; }
   .arc-title { font-size: 14px; }
 
-  /* ── Match du mois ── */
+  /* ── Match ── */
   .match-grid { grid-template-columns: 1fr !important; }
 
-  /* ── Boutons globaux ── */
+  /* ── Globaux ── */
   .btn { padding: 9px 14px; font-size: 13px; }
   .btn-sm { padding: 7px 12px; font-size: 12px; }
-
-  /* ── Save OK : en haut centré ── */
-  .save-ok { font-size: 11px; }
   #errorBanner { top: 56px; left: 10px; right: 10px; transform: none; font-size: 13px; }
-
-  /* Sticky sidebar → non-sticky sur mobile */
   [style*="position:sticky"] { position: static !important; }
 }
+
+/* ── Classes nav mobile (toujours cachées sur desktop) ── */
+.mobile-nav { display: none; position: fixed; bottom: 0; left: 0; right: 0; z-index: 150; background: var(--white); border-top: 1px solid var(--border); box-shadow: 0 -2px 12px rgba(0,0,0,.08); }
+.mobile-nav-btn { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; padding: 8px 4px 10px; background: none; border: none; font-size: 10px; font-weight: 600; color: var(--muted); cursor: pointer; transition: color .15s; }
+.mobile-nav-btn .mn-icon { font-size: 20px; line-height: 1; }
+.mobile-nav-btn.active { color: var(--accent); }
+.mobile-fab { display: none; position: fixed; bottom: 70px; right: 16px; z-index: 160; width: 52px; height: 52px; border-radius: 50%; background: var(--accent); color: white; align-items: center; justify-content: center; font-size: 28px; font-weight: 300; border: none; box-shadow: 0 4px 16px rgba(230,57,70,.4); cursor: pointer; }
 </style>
 </head>
 <body>
 
 <!-- Navigation mobile basse -->
-<div class="mobile-nav" style="display:none">
+<div class="mobile-nav">
   <button class="mobile-nav-btn active" id="mn-home" onclick="showTab('home',this);setMobileNav('mn-home')">
     <span class="mn-icon">📅</span>Réunion
   </button>
@@ -432,9 +419,8 @@ textarea, input, select { font-family: var(--font); }
     <span class="mn-icon">🏟️</span>Match
   </button>
 </div>
-
 <!-- Bouton flottant "+" mobile -->
-<button class="mobile-fab" style="display:none" onclick="openModal('reunion')" title="Nouvelle réunion">+</button>
+<button class="mobile-fab" onclick="openModal('reunion')" title="Nouvelle réunion">+</button>
 
 <!-- Loading -->
 <div id="loadingBar"><div></div></div>
@@ -663,7 +649,6 @@ function showTab(tab, btn) {
   document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
   document.getElementById('tab-'+tab).classList.add('active');
   if (btn) btn.classList.add('active');
-  // Sync mobile nav
   const map = {home:'mn-home', archives:'mn-archives', match:'mn-match'};
   if (map[tab]) setMobileNav(map[tab]);
   if (tab === 'home')     renderHome();
@@ -674,11 +659,22 @@ function showTab(tab, btn) {
 // ═══════════════════════════════════════════════════════════════
 // PAGE PRINCIPALE
 // ═══════════════════════════════════════════════════════════════
+function dateToStr(d) {
+  // Extrait YYYY-MM-DD en heure locale (évite le décalage UTC)
+  if (!d) return '';
+  const dt = d instanceof Date ? d : new Date(d);
+  if (isNaN(dt)) return typeof d === 'string' ? d.substring(0,10) : '';
+  return dt.getFullYear()+'-'+String(dt.getMonth()+1).padStart(2,'0')+'-'+String(dt.getDate()).padStart(2,'0');
+}
+function todayStr() {
+  const now = new Date();
+  return now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0')+'-'+String(now.getDate()).padStart(2,'0');
+}
 function renderHome() {
   const el = document.getElementById('homeContent');
-  const now = new Date(); now.setHours(0,0,0,0);
+  const today = todayStr();
   const upcoming = state.reunions
-    .filter(r => r.date && new Date(r.date) >= now)
+    .filter(r => r.date && dateToStr(r.date) >= today)
     .sort((a,b) => new Date(a.date)-new Date(b.date));
 
   el.innerHTML = '';
@@ -693,15 +689,19 @@ function renderHome() {
   el.appendChild(buildReunionCard(upcoming[0]));
   if (upcoming.length > 1) {
     const next = document.createElement('div');
-    next.style.cssText = 'background:white;border:1px solid var(--border);border-radius:10px;padding:14px 18px;margin-top:16px';
-    next.innerHTML = '<div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);margin-bottom:10px">📅 Réunions à venir</div>' +
+    next.className = 'card';
+    next.style.cssText = 'margin-top:20px;padding:14px 18px';
+    next.innerHTML = '<div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);margin-bottom:10px">📅 Prochaines réunions</div>' +
       upcoming.slice(1).map(r => {
         const dt = new Date(r.date);
-        return `<div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-top:1px solid var(--border)">
-          <div style="font-size:13px;font-weight:600;color:var(--accent);min-width:80px">${dt.toLocaleDateString('fr-FR',{day:'numeric',month:'short'})}</div>
-          <div style="font-size:13px;flex:1">${r.title}</div>
+        return `<div style="display:flex;align-items:center;gap:12px;padding:9px 0;border-top:1px solid var(--border)">
+          <div style="background:var(--accent-light);border-radius:7px;padding:4px 9px;text-align:center;flex-shrink:0">
+            <div style="font-size:15px;font-weight:800;color:var(--accent);line-height:1">${dt.getDate()}</div>
+            <div style="font-size:10px;color:var(--accent);font-weight:600">${dt.toLocaleDateString('fr-FR',{month:'short'})}</div>
+          </div>
+          <div style="font-size:13px;font-weight:600;flex:1">${r.title}</div>
           <button class="btn btn-ghost btn-sm" onclick="editReunion('${r.id}')">✏️</button>
-          <button class="btn btn-ghost btn-sm" onclick="deleteReunion('${r.id}')">🗑️</button>
+          <button class="btn btn-danger btn-sm" onclick="deleteReunion('${r.id}')">🗑️</button>
         </div>`;
       }).join('');
     el.appendChild(next);
@@ -712,30 +712,34 @@ function renderHome() {
 // CARTE RÉUNION COMPLÈTE
 // ═══════════════════════════════════════════════════════════════
 function buildReunionCard(r) {
-  const card = document.createElement('div');
-  card.className = 'card';
-  card.id = 'rcard-'+r.id;
+  const wrap = document.createElement('div');
+  wrap.id = 'rcard-'+r.id;
 
   const dt = r.date ? new Date(r.date) : null;
   const notes = getReunionNotes(r.id);
   const meta = getMetaNotes(r.id);
   const starred = new Set(meta.starred);
-  const capMember = getMember(meta.capitaine);
   let themeMap = {};
   try { themeMap = r.agendaThemes ? JSON.parse(r.agendaThemes) : {}; } catch(e) {}
 
-  // Header
+  // ── HEADER pleine largeur ──
   const hdr = document.createElement('div');
-  hdr.className = 'card-header';
+  hdr.className = 'card page-grid-full';
+  hdr.style.cssText = 'margin-bottom:16px;padding:16px 20px;display:flex;align-items:flex-start;gap:16px';
   const dateDiv = document.createElement('div');
+  dateDiv.style.cssText = 'text-align:center;background:var(--accent-light);border-radius:10px;padding:8px 14px;flex-shrink:0;border:1.5px solid #fecaca';
   dateDiv.innerHTML = dt
-    ? `<div style="font-size:26px;font-weight:800;color:var(--accent);line-height:1">${dt.getDate()}</div>
-       <div style="font-size:12px;color:var(--muted)">${dt.toLocaleDateString('fr-FR',{month:'long'})}&nbsp;${dt.getFullYear()}</div>`
-    : '<div style="font-size:13px;color:var(--muted)">Sans date</div>';
+    ? `<div style="font-size:28px;font-weight:800;color:var(--accent);line-height:1">${dt.getDate()}</div>
+       <div style="font-size:11px;font-weight:600;color:var(--accent);text-transform:uppercase;letter-spacing:.5px;margin-top:2px">${dt.toLocaleDateString('fr-FR',{month:'short'})}</div>
+       <div style="font-size:11px;color:var(--muted)">${dt.getFullYear()}</div>`
+    : '<div style="font-size:13px;color:var(--muted)">?</div>';
   const infoDiv = document.createElement('div');
-  infoDiv.style.cssText = 'flex:1;margin-left:16px';
-  infoDiv.innerHTML = `<div style="font-size:18px;font-weight:700;margin-bottom:3px">${r.title}</div>
-    <div style="font-size:13px;color:var(--muted)">${r.time?'🕐 '+cleanTime(r.time):''}${r.location?' · 📍 '+r.location:''}</div>`;
+  infoDiv.style.cssText = 'flex:1';
+  infoDiv.innerHTML = `<div style="font-size:20px;font-weight:800;letter-spacing:-.3px;margin-bottom:4px">${r.title}</div>
+    <div style="font-size:13px;color:var(--muted);display:flex;flex-wrap:wrap;gap:12px">
+      ${r.time?`<span>🕐 ${cleanTime(r.time)}</span>`:''}
+      ${r.location?`<span>📍 ${r.location}</span>`:''}
+    </div>`;
   const actDiv = document.createElement('div');
   actDiv.style.cssText = 'display:flex;gap:6px;flex-shrink:0';
   const btnEdit = document.createElement('button');
@@ -746,12 +750,41 @@ function buildReunionCard(r) {
   btnDel.addEventListener('click', () => deleteReunion(r.id));
   actDiv.append(btnEdit, btnDel);
   hdr.append(dateDiv, infoDiv, actDiv);
-  card.appendChild(hdr);
+  wrap.appendChild(hdr);
 
-  // Timer
-  card.appendChild(buildTimer(r.id, meta));
+  // ── GRILLE 2 COLONNES ──
+  const grid = document.createElement('div');
+  grid.className = 'page-grid';
+  wrap.appendChild(grid);
 
-  // ODJ
+  // ── COLONNE GAUCHE : ODJ ──
+  const leftCol = document.createElement('div');
+  const odjCard = document.createElement('div');
+  odjCard.className = 'card';
+
+  const odjCardHdr = document.createElement('div');
+  odjCardHdr.className = 'card-header';
+  odjCardHdr.style.cssText = 'display:flex;align-items:center;justify-content:space-between;gap:8px';
+  const odjHdrLeft = document.createElement('div');
+  odjHdrLeft.style.cssText = 'font-size:14px;font-weight:700;display:flex;align-items:center;gap:6px';
+  const subjCount = (r.agenda||[]).filter((_,i)=>themeMap[i]!=='_titre').length;
+  odjHdrLeft.innerHTML = `📋 Ordre du jour <span style="background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:2px 9px;font-size:12px;font-weight:600;color:var(--muted)">${subjCount} sujet${subjCount>1?'s':''}</span>`;
+  const hdrBtns = document.createElement('div');
+  hdrBtns.style.cssText = 'display:flex;gap:6px';
+  const addSubjBtn = document.createElement('button');
+  addSubjBtn.className = 'btn btn-ghost btn-sm';
+  addSubjBtn.textContent = '+ Sujet';
+  addSubjBtn.addEventListener('click', () => addSubjectInline(r, odjCard, false));
+  const addTitleBtn = document.createElement('button');
+  addTitleBtn.className = 'btn btn-ghost btn-sm';
+  addTitleBtn.style.cssText = 'color:var(--muted);border-color:var(--border)';
+  addTitleBtn.textContent = '+ Titre';
+  addTitleBtn.addEventListener('click', () => addSubjectInline(r, odjCard, true));
+  hdrBtns.append(addSubjBtn, addTitleBtn);
+  odjCardHdr.appendChild(odjHdrLeft);
+  odjCardHdr.appendChild(hdrBtns);
+  odjCard.appendChild(odjCardHdr);
+
   if ((r.agenda||[]).length) {
     const odj = document.createElement('div');
     odj.className = 'odj-wrap';
@@ -771,38 +804,82 @@ function buildReunionCard(r) {
       }
     }
 
-    // Par thématique — regrouper les IDs inconnus dans "autre"
+    // Par thématique — en respectant l'ordre et les titres de section
     const themes = getThemes();
-    const grouped = {};
-    themes.forEach(t => { grouped[t.id] = []; });
-    grouped['_autre'] = [];
-    (r.agenda||[]).forEach((subj,i) => {
-      const tid = themeMap[i];
-      const known = tid && themes.find(t=>t.id===tid);
-      const bucket = known ? tid : '_autre';
-      if (!grouped[bucket]) grouped[bucket] = [];
-      grouped[bucket].push({subj,i});
-    });
+    // Vérifier si on a des titres de section : affichage en ordre linéaire
+    const hasSectionTitles = (r.agenda||[]).some((_,i) => themeMap[i] === '_titre');
 
-    [...themes, {id:'_autre',label:'Autre',color:'#6366f1',bg:'#eef2ff'}].forEach(t => {
-      const items = grouped[t.id]||[];
-      if (!items.length) return;
-      const thdr = document.createElement('div');
-      thdr.className = 'theme-hdr';
-      thdr.style.cssText = `background:${t.bg};border-left-color:${t.color}`;
-      thdr.innerHTML = `<span class="theme-hdr-label" style="color:${t.color}">${t.label}</span>
-        <span class="theme-hdr-count" style="color:${t.color}">${items.length} sujet${items.length>1?'s':''}</span>`;
-      odj.appendChild(thdr);
-      items.forEach(({subj,i}) => odj.appendChild(buildSubjectCard(r,i,subj,notes,starred)));
-    });
+    if (hasSectionTitles) {
+      // Affichage linéaire : respect de l'ordre, titres intercalés
+      (r.agenda||[]).forEach((subj,i) => {
+        if (themeMap[i] === '_titre') {
+          const st = document.createElement('div');
+          st.className = 'odj-section-title';
+          const txt = document.createElement('span');
+          txt.className = 'odj-section-title-text';
+          txt.textContent = subj;
+          txt.title = 'Double-cliquer pour modifier';
+          txt.addEventListener('dblclick', e => { e.stopPropagation(); editSubjectTitle(r, i, txt); });
+          st.appendChild(txt);
+          const after = document.createElement('span');
+          after.style.cssText = 'flex:1;height:1.5px;background:var(--border);display:block';
+          st.appendChild(after);
+          odj.appendChild(st);
+        } else {
+          odj.appendChild(buildSubjectCard(r,i,subj,notes,starred));
+        }
+      });
+    } else {
+      // Affichage groupé par thématique (comportement original)
+      const grouped = {};
+      themes.forEach(t => { grouped[t.id] = []; });
+      grouped['_autre'] = [];
+      (r.agenda||[]).forEach((subj,i) => {
+        const tid = themeMap[i];
+        const known = tid && themes.find(t=>t.id===tid);
+        const bucket = known ? tid : '_autre';
+        if (!grouped[bucket]) grouped[bucket] = [];
+        grouped[bucket].push({subj,i});
+      });
+      [...themes, {id:'_autre',label:'Autre',color:'#6366f1',bg:'#eef2ff'}].forEach(t => {
+        const items = grouped[t.id]||[];
+        if (!items.length) return;
+        const thdr = document.createElement('div');
+        thdr.className = 'theme-hdr';
+        thdr.style.cssText = `background:${t.bg};border-left-color:${t.color}`;
+        thdr.innerHTML = `<span class="theme-hdr-label" style="color:${t.color}">${t.label}</span>
+          <span class="theme-hdr-count" style="color:${t.color}">${items.length} sujet${items.length>1?'s':''}</span>`;
+        odj.appendChild(thdr);
+        items.forEach(({subj,i}) => odj.appendChild(buildSubjectCard(r,i,subj,notes,starred)));
+      });
+    }
 
-    card.appendChild(odj);
+    odjCard.appendChild(odj);
+  } else {
+    odjCard.innerHTML += `<div style="padding:20px;text-align:center;color:var(--muted);font-size:13px">Aucun sujet à l'ordre du jour.</div>`;
   }
 
-  // CR section
-  card.appendChild(buildCRSection(r, meta));
+  leftCol.appendChild(odjCard);
+  grid.appendChild(leftCol);
 
-  return card;
+  // ── COLONNE DROITE : Timer + CR ──
+  const rightCol = document.createElement('div');
+  rightCol.style.cssText = 'position:sticky;top:74px;display:flex;flex-direction:column;gap:16px';
+
+  const timerCard = document.createElement('div');
+  timerCard.className = 'card';
+  timerCard.style.cssText = 'overflow:hidden';
+  timerCard.appendChild(buildTimer(r.id, meta));
+  rightCol.appendChild(timerCard);
+
+  const crCard = document.createElement('div');
+  crCard.className = 'card';
+  crCard.appendChild(buildCRSection(r, meta));
+  rightCol.appendChild(crCard);
+
+  grid.appendChild(rightCol);
+
+  return wrap;
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -981,7 +1058,49 @@ function buildSujDuJour(rid) {
   const note = getItemNote(rid, '_sdj');
   const el = document.createElement('div');
   el.className = 'sdj-block';
-  el.innerHTML = '<div class="sdj-title">🎯 Sujet du jour</div>';
+
+  // Titre éditable
+  const titleWrap = document.createElement('div');
+  titleWrap.style.cssText = 'display:flex;align-items:center;gap:8px;margin-bottom:10px';
+  const titleIcon = document.createElement('span');
+  titleIcon.className = 'sdj-title';
+  titleIcon.style.margin = '0';
+  titleIcon.textContent = '🎯 Sujet du jour';
+  const titleSpan = document.createElement('span');
+  titleSpan.style.cssText = 'font-size:13px;font-weight:700;color:#0369a1;cursor:pointer;border-bottom:1px dashed #7dd3fc;';
+  titleSpan.textContent = note.sdjTitle || '';
+  titleSpan.title = 'Cliquer pour modifier le titre';
+  titleSpan.placeholder = 'Ajouter un titre…';
+  if (!titleSpan.textContent) {
+    titleSpan.style.cssText += 'color:#94a3b8;font-weight:400;font-style:italic;';
+    titleSpan.textContent = 'Cliquer pour ajouter un titre…';
+  }
+  function editSdjTitle() {
+    const inp = document.createElement('input');
+    inp.value = note.sdjTitle || '';
+    inp.placeholder = 'Ex : Point budget, Actualités fédérales…';
+    inp.style.cssText = 'font-size:13px;font-weight:700;color:#0369a1;border:1px solid #38bdf8;border-radius:5px;padding:2px 8px;font-family:var(--font);outline:none;min-width:200px;';
+    titleSpan.replaceWith(inp);
+    inp.focus(); inp.select();
+    async function saveSdjTitle() {
+      const val = inp.value.trim();
+      note.sdjTitle = val;
+      await debounceNote(rid, '_sdj', 'sdjTitle', val);
+      titleSpan.textContent = val || '';
+      if (!val) {
+        titleSpan.style.cssText = 'font-size:13px;font-weight:700;color:#94a3b8;cursor:pointer;border-bottom:1px dashed #7dd3fc;font-weight:400;font-style:italic;';
+        titleSpan.textContent = 'Cliquer pour ajouter un titre…';
+      } else {
+        titleSpan.style.cssText = 'font-size:13px;font-weight:700;color:#0369a1;cursor:pointer;border-bottom:1px dashed #7dd3fc;';
+      }
+      inp.replaceWith(titleSpan);
+    }
+    inp.addEventListener('blur', saveSdjTitle);
+    inp.addEventListener('keydown', e => { if(e.key==='Enter') inp.blur(); if(e.key==='Escape'){ inp.replaceWith(titleSpan); } });
+  }
+  titleSpan.addEventListener('click', editSdjTitle);
+  titleWrap.append(titleIcon, titleSpan);
+  el.appendChild(titleWrap);
   const grid = document.createElement('div');
   grid.className = 'body-grid';
 
@@ -989,7 +1108,8 @@ function buildSujDuJour(rid) {
   const notesCol = document.createElement('div');
   const notesLbl = document.createElement('div'); notesLbl.className='body-lbl'; notesLbl.textContent='💬 Notes';
   const ta = document.createElement('textarea');
-  ta.className='body-ta'; ta.placeholder='Notes…'; ta.value=note.decision||'';
+  ta.className='body-ta'; ta.placeholder='Notes libres, points à aborder, contexte…'; ta.value=note.decision||'';
+  ta.style.minHeight = '140px';
   ta.addEventListener('input', () => debounceNote(rid,'_sdj','decision',ta.value));
   notesCol.append(notesLbl, ta);
 
@@ -1028,13 +1148,18 @@ function buildSubjectCard(r, i, subj, notes, starred, prefix) {
   const starBtn = document.createElement('button'); starBtn.className='star-btn'+(isStar?' on':''); starBtn.textContent='★';
   starBtn.addEventListener('click', e => { e.stopPropagation(); toggleStar(r.id,i); });
 
-  const stBtn = document.createElement('button');
+  const stBtn = document.createElement('select');
   stBtn.className='status-btn '+(st==='done'?'st-done':st==='report'?'st-report':'st-todo');
-  stBtn.textContent = st==='done'?'✅ Traité':st==='report'?'🔄 Reporté':'⬜ À traiter';
-  stBtn.addEventListener('click', e => { e.stopPropagation(); cycleStatus(r.id,i); });
+  stBtn.innerHTML=`<option value="todo"${st==='todo'?' selected':''}>⬜ À traiter</option>
+    <option value="done"${st==='done'?' selected':''}>✅ Traité</option>
+    <option value="report"${st==='report'?' selected':''}>🔄 Reporté</option>`;
+  stBtn.addEventListener('change', e => { e.stopPropagation(); setStatus(r.id,i,stBtn.value); });
+  stBtn.addEventListener('click', e => e.stopPropagation());
 
   const titleEl = document.createElement('span');
   titleEl.className='subj-title'+(st==='done'?' crossed':''); titleEl.textContent=subj;
+  titleEl.title='Double-cliquer pour modifier le titre';
+  titleEl.addEventListener('dblclick', e => { e.stopPropagation(); editSubjectTitle(r,i,titleEl); });
 
   const chevEl = document.createElement('span'); chevEl.className='chevron'; chevEl.textContent='▼';
   chevEl.id='chev-'+pfx+r.id+'-'+i;
@@ -1080,6 +1205,109 @@ function toggleSubj(id) {
   const open = body.classList.toggle('open');
   if (chev) chev.classList.toggle('open', open);
 }
+function editSubjectTitle(r, i, titleEl) {
+  const orig = titleEl.textContent;
+  const inp = document.createElement('input');
+  inp.value = orig;
+  inp.style.cssText = 'flex:1;border:1px solid var(--blue);border-radius:5px;padding:2px 6px;font-size:13px;font-family:var(--font);outline:none;';
+  titleEl.replaceWith(inp);
+  inp.focus(); inp.select();
+  async function save() {
+    const val = inp.value.trim() || orig;
+    const newAgenda = [...(r.agenda||[])];
+    newAgenda[i] = val;
+    const updated = { ...r, agenda: newAgenda };
+    try {
+      await apiCall('saveReunion', { data: updated });
+      const idx = state.reunions.findIndex(x=>x.id===r.id);
+      if(idx>=0) state.reunions[idx] = updated;
+      showSaveOk();
+    } catch(e) { showError(e.message); }
+    const newSpan = document.createElement('span');
+    newSpan.className = titleEl.className; newSpan.textContent = val;
+    newSpan.title = 'Double-cliquer pour modifier le titre';
+    newSpan.addEventListener('dblclick', e => { e.stopPropagation(); editSubjectTitle(updated, i, newSpan); });
+    inp.replaceWith(newSpan);
+  }
+  inp.addEventListener('blur', save);
+  inp.addEventListener('keydown', e => { if(e.key==='Enter') inp.blur(); if(e.key==='Escape'){ inp.value=orig; inp.blur(); } });
+}
+
+function addSubjectInline(r, odjCard, isTitre) {
+  // Éviter double-ouverture
+  if(document.getElementById('quick-add-subj-'+r.id)) return;
+  const accentColor = isTitre ? '#7c3aed' : 'var(--blue)';
+  const row = document.createElement('div');
+  row.id = 'quick-add-subj-'+r.id;
+  row.style.cssText = `display:flex;flex-direction:column;gap:6px;padding:10px 16px 12px;border-top:1.5px solid ${isTitre?'#ede9fe':'var(--border)'};background:${isTitre?'#faf5ff':''}`;
+  const topRow = document.createElement('div');
+  topRow.style.cssText = 'display:flex;gap:6px;align-items:center';
+  if (isTitre) {
+    const lbl = document.createElement('span');
+    lbl.style.cssText = 'font-size:11px;font-weight:700;color:#7c3aed;text-transform:uppercase;letter-spacing:.5px;white-space:nowrap';
+    lbl.textContent = '— Titre de section';
+    topRow.appendChild(lbl);
+  } else {
+    const sel = document.createElement('select');
+    sel.id = 'quick-add-theme-'+r.id;
+    sel.style.cssText = 'border:1px solid var(--blue);border-radius:6px;padding:6px 8px;font-size:12px;font-family:var(--font);outline:none;background:white;max-width:140px;';
+    getThemes().forEach(t => {
+      const opt = document.createElement('option');
+      opt.value = t.id; opt.textContent = t.label;
+      sel.appendChild(opt);
+    });
+    topRow.appendChild(sel);
+  }
+  const inp = document.createElement('input');
+  inp.placeholder = isTitre ? 'Ex : Informations générales, Points budgétaires…' : 'Titre du sujet…';
+  inp.style.cssText = `flex:1;border:1px solid ${accentColor};border-radius:6px;padding:6px 10px;font-size:13px;font-family:var(--font);outline:none;${isTitre?'font-weight:600;':''}`;
+  const saveBtn = document.createElement('button');
+  saveBtn.className = 'btn btn-primary btn-sm';
+  saveBtn.style.cssText = isTitre ? 'background:#7c3aed' : '';
+  saveBtn.textContent = 'Ajouter';
+  const cancelBtn = document.createElement('button');
+  cancelBtn.className = 'btn btn-ghost btn-sm';
+  cancelBtn.textContent = 'Annuler';
+  topRow.append(inp, saveBtn, cancelBtn);
+  row.appendChild(topRow);
+  odjCard.appendChild(row);
+  inp.focus();
+
+  async function doSave() {
+    const val = inp.value.trim();
+    if (!val) { row.remove(); return; }
+    const newAgenda = [...(r.agenda||[]), val];
+    const themeMap = {};
+    try { Object.assign(themeMap, r.agendaThemes ? JSON.parse(r.agendaThemes) : {}); } catch(e){}
+    const selEl = document.getElementById('quick-add-theme-'+r.id);
+    themeMap[newAgenda.length - 1] = isTitre ? '_titre' : (selEl?.value || 'autre');
+    const updated = { ...r, agenda: newAgenda, agendaThemes: JSON.stringify(themeMap) };
+    try {
+      saveBtn.disabled = true; saveBtn.textContent = '…';
+      await apiCall('saveReunion', { data: updated });
+      const idx = state.reunions.findIndex(x=>x.id===r.id);
+      if(idx>=0) state.reunions[idx] = updated;
+      // Mettre à jour le compteur
+      const counter = odjCard.querySelector('span[style*="border-radius:20px"]');
+      if(counter) counter.textContent = newAgenda.length + ' sujets';
+      // Rafraîchir la carte de réunion complète
+      const cardWrap = document.getElementById('rcard-'+r.id);
+      if(cardWrap) {
+        const fresh = buildReunionCard(updated);
+        cardWrap.replaceWith(fresh);
+      }
+      showSaveOk();
+    } catch(e) { showError(e.message); saveBtn.disabled=false; saveBtn.textContent='Ajouter'; }
+  }
+
+  saveBtn.addEventListener('click', doSave);
+  cancelBtn.addEventListener('click', () => row.remove());
+  inp.addEventListener('keydown', e => {
+    if(e.key==='Enter') doSave();
+    if(e.key==='Escape') row.remove();
+  });
+}
+
 
 // ═══════════════════════════════════════════════════════════════
 // ACTIONS
@@ -1177,6 +1405,9 @@ async function cycleStatus(rid,idx) {
   const note=getItemNote(rid,idx);
   const cur=note.status||'todo';
   const next=cur==='todo'?'done':cur==='done'?'report':'todo';
+  await setStatus(rid,idx,next);
+}
+async function setStatus(rid,idx,next) {
   try {
     await saveItemNote(rid,idx,{status:next});
     // Mise à jour visuelle directe
@@ -1185,7 +1416,11 @@ async function cycleStatus(rid,idx) {
       if(!sc) return;
       sc.className='subj'+(getMetaNotes(rid).starred.includes(idx)?' prio':'')+(next==='report'?' reported':'')+(next==='done'?' done-s':'');
       const stBtn=sc.querySelector('.status-btn');
-      if(stBtn) { stBtn.className='status-btn '+(next==='done'?'st-done':next==='report'?'st-report':'st-todo'); stBtn.textContent=next==='done'?'✅ Traité':next==='report'?'🔄 Reporté':'⬜ À traiter'; }
+      if(stBtn) {
+        stBtn.className='status-btn '+(next==='done'?'st-done':next==='report'?'st-report':'st-todo');
+        if(stBtn.tagName==='SELECT') { stBtn.value=next; }
+        else { stBtn.textContent=next==='done'?'✅ Traité':next==='report'?'🔄 Reporté':'⬜ À traiter'; }
+      }
       const titleEl=sc.querySelector('.subj-title');
       if(titleEl) titleEl.classList.toggle('crossed',next==='done');
     });
@@ -1356,21 +1591,16 @@ function exportMember(rid,memberId) {
   try{themeMap=r.agendaThemes?JSON.parse(r.agendaThemes):{};}catch(e){}
   const m=getMember(memberId);
   const dt=r.date?new Date(r.date).toLocaleDateString('fr-FR',{day:'numeric',month:'long',year:'numeric'}):'';
-  console.log('=== exportMember ===', memberId);
-  console.log('agenda:', r.agenda);
-  console.log('notes keys:', Object.keys(notes));
   const actions=[];
   (r.agenda||[]).forEach((subj,i)=>{
     const n=notes['item_'+i]||{};
     let acts=n.actions||[];
     if(!acts.length&&n.action) acts=[{assignee:n.assignee||'',text:n.action}];
-    console.log(`item_${i}:`, subj, '| actions:', acts);
     acts.filter(a=>a.assignee===memberId&&a.text).forEach(a=>{
       const t=themes.find(x=>x.id===themeMap[i]);
       actions.push(`[${t?t.label:'Autre'}] ${subj} : ${a.text}`);
     });
   });
-  console.log('actions trouvées:', actions);
   if(!actions.length){
     alert(`Aucune action assignée à ${m?m.name:memberId} dans cette réunion.`);
     return;
@@ -1395,9 +1625,9 @@ function fallbackCopy(text) {
 // ═══════════════════════════════════════════════════════════════
 function renderArchives() {
   const el=document.getElementById('archivesList');
-  const now=new Date(); now.setHours(0,0,0,0);
+  const today=todayStr();
   const past=state.reunions
-    .filter(r=>!r.date||new Date(r.date)<now)
+    .filter(r=>!r.date||dateToStr(r.date)<today)
     .sort((a,b)=>{
       if(!a.date&&!b.date) return 0;
       if(!a.date) return 1; if(!b.date) return -1;
@@ -1439,11 +1669,20 @@ function openArchive(rid) {
   const r=state.reunions.find(x=>x.id===rid);
   if(!r) return;
   const el=document.getElementById('archivesList');
-  el.innerHTML='<button class="btn btn-ghost btn-sm" onclick="renderArchives()" style="margin-bottom:16px">← Retour aux archives</button>';
-
-  // Vue lecture seule
-  const notes=getReunionNotes(rid);
+  el.innerHTML='';
+  const backBtn=document.createElement('button');
+  backBtn.className='btn btn-ghost btn-sm';
+  backBtn.style.cssText='margin-bottom:16px';
+  backBtn.textContent='← Retour aux archives';
+  backBtn.addEventListener('click',renderArchives);
+  el.appendChild(backBtn);
+  // Carte interactive complète (même que page principale)
   const meta=getMetaNotes(rid);
+  el.appendChild(buildReunionCard(r));
+  return; // on garde le reste du code ci-dessous mort mais inatteignable
+
+  // (code lecture seule conservé ci-dessous pour référence)
+  const notes=getReunionNotes(rid);
   const themes=getThemes();
   let themeMap={};
   try{themeMap=r.agendaThemes?JSON.parse(r.agendaThemes):{};}catch(e){}
@@ -1624,10 +1863,10 @@ function buildReunionForm(data) {
     </div>
     <div class="form-row">
       <div class="form-group"><label class="form-label">Date</label>
-        <input class="form-input" id="f-date" type="date" value="${data?.date||''}">
+        <input class="form-input" id="f-date" type="date" value="${dateToStr(data?.date)||''}">
       </div>
       <div class="form-group"><label class="form-label">Heure</label>
-        <input class="form-input" id="f-time" type="time" value="${data?.time||''}">
+        <input class="form-input" id="f-time" type="time" value="${cleanTime(data?.time)||''}">
       </div>
     </div>
     <div class="form-group"><label class="form-label">Lieu</label>
@@ -1670,13 +1909,21 @@ function changeTheme(i,theme) {
   _agendaItems[i].theme=theme;
   refreshBuilder();
 }
+function syncAgendaInputs() {
+  _agendaItems.forEach((_,i)=>{
+    const inp=document.getElementById('agenda-builder')?.querySelector(`#abi-${i} .ab-inp`);
+    if(inp) _agendaItems[i].txt=inp.value;
+  });
+}
 function refreshBuilder() {
+  syncAgendaInputs();
   const b=document.getElementById('agenda-builder');
   const r=document.getElementById('ab-add-row');
   if(b) b.innerHTML=renderAgendaItems();
   if(r) r.innerHTML=renderAddBtns();
 }
 async function saveReunion() {
+  syncAgendaInputs();
   const title=(document.getElementById('f-title')||{}).value?.trim();
   if(!title){alert('Le titre est requis');return;}
   const date=(document.getElementById('f-date')||{}).value||'';
