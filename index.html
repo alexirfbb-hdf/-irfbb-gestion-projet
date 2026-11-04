@@ -602,10 +602,20 @@ function getMetaNotes(rid) {
 // API
 // ═══════════════════════════════════════════════════════════════
 async function apiCall(action, body = {}) {
-  const json = JSON.stringify({ action, ...body }).replace(/%/g, '%25');
-  let encoded;
-  try { encoded = encodeURIComponent(json); } catch(e) { encoded = json; }
-  const res = await fetch(API_URL + '?payload=' + encoded, { method:'GET', redirect:'follow' });
+  const json = JSON.stringify({ action, ...body });
+  let res;
+  if (json.length > 1500) {
+    // Payload volumineux → POST pour éviter la limite d'URL
+    res = await fetch(API_URL, {
+      method: 'POST',
+      redirect: 'follow',
+      headers: { 'Content-Type': 'text/plain' },
+      body: json
+    });
+  } else {
+    const encoded = encodeURIComponent(json.replace(/%/g, '%25'));
+    res = await fetch(API_URL + '?payload=' + encoded, { method: 'GET', redirect: 'follow' });
+  }
   const text = await res.text();
   const data = JSON.parse(text);
   if (!data.success) throw new Error(data.error || 'Erreur API');
