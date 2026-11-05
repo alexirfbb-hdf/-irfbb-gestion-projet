@@ -640,8 +640,14 @@ async function saveItemNote(rid, idx, patch) {
 }
 async function saveMetaNotes(rid, patch) {
   if (!state.agendaNotes[rid]) state.agendaNotes[rid] = {};
-  Object.assign(state.agendaNotes[rid], patch);
-  await apiCall('saveMeta', { reunionId: rid, data: patch });
+  // L'état local utilise des clés préfixées (_cl_paul…), l'API des clés sans préfixe (cl_paul…)
+  const apiPatch = {};
+  for (const [k, v] of Object.entries(patch)) {
+    const bare = k.replace(/^_/, '');
+    state.agendaNotes[rid]['_' + bare] = v;
+    apiPatch[bare] = v;
+  }
+  await apiCall('saveMeta', { reunionId: rid, data: apiPatch });
   showSaveOk();
 }
 
@@ -1476,7 +1482,7 @@ function buildCRSection(r, meta) {
   MEMBERS.forEach(m=>{
     const btn=document.createElement('button'); btn.className='export-member';
     btn.style.borderColor=m.color; btn.textContent=m.name;
-    btn.setAttribute('onclick', `exportMember('${r.id}','${m.id}')`);
+    btn.addEventListener('click', () => exportMember(r.id, m.id));
     expBtns.appendChild(btn);
   });
   expSec.append(expLbl,expBtns);
@@ -1574,6 +1580,8 @@ function copyChecklist(rid,who) {
 function toggleCR(rid) {
   const box=document.getElementById('cr-box-'+rid);
   if(!box) return;
+  if(box.dataset.mode==='member'&&box.classList.contains('open')) box.classList.remove('open');
+  box.dataset.mode='cr';
   const open=box.classList.toggle('open');
   if(!open) return;
   const r=state.reunions.find(x=>x.id===rid);
@@ -1620,27 +1628,30 @@ function exportMember(rid,memberId) {
   let themeMap={};
   try{themeMap=r.agendaThemes?JSON.parse(r.agendaThemes):{};}catch(e){}
   const m=getMember(memberId);
+  const name=m?m.name:memberId;
   const dt=r.date?new Date(r.date).toLocaleDateString('fr-FR',{day:'numeric',month:'long',year:'numeric'}):'';
+  const getActs=n=>{ let a=n.actions||[]; if(!a.length&&n.action) a=[{assignee:n.assignee||'',text:n.action}]; return a; };
   const actions=[];
+  // Sujet du jour
+  const sdj=notes['_sdj']||{};
+  getActs(sdj).filter(a=>a.assignee===memberId&&a.text).forEach(a=>{
+    actions.push(`[Sujet du jour] ${r.sdjTitle||sdj.sdjTitle||''} : ${a.text}`);
+  });
+  // Sujets de l'ordre du jour
   (r.agenda||[]).forEach((subj,i)=>{
-    const n=notes['item_'+i]||{};
-    let acts=n.actions||[];
-    if(!acts.length&&n.action) acts=[{assignee:n.assignee||'',text:n.action}];
-    acts.filter(a=>a.assignee===memberId&&a.text).forEach(a=>{
+    getActs(notes['item_'+i]||{}).filter(a=>a.assignee===memberId&&a.text).forEach(a=>{
       const t=themes.find(x=>x.id===themeMap[i]);
       actions.push(`[${t?t.label:'Autre'}] ${subj} : ${a.text}`);
     });
   });
-  if(!actions.length){
-    alert(`Aucune action assignée à ${m?m.name:memberId} dans cette réunion.`);
-    return;
-  }
-  const text=`TÂCHES DE ${(m?m.name:memberId).toUpperCase()} — ${dt}\n\n${actions.map(a=>'- '+a).join('\n')}`;
-  if(navigator.clipboard&&window.isSecureContext) {
-    navigator.clipboard.writeText(text).then(()=>showSaveOk()).catch(()=>fallbackCopy(text));
-  } else {
-    fallbackCopy(text);
-  }
+  const text=actions.length
+    ? `TÂCHES DE ${name.toUpperCase()} — ${dt}\n\n${actions.map(a=>'- '+a).join('\n')}`
+    : `Aucune action assignée à ${name} dans cette réunion.`;
+  // Affichage dans l'encadré sous les boutons (même zone que le CR rapide)
+  const box=document.getElementById('cr-box-'+rid);
+  const el=document.getElementById('cr-txt-'+rid);
+  if(box&&el){ box.dataset.mode='member'; el.textContent=text; box.classList.add('open'); box.scrollIntoView({behavior:'smooth',block:'nearest'}); }
+  else alert(text);
 }
 function fallbackCopy(text) {
   const ta=document.createElement('textarea');
